@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabaseClient';
 
 export const TOTAL_CARTAS = 28;
 const LOCAL_KEY = 'hechi-go-local-state';
+const db = supabase.schema('hechi');
 
 export function cargarLocal() {
   try {
@@ -30,8 +31,8 @@ function normalizarAlumno(alumno) {
 }
 
 export async function cargarClase(userId) {
-  let { data: clase, error: claseError } = await supabase
-    .from('hechi_clases')
+  let { data: clase, error: claseError } = await db
+    .from('clases')
     .select('id, nombre, estado, created_at')
     .eq('created_by', userId)
     .eq('estado', 'activa')
@@ -42,8 +43,8 @@ export async function cargarClase(userId) {
   if (claseError) throw claseError;
 
   if (!clase) {
-    const { data: nuevaClase, error: crearError } = await supabase
-      .from('hechi_clases')
+    const { data: nuevaClase, error: crearError } = await db
+      .from('clases')
       .insert({ nombre: 'Clase HECHI GO' })
       .select('id, nombre, estado, created_at')
       .single();
@@ -52,8 +53,8 @@ export async function cargarClase(userId) {
     clase = nuevaClase;
   }
 
-  const { data: alumnos, error: alumnosError } = await supabase
-    .from('hechi_alumnos')
+  const { data: alumnos, error: alumnosError } = await db
+    .from('alumnos')
     .select('id, nombre, puntos, cartas, participaciones')
     .eq('clase_id', clase.id)
     .eq('activo', true)
@@ -64,8 +65,8 @@ export async function cargarClase(userId) {
 }
 
 export async function crearAlumno(claseId, nombre) {
-  const { data, error } = await supabase
-    .from('hechi_alumnos')
+  const { data, error } = await db
+    .from('alumnos')
     .insert({ clase_id: claseId, nombre })
     .select('id, nombre, puntos, cartas, participaciones')
     .single();
@@ -93,14 +94,14 @@ export async function registrarParticipacion({ claseId, alumno, puntos, carta, e
     cartas: esNueva ? [...alumno.cartas, carta] : alumno.cartas
   };
 
-  const { error: historialError } = await supabase
-    .from('hechi_participaciones')
+  const { error: historialError } = await db
+    .from('participaciones')
     .insert({ clase_id: claseId, alumno_id: alumno.id, puntos, carta, carta_nueva: esNueva });
 
   if (historialError) throw historialError;
 
-  const { data, error } = await supabase
-    .from('hechi_alumnos')
+  const { data, error } = await db
+    .from('alumnos')
     .update({ puntos: actualizado.puntos, cartas: actualizado.cartas, participaciones: actualizado.participaciones })
     .eq('id', alumno.id)
     .select('id, nombre, puntos, cartas, participaciones')
@@ -111,8 +112,8 @@ export async function registrarParticipacion({ claseId, alumno, puntos, carta, e
 }
 
 export async function cerrarClase(claseId) {
-  const { error } = await supabase
-    .from('hechi_clases')
+  const { error } = await db
+    .from('clases')
     .update({ estado: 'cerrada' })
     .eq('id', claseId);
 
