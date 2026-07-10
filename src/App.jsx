@@ -52,12 +52,12 @@ function AuthScreen() {
   return (
     <main className='auth-shell'>
       <section className='auth-card'>
-        <span className='eyebrow'>Juego para clase</span>
+        <span className='eyebrow'>Academia de cartas</span>
         <h1>HECHI GO</h1>
-        <p>Registra participaciones, asigna puntos y descubre cartas HECHI con tu grupo.</p>
+        <p>Convierte cada participacion en puntos de casa y revela cartas encantadas con tu grupo.</p>
         <form onSubmit={(event) => { event.preventDefault(); acceder('login'); }}>
           <input type='email' value={email} onChange={(event) => setEmail(event.target.value)} placeholder='Correo' autoComplete='email' required />
-          <input type='password' value={password} onChange={(event) => setPassword(event.target.value)} placeholder='Contraseña' autoComplete='current-password' required minLength='6' />
+          <input type='password' value={password} onChange={(event) => setPassword(event.target.value)} placeholder='Contrasena' autoComplete='current-password' required minLength='6' />
           <button type='submit' disabled={loading}>Entrar</button>
           <button type='button' className='secondary' onClick={() => acceder('registro')} disabled={loading}>Crear cuenta</button>
         </form>
@@ -89,7 +89,7 @@ function GameApp({ session }) {
         if (!activo) return;
         setEstado({ ...estadoInicial, ...datos, alumnoActivoId: datos.alumnos[0]?.id || '' });
         setModoDatos('supabase');
-        setMensaje('Clase conectada a Supabase.');
+        setMensaje('Camara magica conectada a Supabase.');
       } catch (error) {
         console.error(error);
         const local = cargarLocal() || estadoInicial;
@@ -130,7 +130,7 @@ function GameApp({ session }) {
       aplicarEstado(siguiente);
       guardarLocal({ ...estado, ...siguiente });
       setNombre('');
-      setMensaje(nombreLimpio + ' esta listo para jugar.');
+      setMensaje(nombreLimpio + ' ha entrado al gran salon.');
     } catch (error) {
       console.error(error);
       setMensaje('No pude guardar el alumno. Revisa Supabase e intenta otra vez.');
@@ -141,7 +141,7 @@ function GameApp({ session }) {
 
   const participar = async () => {
     if (!alumnoActivo || guardando) {
-      setMensaje('Primero agrega o selecciona un alumno.');
+      setMensaje('Primero invita o selecciona un aprendiz.');
       return;
     }
 
@@ -165,7 +165,7 @@ function GameApp({ session }) {
       const siguiente = { alumnos, cartaActual: carta, puntosElegidos: puntos };
       aplicarEstado(siguiente);
       guardarLocal({ ...estado, ...siguiente });
-      setMensaje(alumnoActivo.nombre + ' gano ' + puntos + ' punto' + (puntos === 1 ? '' : 's') + (esNueva ? ' y una carta nueva.' : '.'));
+      setMensaje(alumnoActivo.nombre + ' sumo ' + puntos + ' punto' + (puntos === 1 ? '' : 's') + (esNueva ? ' y desperto una carta nueva.' : '.'));
     } catch (error) {
       console.error(error);
       setMensaje('No pude guardar la participacion. Intenta otra vez.');
@@ -187,7 +187,7 @@ function GameApp({ session }) {
         limpiarLocal();
         setEstado(estadoInicial);
       }
-      setMensaje('Clase reiniciada. Agrega al primer alumno.');
+      setMensaje('Clase reiniciada. Invita al primer aprendiz.');
     } catch (error) {
       console.error(error);
       setMensaje('No pude reiniciar la clase. Intenta otra vez.');
@@ -204,9 +204,9 @@ function GameApp({ session }) {
     <main className='game-shell'>
       <header className='hero'>
         <div>
-          <span className='eyebrow'><FaBolt /> Aventura en clase</span>
+          <span className='eyebrow'><FaBolt /> Duelo de saberes</span>
           <h1>HECHI GO</h1>
-          <p>Premia participaciones, descubre cartas y sigue el progreso de tu grupo.</p>
+          <p>Otorga puntos, revela cartas encantadas y mira como sube cada aprendiz en el gran salon.</p>
         </div>
         <div className='hero-actions'>
           <span className={'sync sync-' + modoDatos}><FaCloud /> {modoDatos === 'supabase' ? 'Supabase' : 'Local'}</span>
@@ -217,9 +217,9 @@ function GameApp({ session }) {
 
       <section className='layout'>
         <aside className='panel roster'>
-          <h2>Equipo</h2>
+          <h2>Casa de aprendices</h2>
           <form onSubmit={agregarAlumno} className='student-form'>
-            <input value={nombre} onChange={(event) => setNombre(event.target.value)} placeholder='Nombre del alumno' disabled={guardando} />
+            <input value={nombre} onChange={(event) => setNombre(event.target.value)} placeholder='Nombre del aprendiz' disabled={guardando} />
             <button aria-label='Agregar alumno' disabled={guardando}><FaUserPlus /></button>
           </form>
           <div className='students'>
@@ -230,39 +230,39 @@ function GameApp({ session }) {
                 <b>{alumno.puntos} pts</b>
               </button>
             ))}
-            {!estado.alumnos.length && <p className='empty'>Agrega alumnos para comenzar.</p>}
+            {!estado.alumnos.length && <p className='empty'>Invita aprendices para comenzar.</p>}
           </div>
         </aside>
 
         <section className='stage'>
           <div className='scorebar'>
-            <div><span>Jugador</span><strong>{alumnoActivo?.nombre || 'Sin seleccionar'}</strong></div>
+            <div><span>Aprendiz</span><strong>{alumnoActivo?.nombre || 'Sin elegir'}</strong></div>
             <div><span>Puntos</span><strong>{alumnoActivo?.puntos || 0}</strong></div>
-            <div><span>Cartas</span><strong>{alumnoActivo?.cartas.length || 0}/{TOTAL_CARTAS}</strong></div>
+            <div><span>Reliquias</span><strong>{alumnoActivo?.cartas.length || 0}/{TOTAL_CARTAS}</strong></div>
           </div>
 
           <div className={'card-reveal ' + (estado.cartaActual ? 'revealed' : '')} key={estado.cartaActual || 'back'}>
             {estado.cartaActual
               ? <img src={'/hechi/card-' + estado.cartaActual + '.png'} alt={'Carta HECHI ' + estado.cartaActual} />
-              : <div className='card-back'><img src='/logo.png' alt='' /><strong>HECHI</strong><span>Que carta aparecera?</span></div>}
+              : <div className='card-back'><img src='/logo.png' alt='' /><strong>HECHI</strong><span>Que carta despertara?</span></div>}
           </div>
 
           <div className='award'>
-            <label htmlFor='points'>Cuantos puntos genera?</label>
+            <label htmlFor='points'>Cuantos puntos de casa otorga?</label>
             <div className='point-options'>
               {[1, 2, 3, 5, 10].map((puntos) => (
                 <button type='button' key={puntos} className={estado.puntosElegidos === puntos ? 'active' : ''} onClick={() => aplicarEstado({ puntosElegidos: puntos })}><FaStar /> {puntos}</button>
               ))}
               <input id='points' type='number' min='0' max='100' value={estado.puntosElegidos} onChange={(event) => aplicarEstado({ puntosElegidos: Math.max(0, Number(event.target.value)) })} />
             </div>
-            <button type='button' className='participate' onClick={participar} disabled={!alumnoActivo || guardando}><FaBolt /> Registrar participacion</button>
+            <button type='button' className='participate' onClick={participar} disabled={!alumnoActivo || guardando}><FaBolt /> Lanzar hechizo de participacion</button>
             <p className='message'>{guardando ? 'Guardando...' : mensaje}</p>
           </div>
         </section>
 
         <aside className='panel collection'>
-          <h2><FaTrophy /> Coleccion</h2>
-          <p>{alumnoActivo ? 'Cartas de ' + alumnoActivo.nombre : 'Selecciona un alumno'}</p>
+          <h2><FaTrophy /> Coleccion encantada</h2>
+          <p>{alumnoActivo ? 'Reliquias de ' + alumnoActivo.nombre : 'Selecciona un aprendiz'}</p>
           <div className='mini-grid'>
             {Array.from({ length: TOTAL_CARTAS }, (_, index) => index + 1).map((numero) => alumnoActivo?.cartas.includes(numero)
               ? <img key={numero} src={'/hechi/card-' + numero + '.png'} alt={'Carta ' + numero} />
