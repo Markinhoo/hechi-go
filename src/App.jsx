@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { FaArrowLeft, FaArrowRight, FaHatWizard, FaRotate, FaUserPlus, FaWandMagicSparkles } from 'react-icons/fa6';
+import { FaArrowLeft, FaArrowRight, FaHatWizard, FaRotate, FaUserPlus, FaWandMagicSparkles, FaXmark } from 'react-icons/fa6';
 
 const TOTAL_CARTAS = 28;
 const CLASS_KEY = 'hechi-pocket-class-v2';
@@ -176,10 +176,34 @@ function App() {
   const [jugador, setJugador] = useState(cargarJugador);
   const [mensaje, setMensaje] = useState('Gira el carrusel y elige una carta para abrir.');
   const [arrastre, setArrastre] = useState({ activo: false, inicio: 0, delta: 0 });
+  const [cartaAbierta, setCartaAbierta] = useState(null);
+  const [destellos, setDestellos] = useState([]);
 
   const jugadorActual = jugador ? estado?.alumnos.find((alumno) => alumno.id === jugador.id) : null;
   const casaJugador = obtenerCasa(jugadorActual?.casaId);
   const sobres = Array.from({ length: 7 }, (_, index) => index);
+
+  const crearDestello = (event, intenso = false) => {
+    const id = crypto.randomUUID();
+    const x = event.clientX;
+    const y = event.clientY;
+    if (!x && !y) return;
+    setDestellos((actual) => [...actual.slice(-18), { id, x, y, intenso }]);
+    window.setTimeout(() => {
+      setDestellos((actual) => actual.filter((destello) => destello.id !== id));
+    }, intenso ? 900 : 620);
+  };
+
+  const envolver = (contenido) => (
+    <div className='magic-surface' onPointerMove={crearDestello} onPointerDown={(event) => crearDestello(event, true)}>
+      {contenido}
+      <div className='spark-layer' aria-hidden='true'>
+        {destellos.map((destello) => (
+          <span key={destello.id} className={destello.intenso ? 'spark burst' : 'spark'} style={{ left: destello.x, top: destello.y }} />
+        ))}
+      </div>
+    </div>
+  );
 
   const actualizar = (siguiente) => {
     setEstado(siguiente);
@@ -241,6 +265,7 @@ function App() {
     const puntajes = { ...estado.puntajes, [jugadorActual.casaId]: estado.puntajes[jugadorActual.casaId] + efecto.puntos };
     const siguiente = { ...estado, alumnos, puntajes, ultimaCarta: carta, historial: [carta, ...estado.historial].slice(0, 12) };
     actualizar(siguiente);
+    setCartaAbierta(carta);
     setMensaje(casaJugador.nombre + ' gana ' + efecto.puntos + ' puntos. ' + efecto.descripcion);
   };
 
@@ -251,12 +276,12 @@ function App() {
 
   const moverArrastre = (event) => {
     if (!arrastre.activo) return;
-    setArrastre((actual) => ({ ...actual, delta: Math.max(-120, Math.min(120, event.clientX - actual.inicio)) }));
+    setArrastre((actual) => ({ ...actual, delta: Math.max(-140, Math.min(140, event.clientX - actual.inicio)) }));
   };
 
   const cerrarArrastre = () => {
     if (!arrastre.activo) return;
-    if (Math.abs(arrastre.delta) > 42) moverSobre(arrastre.delta < 0 ? 1 : -1);
+    if (Math.abs(arrastre.delta) > 38) moverSobre(arrastre.delta < 0 ? 1 : -1);
     setArrastre({ activo: false, inicio: 0, delta: 0 });
   };
 
@@ -273,10 +298,10 @@ function App() {
     setJugador(null);
   };
 
-  if (!estado) return <AdminSetup onCrear={crearClase} />;
-  if (!jugadorActual) return <NameLogin estado={estado} onEntrar={entrar} />;
+  if (!estado) return envolver(<AdminSetup onCrear={crearClase} />);
+  if (!jugadorActual) return envolver(<NameLogin estado={estado} onEntrar={entrar} />);
 
-  return (
+  return envolver(
     <main className='game-shell'>
       <header className='hero'>
         <div>
@@ -352,17 +377,6 @@ function App() {
 
           <button type='button' className='open-pack' onClick={abrirCarta}>Abrir carta</button>
           <p className='message'>{mensaje}</p>
-
-          {estado.ultimaCarta && (
-            <article className='pull-result' style={{ '--house': obtenerCasa(estado.ultimaCarta.casaId).color, '--metal': obtenerCasa(estado.ultimaCarta.casaId).metal }}>
-              <img src={'/hechi/card-' + estado.ultimaCarta.numero + '.png'} alt={'Carta ' + estado.ultimaCarta.numero} />
-              <div>
-                <span>{estado.ultimaCarta.titulo}</span>
-                <h2>+{estado.ultimaCarta.puntos} puntos</h2>
-                <p>{estado.ultimaCarta.descripcion}</p>
-              </div>
-            </article>
-          )}
         </section>
 
         <aside className='panel history'>
@@ -379,6 +393,23 @@ function App() {
           })}
         </aside>
       </section>
+
+      {cartaAbierta && (
+        <section className='card-modal' role='dialog' aria-modal='true'>
+          <button type='button' className='modal-close' onClick={() => setCartaAbierta(null)} aria-label='Cerrar carta'><FaXmark /></button>
+          <div className='modal-card-wrap'>
+            <div className='modal-card-flip'>
+              <div className='modal-card-face modal-card-back'><img src='/hechi/card-back.png' alt='' /></div>
+              <div className='modal-card-face modal-card-front'><img src={'/hechi/card-' + cartaAbierta.numero + '.png'} alt={'Carta ' + cartaAbierta.numero} /></div>
+            </div>
+          </div>
+          <article className='modal-effect' style={{ '--house': obtenerCasa(cartaAbierta.casaId).color, '--metal': obtenerCasa(cartaAbierta.casaId).metal }}>
+            <span>{cartaAbierta.titulo}</span>
+            <h2>+{cartaAbierta.puntos} puntos</h2>
+            <p>{cartaAbierta.descripcion}</p>
+          </article>
+        </section>
+      )}
     </main>
   );
 }
