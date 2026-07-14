@@ -1,27 +1,42 @@
 import { useMemo, useState } from 'react';
 import { FaArrowLeft, FaArrowRight, FaHatWizard, FaRotate, FaUserPlus, FaWandMagicSparkles } from 'react-icons/fa6';
-import { TOTAL_CARTAS } from './services/hechiGame';
 
-const CLASS_KEY = 'hechi-pocket-class-v1';
-const PLAYER_KEY = 'hechi-pocket-player-v1';
+const TOTAL_CARTAS = 28;
+const CLASS_KEY = 'hechi-pocket-class-v2';
+const PLAYER_KEY = 'hechi-pocket-player-v2';
 
 const casas = [
-  { id: 'gryffindor', nombre: 'Gryffindor', color: '#8f1628', metal: '#f0c75e' },
-  { id: 'slytherin', nombre: 'Slytherin', color: '#0d5c45', metal: '#c8d2d8' },
-  { id: 'ravenclaw', nombre: 'Ravenclaw', color: '#174b7a', metal: '#c99445' },
-  { id: 'hufflepuff', nombre: 'Hufflepuff', color: '#e0ad25', metal: '#1f1a18' }
+  { id: 'gryffindor', nombre: 'Gryffindor', color: '#8f1628', metal: '#f0c75e', escudo: '/houses/gryffindor.png' },
+  { id: 'slytherin', nombre: 'Slytherin', color: '#0d5c45', metal: '#c8d2d8', escudo: '/houses/slytherin.png' },
+  { id: 'ravenclaw', nombre: 'Ravenclaw', color: '#174b7a', metal: '#c99445', escudo: '/houses/ravenclaw.png' },
+  { id: 'hufflepuff', nombre: 'Hufflepuff', color: '#e0ad25', metal: '#1f1a18', escudo: '/houses/hufflepuff.png' }
 ];
+
+const efectosCartas = Array.from({ length: TOTAL_CARTAS }, (_, index) => {
+  const numero = index + 1;
+  if ([4, 12, 21, 28].includes(numero)) return { puntos: 40, titulo: 'Hechizo supremo', descripcion: 'La casa recibe una gran recompensa por una participacion brillante.' };
+  if ([7, 14, 23].includes(numero)) return { puntos: 30, titulo: 'Reliquia poderosa', descripcion: 'La casa sube con fuerza en el marcador.' };
+  if ([5, 10, 15, 20, 25].includes(numero)) return { puntos: 20, titulo: 'Encantamiento mayor', descripcion: 'La participacion suma una ventaja importante.' };
+  if (numero % 2 === 0) return { puntos: 15, titulo: 'Carta especial', descripcion: 'Buen aporte para la casa.' };
+  return { puntos: 10, titulo: 'Carta comun', descripcion: 'Suma base por participacion autorizada.' };
+});
 
 function randomEntero(maximo) {
   const valores = new Uint32Array(1);
   crypto.getRandomValues(valores);
   return valores[0] % maximo;
 }
+
+function calcularObjetivos(total) {
+  const base = Math.floor(total / casas.length);
+  const sobrantes = total % casas.length;
+  return casas.reduce((acc, casa, index) => ({ ...acc, [casa.id]: base + (index < sobrantes ? 1 : 0) }), {});
+}
+
 function crearEstadoInicial(total) {
-  const objetivos = calcularObjetivos(total);
   return {
     total,
-    objetivos,
+    objetivos: calcularObjetivos(total),
     alumnos: [],
     puntajes: casas.reduce((acc, casa) => ({ ...acc, [casa.id]: 0 }), {}),
     sobreActivo: 0,
@@ -30,9 +45,23 @@ function crearEstadoInicial(total) {
   };
 }
 
+function normalizarEstado(estado) {
+  if (!estado) return null;
+  const total = estado.total || Math.max(4, estado.alumnos?.length || 4);
+  return {
+    ...crearEstadoInicial(total),
+    ...estado,
+    total,
+    objetivos: estado.objetivos || calcularObjetivos(total),
+    alumnos: (estado.alumnos || []).map((alumno) => ({ oportunidades: 0, cartas: [], puntos: 0, ...alumno })),
+    puntajes: { ...casas.reduce((acc, casa) => ({ ...acc, [casa.id]: 0 }), {}), ...(estado.puntajes || {}) },
+    historial: estado.historial || []
+  };
+}
+
 function cargarEstado() {
   try {
-    return JSON.parse(localStorage.getItem(CLASS_KEY) || 'null');
+    return normalizarEstado(JSON.parse(localStorage.getItem(CLASS_KEY) || 'null'));
   } catch {
     return null;
   }
@@ -54,15 +83,6 @@ function guardarJugador(jugador) {
   localStorage.setItem(PLAYER_KEY, JSON.stringify(jugador));
 }
 
-function calcularObjetivos(total) {
-  const base = Math.floor(total / casas.length);
-  const sobrantes = total % casas.length;
-  return casas.reduce((acc, casa, index) => ({
-    ...acc,
-    [casa.id]: base + (index < sobrantes ? 1 : 0)
-  }), {});
-}
-
 function contarPorCasa(alumnos, casaId) {
   return alumnos.filter((alumno) => alumno.casaId === casaId).length;
 }
@@ -77,7 +97,7 @@ function elegirCasaDisponible(estado) {
     .filter((item) => item.actual < item.objetivo)
     .sort((a, b) => a.carga - b.carga || a.actual - b.actual);
 
-  if (opciones.length) return opciones[0].casa;
+  if (opciones.length) return opciones[randomEntero(Math.min(2, opciones.length))].casa;
   return casas[randomEntero(casas.length)];
 }
 
@@ -85,17 +105,12 @@ function obtenerCasa(casaId) {
   return casas.find((casa) => casa.id === casaId) || casas[0];
 }
 
-function valorCarta(numero) {
-  if (numero % 11 === 0) return { puntos: 30, titulo: 'Reliquia legendaria' };
-  if (numero % 7 === 0) return { puntos: 20, titulo: 'Hechizo mayor' };
-  if (numero % 5 === 0) return { puntos: 15, titulo: 'Encantamiento brillante' };
-  if (numero % 3 === 0) return { puntos: 10, titulo: 'Carta rara' };
-  return { puntos: 5, titulo: 'Carta comun' };
+function efectoCarta(numero) {
+  return efectosCartas[numero - 1] || efectosCartas[0];
 }
 
 function AdminSetup({ onCrear }) {
   const [total, setTotal] = useState(30);
-
   const objetivos = useMemo(() => calcularObjetivos(Math.max(4, Number(total) || 4)), [total]);
 
   return (
@@ -109,6 +124,7 @@ function AdminSetup({ onCrear }) {
         <div className='house-preview'>
           {casas.map((casa) => (
             <span key={casa.id} style={{ '--house': casa.color, '--metal': casa.metal }}>
+              <img src={casa.escudo} alt='' />
               <b>{casa.nombre}</b>
               <small>{objetivos[casa.id]} lugares</small>
             </span>
@@ -136,7 +152,7 @@ function NameLogin({ estado, onEntrar }) {
       <section className='auth-card login-card'>
         <span className='eyebrow'><FaUserPlus /> Registro de aprendiz</span>
         <h1>HECHI GO</h1>
-        <p>Escribe tu nombre y el sombrero te asignara una casa disponible al azar balanceado.</p>
+        <p>Escribe tu nombre y el sombrero te asignara una casa disponible de forma balanceada.</p>
         <form onSubmit={entrar}>
           <input value={nombre} onChange={(event) => setNombre(event.target.value)} placeholder='Nombre del aprendiz' autoFocus />
           <button type='submit' disabled={cupoLleno}>{cupoLleno ? 'Clase completa' : 'Entrar al gran salon'}</button>
@@ -144,6 +160,7 @@ function NameLogin({ estado, onEntrar }) {
         <div className='house-preview compact'>
           {casas.map((casa) => (
             <span key={casa.id} style={{ '--house': casa.color, '--metal': casa.metal }}>
+              <img src={casa.escudo} alt='' />
               <b>{casa.nombre}</b>
               <small>{contarPorCasa(estado.alumnos, casa.id)}/{estado.objetivos[casa.id]}</small>
             </span>
@@ -157,7 +174,8 @@ function NameLogin({ estado, onEntrar }) {
 function App() {
   const [estado, setEstado] = useState(cargarEstado);
   const [jugador, setJugador] = useState(cargarJugador);
-  const [mensaje, setMensaje] = useState('Gira el carrusel y elige un sobre para abrir.');
+  const [mensaje, setMensaje] = useState('Gira el carrusel y elige una carta para abrir.');
+  const [arrastre, setArrastre] = useState({ activo: false, inicio: 0, delta: 0 });
 
   const jugadorActual = jugador ? estado?.alumnos.find((alumno) => alumno.id === jugador.id) : null;
   const casaJugador = obtenerCasa(jugadorActual?.casaId);
@@ -177,12 +195,12 @@ function App() {
 
   const entrar = (nombre) => {
     const casa = elegirCasaDisponible(estado);
-    const nuevo = { id: crypto.randomUUID(), nombre, casaId: casa.id, cartas: [], puntos: 0 };
+    const nuevo = { id: crypto.randomUUID(), nombre, casaId: casa.id, cartas: [], puntos: 0, oportunidades: 0 };
     const siguiente = { ...estado, alumnos: [...estado.alumnos, nuevo] };
     actualizar(siguiente);
     guardarJugador({ id: nuevo.id });
     setJugador({ id: nuevo.id });
-    setMensaje(nombre + ' fue asignado a ' + casa.nombre + '.');
+    setMensaje(nombre + ' fue asignado a ' + casa.nombre + '. Espera autorizacion del maestro para abrir carta.');
   };
 
   const moverSobre = (direccion) => {
@@ -190,19 +208,56 @@ function App() {
     actualizar({ ...estado, sobreActivo: siguiente, ultimaCarta: null });
   };
 
-  const abrirSobre = () => {
+  const autorizarParticipacion = (alumnoId) => {
+    const alumnos = estado.alumnos.map((alumno) => alumno.id === alumnoId
+      ? { ...alumno, oportunidades: (alumno.oportunidades || 0) + 1 }
+      : alumno);
+    const autorizado = alumnos.find((alumno) => alumno.id === alumnoId);
+    actualizar({ ...estado, alumnos });
+    setMensaje('Participacion autorizada para ' + autorizado.nombre + '. Ahora puede abrir una carta.');
+  };
+
+  const abrirCarta = () => {
     if (!jugadorActual) return;
+    if ((jugadorActual.oportunidades || 0) <= 0) {
+      setMensaje('Necesitas que el maestro autorice tu participacion antes de abrir carta.');
+      return;
+    }
 
     const numero = randomEntero(TOTAL_CARTAS) + 1;
-    const efecto = valorCarta(numero);
-    const carta = { numero, puntos: efecto.puntos, titulo: efecto.titulo, casaId: jugadorActual.casaId, alumnoId: jugadorActual.id, alumno: jugadorActual.nombre };
+    const efecto = efectoCarta(numero);
+    const carta = {
+      numero,
+      puntos: efecto.puntos,
+      titulo: efecto.titulo,
+      descripcion: efecto.descripcion,
+      casaId: jugadorActual.casaId,
+      alumnoId: jugadorActual.id,
+      alumno: jugadorActual.nombre
+    };
     const alumnos = estado.alumnos.map((alumno) => alumno.id === jugadorActual.id
-      ? { ...alumno, puntos: alumno.puntos + efecto.puntos, cartas: [...alumno.cartas, numero] }
+      ? { ...alumno, oportunidades: Math.max(0, (alumno.oportunidades || 0) - 1), puntos: alumno.puntos + efecto.puntos, cartas: [...alumno.cartas, numero] }
       : alumno);
     const puntajes = { ...estado.puntajes, [jugadorActual.casaId]: estado.puntajes[jugadorActual.casaId] + efecto.puntos };
     const siguiente = { ...estado, alumnos, puntajes, ultimaCarta: carta, historial: [carta, ...estado.historial].slice(0, 12) };
     actualizar(siguiente);
-    setMensaje(casaJugador.nombre + ' gana ' + efecto.puntos + ' puntos por ' + efecto.titulo + '.');
+    setMensaje(casaJugador.nombre + ' gana ' + efecto.puntos + ' puntos. ' + efecto.descripcion);
+  };
+
+  const iniciarArrastre = (event) => {
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    setArrastre({ activo: true, inicio: event.clientX, delta: 0 });
+  };
+
+  const moverArrastre = (event) => {
+    if (!arrastre.activo) return;
+    setArrastre((actual) => ({ ...actual, delta: Math.max(-120, Math.min(120, event.clientX - actual.inicio)) }));
+  };
+
+  const cerrarArrastre = () => {
+    if (!arrastre.activo) return;
+    if (Math.abs(arrastre.delta) > 42) moverSobre(arrastre.delta < 0 ? 1 : -1);
+    setArrastre({ activo: false, inicio: 0, delta: 0 });
   };
 
   const salir = () => {
@@ -225,12 +280,12 @@ function App() {
     <main className='game-shell'>
       <header className='hero'>
         <div>
-          <span className='eyebrow'><FaWandMagicSparkles /> Sobre encantado</span>
+          <span className='eyebrow'><FaWandMagicSparkles /> Carta encantada</span>
           <h1>HECHI GO</h1>
-          <p>Gira el carrusel, abre un sobre y suma puntos para tu casa.</p>
+          <p>El maestro autoriza participaciones; cada oportunidad permite abrir una carta y sumar puntos para la casa.</p>
         </div>
         <div className='hero-actions'>
-          <span className='player-badge' style={{ '--house': casaJugador.color, '--metal': casaJugador.metal }}>{jugadorActual.nombre} Ã‚Â· {casaJugador.nombre}</span>
+          <span className='player-badge' style={{ '--house': casaJugador.color, '--metal': casaJugador.metal }}>{jugadorActual.nombre} - {casaJugador.nombre} - {jugadorActual.oportunidades || 0} oportunidades</span>
           <button type='button' className='ghost' onClick={salir}>Cambiar jugador</button>
           <button type='button' className='ghost' onClick={reiniciar}><FaRotate /> Reiniciar clase</button>
         </div>
@@ -239,6 +294,7 @@ function App() {
       <section className='house-board'>
         {casas.map((casa) => (
           <article key={casa.id} className='house-card' style={{ '--house': casa.color, '--metal': casa.metal }}>
+            <img className='house-crest' src={casa.escudo} alt='' />
             <span>{contarPorCasa(estado.alumnos, casa.id)}/{estado.objetivos[casa.id]} aprendices</span>
             <h2>{casa.nombre}</h2>
             <strong>{estado.puntajes[casa.id]} pts</strong>
@@ -255,8 +311,9 @@ function App() {
               return (
                 <div className='student-row' key={alumno.id} style={{ '--house': casa.color, '--metal': casa.metal }}>
                   <span className='rank'>{index + 1}</span>
-                  <span><strong>{alumno.nombre}</strong><small>{casa.nombre} Ã‚Â· {alumno.cartas.length} cartas</small></span>
+                  <span><strong>{alumno.nombre}</strong><small>{casa.nombre} - {alumno.cartas.length} cartas - {alumno.oportunidades || 0} oportunidades</small></span>
                   <b>{alumno.puntos} pts</b>
+                  <button type='button' className='authorize' onClick={() => autorizarParticipacion(alumno.id)}>Autorizar</button>
                 </div>
               );
             })}
@@ -265,8 +322,15 @@ function App() {
 
         <section className='pack-stage'>
           <div className='carousel-shell'>
-            <button className='carousel-nav' type='button' onClick={() => moverSobre(-1)} aria-label='Sobre anterior'><FaArrowLeft /></button>
-            <div className='pack-carousel'>
+            <button className='carousel-nav' type='button' onClick={() => moverSobre(-1)} aria-label='Carta anterior'><FaArrowLeft /></button>
+            <div
+              className={'pack-carousel ' + (arrastre.activo ? 'dragging' : '')}
+              onPointerDown={iniciarArrastre}
+              onPointerMove={moverArrastre}
+              onPointerUp={cerrarArrastre}
+              onPointerCancel={cerrarArrastre}
+              onPointerLeave={cerrarArrastre}
+            >
               {sobres.map((sobre, index) => {
                 const offset = index - estado.sobreActivo;
                 const normal = offset > 3 ? offset - sobres.length : offset < -3 ? offset + sobres.length : offset;
@@ -275,18 +339,18 @@ function App() {
                     type='button'
                     key={sobre}
                     className={'pack-card ' + (normal === 0 ? 'active' : '')}
-                    style={{ '--offset': normal, '--distance': Math.abs(normal) }}
-                    onClick={() => normal === 0 ? abrirSobre() : actualizar({ ...estado, sobreActivo: index, ultimaCarta: null })}
+                    style={{ '--offset': normal, '--distance': Math.abs(normal), '--drag': arrastre.delta + 'px' }}
+                    onClick={() => normal === 0 ? abrirCarta() : actualizar({ ...estado, sobreActivo: index, ultimaCarta: null })}
                   >
-                    <img src='/hechi/card-back.png' alt='Reverso del sobre HECHI' />
+                    <img src='/hechi/card-back.png' alt='Reverso de carta HECHI' draggable='false' />
                   </button>
                 );
               })}
             </div>
-            <button className='carousel-nav' type='button' onClick={() => moverSobre(1)} aria-label='Sobre siguiente'><FaArrowRight /></button>
+            <button className='carousel-nav' type='button' onClick={() => moverSobre(1)} aria-label='Carta siguiente'><FaArrowRight /></button>
           </div>
 
-          <button type='button' className='open-pack' onClick={abrirSobre}>Abrir sobre seleccionado</button>
+          <button type='button' className='open-pack' onClick={abrirCarta}>Abrir carta</button>
           <p className='message'>{mensaje}</p>
 
           {estado.ultimaCarta && (
@@ -295,7 +359,7 @@ function App() {
               <div>
                 <span>{estado.ultimaCarta.titulo}</span>
                 <h2>+{estado.ultimaCarta.puntos} puntos</h2>
-                <p>{obtenerCasa(estado.ultimaCarta.casaId).nombre} recibe el puntaje.</p>
+                <p>{estado.ultimaCarta.descripcion}</p>
               </div>
             </article>
           )}
@@ -303,7 +367,7 @@ function App() {
 
         <aside className='panel history'>
           <h2>Ultimos hechizos</h2>
-          {estado.historial.length === 0 && <p className='empty'>Aun no se abre ningun sobre.</p>}
+          {estado.historial.length === 0 && <p className='empty'>Aun no se abre ninguna carta.</p>}
           {estado.historial.map((item, index) => {
             const casa = obtenerCasa(item.casaId);
             return (
