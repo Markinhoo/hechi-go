@@ -28,3 +28,8 @@ input{width:100%;border:1px solid #9b7437;border-radius:7px;padding:12px 13px;co
 .login-galaxy-bg::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at 50% 42%, rgba(255, 214, 109, .14), transparent 30%), linear-gradient(180deg, rgba(5, 6, 17, .08), rgba(5, 6, 17, .48)); }
 .galaxy-auth-shell .unified-login-card { background: linear-gradient(145deg, rgba(255,244,211,.9), rgba(228,194,126,.84)); box-shadow: 0 28px 90px rgba(0,0,0,.52), 0 0 80px rgba(126, 93, 255, .18), inset 0 0 0 1px rgba(255,255,255,.38); }
 @media(prefers-reduced-motion:reduce){ .login-galaxy-bg { opacity: .82; } }
+
+/* Keep special animated backgrounds only on the login screen */
+.auth-shell:not(.galaxy-auth-shell) { background: radial-gradient(circle at 50% 110%, rgba(255,214,109,.08), transparent 34%), linear-gradient(145deg, #120b13 0%, #1b1420 48%, #0d1118 100%); }
+.auth-shell:not(.galaxy-auth-shell)::before,
+.auth-shell:not(.galaxy-auth-shell)::after { display: none; }
