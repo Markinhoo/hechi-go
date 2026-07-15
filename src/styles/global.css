@@ -16,3 +16,74 @@
 @keyframes sparkFade{0%{opacity:.95;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-110%) scale(.25)}}@keyframes sparkBurst{0%{opacity:1;transform:translate(-50%,-50%) scale(.8)}100%{opacity:0;transform:translate(-50%,-50%) scale(2.8)}}@keyframes cardRevealFlip{0%{transform:translateY(84px) scale(.58) rotateY(0deg);filter:brightness(.8)}48%{transform:translateY(0) scale(1.08) rotateY(92deg);filter:brightness(1.35)}100%{transform:translateY(0) scale(1) rotateY(180deg);filter:brightness(1)}}@keyframes modalIn{from{opacity:0}to{opacity:1}}@keyframes effectRise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}@keyframes magicSheen{0%,100%{filter:brightness(1)}50%{filter:brightness(1.18) saturate(1.1)}}
 @media(max-width:1100px){.game-shell::before{width:58vw;left:-22vw}.game-shell::after{width:44vw;right:-20vw}.house-card{padding-right:180px}.house-crest{width:230px}}
 @media(max-width:760px){.game-shell::before{left:-44vw;width:90vw;opacity:.28}.game-shell::after{right:-44vw;width:86vw;opacity:.22}.house-card{padding-right:165px;min-height:132px}.house-crest{right:-44px;width:220px}.modal-card-wrap{width:min(82vw,310px)}.modal-close{right:14px;top:14px}.spark{display:none}}
+/* Token classrooms + section-specific magical scenery */
+html, body, #root { height: 100%; overflow: hidden; }
+body { overscroll-behavior: none; }
+.magic-surface { height: 100vh; overflow: hidden; }
+.app-fixed { height: 100vh; min-height: 0; overflow: hidden; display: grid; grid-template-rows: auto auto minmax(0, 1fr); }
+.compact-hero { padding: 16px 20px; }
+.compact-hero h1 { font-size: clamp(34px, 5vw, 56px); }
+.compact-hero p { margin: 5px 0 0; }
+.game-shell::before, .game-shell::after { display: none; }
+.no-scroll-grid { min-height: 0; height: 100%; margin-top: 12px; }
+.house-board { margin-top: 12px; }
+.house-card { min-height: 105px; padding: 12px 190px 12px 14px; }
+.house-card h2 { margin: 6px 0 0; font-size: 26px; }
+.house-card strong { font-size: 34px; }
+.house-crest { right: -48px; width: 270px; max-height: 235px; opacity: .38; }
+.hall-panel, .parchment-panel { isolation: isolate; overflow: hidden; }
+.hall-panel { background: linear-gradient(90deg, rgba(255, 244, 212, .88), rgba(232, 194, 122, .72)), url('/backgrounds/gran-salon-panel.png') center/cover no-repeat; }
+.parchment-panel { background: linear-gradient(90deg, rgba(255, 248, 225, .9), rgba(232, 194, 122, .66)), url('/backgrounds/hechizos-panel.png') center/cover no-repeat; }
+.students, .history { min-height: 0; max-height: none; overflow: auto; scrollbar-width: thin; }
+.student-row { grid-template-columns: 30px minmax(0, 1fr) auto auto auto; background: rgba(255, 250, 224, .84); backdrop-filter: blur(2px); }
+.authorize.password { background: linear-gradient(100deg, #5b3415, #1b101d); }
+.pack-stage { min-height: 0; align-content: center; overflow: hidden; padding: 16px; }
+.carousel-shell { grid-template-columns: 1fr; touch-action: none; }
+.carousel-nav { display: none; }
+.pack-carousel { height: min(34vh, 330px); min-height: 230px; touch-action: none; }
+.pack-card { width: clamp(128px, 17vw, 190px); transform: translateX(calc(-50% + (var(--offset) * clamp(58px, 8vw, 92px)) + var(--drag, 0px))) translateY(calc(var(--distance) * 10px)) rotateY(calc(var(--offset) * -17deg)) scale(calc(1 - (var(--distance) * .075))); transition: transform .28s cubic-bezier(.2,.8,.18,1), opacity .28s ease, filter .28s ease; }
+.pack-carousel.dragging .pack-card { transition: none; }
+.open-pack { padding: 12px; }
+.message { margin: 0; }
+.card-modal { touch-action: none; }
+.modal-card-front { transform: rotateY(180deg) translateZ(1px); }
+.modal-card-back { transform: rotateY(0deg) translateZ(1px); }
+.mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
+.secondary { color: #ffeeca; background: linear-gradient(100deg, #27465e, #1b101d); border: 1px solid rgba(255,214,109,.34); }
+.teacher-login { margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(95,57,20,.22); }
+.form-message { margin: 14px 0 0; color: #5b2418; font-weight: 900; }
+@media(max-width:1100px){
+  .app-fixed { overflow: hidden; }
+  .pocket-layout { grid-template-columns: 1fr; grid-template-rows: minmax(0, .9fr) minmax(0, 1.1fr) minmax(0, .8fr); gap: 10px; }
+  .roster { order: 2; }
+  .pack-stage { order: 1; }
+  .history { order: 3; }
+  .panel { padding: 14px; }
+  .students, .history { overflow: auto; }
+}
+@media(max-width:760px){
+  .game-shell { padding: 8px; grid-template-rows: auto auto minmax(0, 1fr); }
+  .compact-hero { padding: 12px; gap: 8px; }
+  .compact-hero h1 { font-size: 34px; }
+  .hero-actions { gap: 6px; }
+  .ghost, .player-badge { padding: 8px 9px; font-size: 12px; }
+  .house-board { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  .house-card { min-height: 86px; padding: 9px 98px 9px 9px; }
+  .house-card h2 { font-size: 18px; }
+  .house-card strong { font-size: 24px; }
+  .house-card span { font-size: 10px; }
+  .house-crest { right: -34px; width: 150px; max-height: 140px; opacity: .42; }
+  .pocket-layout { margin-top: 8px; grid-template-rows: minmax(0, 1.05fr) minmax(0, .95fr) minmax(0, .78fr); }
+  .panel h2 { font-size: 21px; margin-bottom: 8px; }
+  .student-row { grid-template-columns: 28px minmax(0, 1fr) auto; gap: 6px; padding: 8px; }
+  .student-row .authorize { grid-column: span 1; padding: 7px 8px; }
+  .student-row .password { grid-column: 2 / 4; }
+  .pack-carousel { height: 236px; min-height: 210px; }
+  .pack-card { width: 132px; top: 18px; }
+  .open-pack { width: 100%; }
+  .mode-grid { grid-template-columns: 1fr; }
+}
+.panel { min-height: 0; }
+.roster { min-height: 0; display: flex; flex-direction: column; }
+.roster .students { flex: 1; }
+.parchment-panel { min-height: 0; overflow: auto; }

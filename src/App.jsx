@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
-import { FaArrowLeft, FaArrowRight, FaHatWizard, FaRotate, FaUserPlus, FaWandMagicSparkles, FaXmark } from 'react-icons/fa6';
+import { FaHatWizard, FaUserPlus, FaWandMagicSparkles, FaXmark } from 'react-icons/fa6';
+import { supabase } from './lib/supabaseClient';
 
 const TOTAL_CARTAS = 28;
-const CLASS_KEY = 'hechi-pocket-class-v2';
-const PLAYER_KEY = 'hechi-pocket-player-v2';
+const PLAYER_KEY = 'hechi-pocket-player-v3';
+const TEACHER_KEY = 'hechi-pocket-teacher-v3';
+const db = supabase.schema('hechi');
 
 const casas = [
   { id: 'gryffindor', nombre: 'Gryffindor', color: '#8f1628', metal: '#f0c75e', escudo: '/houses/gryffindor.png' },
@@ -27,78 +29,15 @@ function randomEntero(maximo) {
   return valores[0] % maximo;
 }
 
+function generarToken() {
+  const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({ length: 6 }, () => abc[randomEntero(abc.length)]).join('');
+}
+
 function calcularObjetivos(total) {
   const base = Math.floor(total / casas.length);
   const sobrantes = total % casas.length;
   return casas.reduce((acc, casa, index) => ({ ...acc, [casa.id]: base + (index < sobrantes ? 1 : 0) }), {});
-}
-
-function crearEstadoInicial(total) {
-  return {
-    total,
-    objetivos: calcularObjetivos(total),
-    alumnos: [],
-    puntajes: casas.reduce((acc, casa) => ({ ...acc, [casa.id]: 0 }), {}),
-    sobreActivo: 0,
-    ultimaCarta: null,
-    historial: []
-  };
-}
-
-function normalizarEstado(estado) {
-  if (!estado) return null;
-  const total = estado.total || Math.max(4, estado.alumnos?.length || 4);
-  return {
-    ...crearEstadoInicial(total),
-    ...estado,
-    total,
-    objetivos: estado.objetivos || calcularObjetivos(total),
-    alumnos: (estado.alumnos || []).map((alumno) => ({ oportunidades: 0, cartas: [], puntos: 0, ...alumno })),
-    puntajes: { ...casas.reduce((acc, casa) => ({ ...acc, [casa.id]: 0 }), {}), ...(estado.puntajes || {}) },
-    historial: estado.historial || []
-  };
-}
-
-function cargarEstado() {
-  try {
-    return normalizarEstado(JSON.parse(localStorage.getItem(CLASS_KEY) || 'null'));
-  } catch {
-    return null;
-  }
-}
-
-function guardarEstado(estado) {
-  localStorage.setItem(CLASS_KEY, JSON.stringify(estado));
-}
-
-function cargarJugador() {
-  try {
-    return JSON.parse(localStorage.getItem(PLAYER_KEY) || 'null');
-  } catch {
-    return null;
-  }
-}
-
-function guardarJugador(jugador) {
-  localStorage.setItem(PLAYER_KEY, JSON.stringify(jugador));
-}
-
-function contarPorCasa(alumnos, casaId) {
-  return alumnos.filter((alumno) => alumno.casaId === casaId).length;
-}
-
-function elegirCasaDisponible(estado) {
-  const opciones = casas
-    .map((casa) => {
-      const actual = contarPorCasa(estado.alumnos, casa.id);
-      const objetivo = estado.objetivos[casa.id] || 1;
-      return { casa, actual, objetivo, carga: actual / objetivo };
-    })
-    .filter((item) => item.actual < item.objetivo)
-    .sort((a, b) => a.carga - b.carga || a.actual - b.actual);
-
-  if (opciones.length) return opciones[randomEntero(Math.min(2, opciones.length))].casa;
-  return casas[randomEntero(casas.length)];
 }
 
 function obtenerCasa(casaId) {
@@ -109,210 +48,216 @@ function efectoCarta(numero) {
   return efectosCartas[numero - 1] || efectosCartas[0];
 }
 
-function AdminSetup({ onCrear }) {
-  const [total, setTotal] = useState(30);
-  const objetivos = useMemo(() => calcularObjetivos(Math.max(4, Number(total) || 4)), [total]);
+function cargarLocal(key) {
+  try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch { return null; }
+}
 
+function guardarLocal(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+function Inicio({ onModo }) {
   return (
     <main className='auth-shell'>
       <section className='auth-card setup-card'>
-        <span className='eyebrow'><FaHatWizard /> Ceremonia de seleccion</span>
+        <span className='eyebrow'><FaHatWizard /> Acceso HECHI</span>
         <h1>HECHI GO</h1>
-        <p>El administrador define cuantos aprendices hay en la clase. El juego reparte las casas de la forma mas pareja posible.</p>
-        <label className='field-label' htmlFor='class-size'>Total de alumnos</label>
-        <input id='class-size' type='number' min='4' max='120' value={total} onChange={(event) => setTotal(event.target.value)} />
-        <div className='house-preview'>
-          {casas.map((casa) => (
-            <span key={casa.id} style={{ '--house': casa.color, '--metal': casa.metal }}>
-              <img src={casa.escudo} alt='' />
-              <b>{casa.nombre}</b>
-              <small>{objetivos[casa.id]} lugares</small>
-            </span>
-          ))}
+        <p>El maestro crea una clase y comparte el token. Los alumnos entran con token, nombre y contrasena.</p>
+        <div className='mode-grid'>
+          <button type='button' onClick={() => onModo('maestro')}>Soy maestro</button>
+          <button type='button' className='secondary' onClick={() => onModo('alumno')}>Soy alumno</button>
         </div>
-        <button type='button' onClick={() => onCrear(Math.max(4, Number(total) || 4))}>Iniciar clase magica</button>
       </section>
     </main>
   );
 }
 
-function NameLogin({ estado, onEntrar }) {
-  const [nombre, setNombre] = useState('');
-  const cupoLleno = estado.alumnos.length >= estado.total;
+function MaestroAcceso({ onEntrar, mensaje, setMensaje }) {
+  const [token, setToken] = useState(cargarLocal(TEACHER_KEY)?.token || '');
+  const [pin, setPin] = useState(cargarLocal(TEACHER_KEY)?.pin || '');
+  const [total, setTotal] = useState(30);
+  const objetivos = useMemo(() => calcularObjetivos(Math.max(4, Number(total) || 4)), [total]);
 
-  const entrar = (event) => {
+  const crear = async () => {
+    setMensaje('Creando clase...');
+    const nuevoToken = generarToken();
+    const { data, error } = await db.rpc('crear_clase', { p_token: nuevoToken, p_total: Math.max(4, Number(total) || 4), p_pin: pin.trim() || 'maestro' });
+    if (error) return setMensaje(error.message);
+    guardarLocal(TEACHER_KEY, { token: data.token, pin: pin.trim() || 'maestro' });
+    onEntrar(data, pin.trim() || 'maestro');
+  };
+
+  const entrar = async (event) => {
     event.preventDefault();
-    const limpio = nombre.trim();
-    if (!limpio || cupoLleno) return;
-    onEntrar(limpio);
+    setMensaje('Entrando como maestro...');
+    const { data, error } = await db.rpc('login_maestro', { p_token: token.trim().toUpperCase(), p_pin: pin });
+    if (error) return setMensaje(error.message);
+    guardarLocal(TEACHER_KEY, { token: token.trim().toUpperCase(), pin });
+    onEntrar(data, pin);
+  };
+
+  return (
+    <main className='auth-shell'>
+      <section className='auth-card setup-card'>
+        <span className='eyebrow'><FaHatWizard /> Maestro</span>
+        <h1>Crear clase</h1>
+        <label className='field-label'>PIN maestro</label>
+        <input value={pin} onChange={(event) => setPin(event.target.value)} placeholder='PIN para administrar la clase' />
+        <label className='field-label'>Total de alumnos</label>
+        <input type='number' min='4' max='120' value={total} onChange={(event) => setTotal(event.target.value)} />
+        <div className='house-preview compact'>
+          {casas.map((casa) => <span key={casa.id} style={{ '--house': casa.color, '--metal': casa.metal }}><img src={casa.escudo} alt='' /><b>{casa.nombre}</b><small>{objetivos[casa.id]}</small></span>)}
+        </div>
+        <button type='button' onClick={crear}>Iniciar clase magica</button>
+        <form onSubmit={entrar} className='teacher-login'>
+          <label className='field-label'>Entrar a clase existente</label>
+          <input value={token} onChange={(event) => setToken(event.target.value.toUpperCase())} placeholder='TOKEN' />
+          <button type='submit' className='secondary'>Entrar con token</button>
+        </form>
+        {mensaje && <p className='form-message'>{mensaje}</p>}
+      </section>
+    </main>
+  );
+}
+
+function AlumnoAcceso({ onEntrar, mensaje, setMensaje }) {
+  const previo = cargarLocal(PLAYER_KEY);
+  const [token, setToken] = useState(previo?.token || '');
+  const [nombre, setNombre] = useState(previo?.nombre || '');
+  const [password, setPassword] = useState(previo?.password || '');
+
+  const entrar = async (event) => {
+    event.preventDefault();
+    setMensaje('Entrando a la clase...');
+    const { data, error } = await db.rpc('entrar_alumno', { p_token: token.trim().toUpperCase(), p_nombre: nombre.trim(), p_password: password });
+    if (error) return setMensaje(error.message);
+    guardarLocal(PLAYER_KEY, { token: token.trim().toUpperCase(), nombre: nombre.trim(), password, alumnoId: data.alumno_id });
+    onEntrar(data, { token: token.trim().toUpperCase(), nombre: nombre.trim(), password, alumnoId: data.alumno_id });
   };
 
   return (
     <main className='auth-shell'>
       <section className='auth-card login-card'>
-        <span className='eyebrow'><FaUserPlus /> Registro de aprendiz</span>
-        <h1>HECHI GO</h1>
-        <p>Escribe tu nombre y el sombrero te asignara una casa disponible de forma balanceada.</p>
+        <span className='eyebrow'><FaUserPlus /> Alumno</span>
+        <h1>Unirse a clase</h1>
         <form onSubmit={entrar}>
-          <input value={nombre} onChange={(event) => setNombre(event.target.value)} placeholder='Nombre del aprendiz' autoFocus />
-          <button type='submit' disabled={cupoLleno}>{cupoLleno ? 'Clase completa' : 'Entrar al gran salon'}</button>
+          <input value={token} onChange={(event) => setToken(event.target.value.toUpperCase())} placeholder='Token de clase' required />
+          <input value={nombre} onChange={(event) => setNombre(event.target.value)} placeholder='Nombre del alumno' required />
+          <input type='password' value={password} onChange={(event) => setPassword(event.target.value)} placeholder='Contrasena' required />
+          <button type='submit'>Entrar al gran salon</button>
         </form>
-        <div className='house-preview compact'>
-          {casas.map((casa) => (
-            <span key={casa.id} style={{ '--house': casa.color, '--metal': casa.metal }}>
-              <img src={casa.escudo} alt='' />
-              <b>{casa.nombre}</b>
-              <small>{contarPorCasa(estado.alumnos, casa.id)}/{estado.objetivos[casa.id]}</small>
-            </span>
-          ))}
-        </div>
+        {mensaje && <p className='form-message'>{mensaje}</p>}
       </section>
     </main>
   );
 }
 
 function App() {
-  const [estado, setEstado] = useState(cargarEstado);
-  const [jugador, setJugador] = useState(cargarJugador);
-  const [mensaje, setMensaje] = useState('Gira el carrusel y elige una carta para abrir.');
+  const [modo, setModo] = useState('inicio');
+  const [sesion, setSesion] = useState(null);
+  const [estado, setEstado] = useState(null);
+  const [mensaje, setMensaje] = useState('');
   const [arrastre, setArrastre] = useState({ activo: false, inicio: 0, delta: 0 });
   const [cartaAbierta, setCartaAbierta] = useState(null);
   const [destellos, setDestellos] = useState([]);
-
-  const jugadorActual = jugador ? estado?.alumnos.find((alumno) => alumno.id === jugador.id) : null;
-  const casaJugador = obtenerCasa(jugadorActual?.casaId);
   const sobres = Array.from({ length: 7 }, (_, index) => index);
 
   const crearDestello = (event, intenso = false) => {
-    const id = crypto.randomUUID();
     const x = event.clientX;
     const y = event.clientY;
     if (!x && !y) return;
+    const id = crypto.randomUUID();
     setDestellos((actual) => [...actual.slice(-18), { id, x, y, intenso }]);
-    window.setTimeout(() => {
-      setDestellos((actual) => actual.filter((destello) => destello.id !== id));
-    }, intenso ? 900 : 620);
+    window.setTimeout(() => setDestellos((actual) => actual.filter((d) => d.id !== id)), intenso ? 900 : 620);
   };
 
   const envolver = (contenido) => (
     <div className='magic-surface' onPointerMove={crearDestello} onPointerDown={(event) => crearDestello(event, true)}>
       {contenido}
-      <div className='spark-layer' aria-hidden='true'>
-        {destellos.map((destello) => (
-          <span key={destello.id} className={destello.intenso ? 'spark burst' : 'spark'} style={{ left: destello.x, top: destello.y }} />
-        ))}
-      </div>
+      <div className='spark-layer' aria-hidden='true'>{destellos.map((d) => <span key={d.id} className={d.intenso ? 'spark burst' : 'spark'} style={{ left: d.x, top: d.y }} />)}</div>
     </div>
   );
 
-  const actualizar = (siguiente) => {
-    setEstado(siguiente);
-    guardarEstado(siguiente);
+  const refrescar = async (token) => {
+    const { data, error } = await db.rpc('cargar_clase', { p_token: token });
+    if (error) throw error;
+    setEstado(data);
+    return data;
   };
 
-  const crearClase = (total) => {
-    const nueva = crearEstadoInicial(total);
-    actualizar(nueva);
-    localStorage.removeItem(PLAYER_KEY);
-    setJugador(null);
+  const entrarMaestro = (data, pin) => {
+    setSesion({ tipo: 'maestro', token: data.token, pin });
+    setEstado(data);
+    setModo('juego');
+    setMensaje('Comparte este token con tus alumnos: ' + data.token);
   };
 
-  const entrar = (nombre) => {
-    const casa = elegirCasaDisponible(estado);
-    const nuevo = { id: crypto.randomUUID(), nombre, casaId: casa.id, cartas: [], puntos: 0, oportunidades: 0 };
-    const siguiente = { ...estado, alumnos: [...estado.alumnos, nuevo] };
-    actualizar(siguiente);
-    guardarJugador({ id: nuevo.id });
-    setJugador({ id: nuevo.id });
-    setMensaje(nombre + ' fue asignado a ' + casa.nombre + '. Espera autorizacion del maestro para abrir carta.');
+  const entrarAlumno = (data, credenciales) => {
+    setSesion({ tipo: 'alumno', ...credenciales });
+    setEstado(data);
+    setModo('juego');
+    setMensaje('Bienvenido al gran salon. Espera autorizacion para abrir carta.');
+  };
+
+  const autorizar = async (alumnoId) => {
+    const { data, error } = await db.rpc('autorizar_participacion', { p_token: sesion.token, p_pin: sesion.pin, p_alumno_id: alumnoId });
+    if (error) return setMensaje(error.message);
+    setEstado(data);
+    setMensaje('Participacion autorizada.');
+  };
+
+  const cambiarPassword = async (alumno) => {
+    const nueva = window.prompt('Nueva contrasena para ' + alumno.nombre);
+    if (!nueva) return;
+    const { data, error } = await db.rpc('cambiar_password_alumno', { p_token: sesion.token, p_pin: sesion.pin, p_alumno_id: alumno.id, p_password: nueva });
+    if (error) return setMensaje(error.message);
+    setEstado(data);
+    setMensaje('Contrasena actualizada para ' + alumno.nombre + '.');
   };
 
   const moverSobre = (direccion) => {
-    const siguiente = (estado.sobreActivo + direccion + sobres.length) % sobres.length;
-    actualizar({ ...estado, sobreActivo: siguiente, ultimaCarta: null });
+    setEstado((actual) => ({ ...actual, sobreActivo: (actual.sobreActivo + direccion + sobres.length) % sobres.length }));
   };
 
-  const autorizarParticipacion = (alumnoId) => {
-    const alumnos = estado.alumnos.map((alumno) => alumno.id === alumnoId
-      ? { ...alumno, oportunidades: (alumno.oportunidades || 0) + 1 }
-      : alumno);
-    const autorizado = alumnos.find((alumno) => alumno.id === alumnoId);
-    actualizar({ ...estado, alumnos });
-    setMensaje('Participacion autorizada para ' + autorizado.nombre + '. Ahora puede abrir una carta.');
-  };
-
-  const abrirCarta = () => {
-    if (!jugadorActual) return;
-    if ((jugadorActual.oportunidades || 0) <= 0) {
-      setMensaje('Necesitas que el maestro autorice tu participacion antes de abrir carta.');
-      return;
-    }
-
+  const abrirCarta = async () => {
+    if (sesion.tipo !== 'alumno') return setMensaje('Solo el alumno puede abrir su carta.');
+    const alumno = estado.alumnos.find((item) => item.id === sesion.alumnoId);
+    if (!alumno || alumno.oportunidades <= 0) return setMensaje('Necesitas autorizacion del maestro para abrir carta.');
     const numero = randomEntero(TOTAL_CARTAS) + 1;
     const efecto = efectoCarta(numero);
-    const carta = {
-      numero,
-      puntos: efecto.puntos,
-      titulo: efecto.titulo,
-      descripcion: efecto.descripcion,
-      casaId: jugadorActual.casaId,
-      alumnoId: jugadorActual.id,
-      alumno: jugadorActual.nombre
-    };
-    const alumnos = estado.alumnos.map((alumno) => alumno.id === jugadorActual.id
-      ? { ...alumno, oportunidades: Math.max(0, (alumno.oportunidades || 0) - 1), puntos: alumno.puntos + efecto.puntos, cartas: [...alumno.cartas, numero] }
-      : alumno);
-    const puntajes = { ...estado.puntajes, [jugadorActual.casaId]: estado.puntajes[jugadorActual.casaId] + efecto.puntos };
-    const siguiente = { ...estado, alumnos, puntajes, ultimaCarta: carta, historial: [carta, ...estado.historial].slice(0, 12) };
-    actualizar(siguiente);
-    setCartaAbierta(carta);
-    setMensaje(casaJugador.nombre + ' gana ' + efecto.puntos + ' puntos. ' + efecto.descripcion);
+    const { data, error } = await db.rpc('abrir_carta', { p_token: sesion.token, p_alumno_id: sesion.alumnoId, p_password: sesion.password, p_numero: numero, p_puntos: efecto.puntos, p_titulo: efecto.titulo, p_descripcion: efecto.descripcion });
+    if (error) return setMensaje(error.message);
+    setEstado(data);
+    setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId });
+    setMensaje(obtenerCasa(alumno.casaId).nombre + ' gana ' + efecto.puntos + ' puntos.');
   };
 
-  const iniciarArrastre = (event) => {
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-    setArrastre({ activo: true, inicio: event.clientX, delta: 0 });
-  };
+  const iniciarArrastre = (event) => { event.currentTarget.setPointerCapture?.(event.pointerId); setArrastre({ activo: true, inicio: event.clientX, delta: 0 }); };
+  const moverArrastre = (event) => { if (arrastre.activo) setArrastre((actual) => ({ ...actual, delta: Math.max(-150, Math.min(150, event.clientX - actual.inicio)) })); };
+  const cerrarArrastre = () => { if (!arrastre.activo) return; if (Math.abs(arrastre.delta) > 34) moverSobre(arrastre.delta < 0 ? 1 : -1); setArrastre({ activo: false, inicio: 0, delta: 0 }); };
 
-  const moverArrastre = (event) => {
-    if (!arrastre.activo) return;
-    setArrastre((actual) => ({ ...actual, delta: Math.max(-140, Math.min(140, event.clientX - actual.inicio)) }));
-  };
+  const salir = () => { setSesion(null); setEstado(null); setModo('inicio'); setCartaAbierta(null); };
 
-  const cerrarArrastre = () => {
-    if (!arrastre.activo) return;
-    if (Math.abs(arrastre.delta) > 38) moverSobre(arrastre.delta < 0 ? 1 : -1);
-    setArrastre({ activo: false, inicio: 0, delta: 0 });
-  };
+  if (modo === 'inicio') return envolver(<Inicio onModo={setModo} />);
+  if (modo === 'maestro') return envolver(<MaestroAcceso onEntrar={entrarMaestro} mensaje={mensaje} setMensaje={setMensaje} />);
+  if (modo === 'alumno') return envolver(<AlumnoAcceso onEntrar={entrarAlumno} mensaje={mensaje} setMensaje={setMensaje} />);
+  if (!estado || !sesion) return envolver(<Inicio onModo={setModo} />);
 
-  const salir = () => {
-    localStorage.removeItem(PLAYER_KEY);
-    setJugador(null);
-  };
-
-  const reiniciar = () => {
-    if (!window.confirm('Quieres reiniciar toda la clase y borrar casas, puntos y alumnos?')) return;
-    localStorage.removeItem(CLASS_KEY);
-    localStorage.removeItem(PLAYER_KEY);
-    setEstado(null);
-    setJugador(null);
-  };
-
-  if (!estado) return envolver(<AdminSetup onCrear={crearClase} />);
-  if (!jugadorActual) return envolver(<NameLogin estado={estado} onEntrar={entrar} />);
+  const alumnoActual = sesion.tipo === 'alumno' ? estado.alumnos.find((alumno) => alumno.id === sesion.alumnoId) : null;
+  const casaActual = obtenerCasa(alumnoActual?.casaId);
 
   return envolver(
-    <main className='game-shell'>
-      <header className='hero'>
+    <main className='game-shell app-fixed'>
+      <header className='hero compact-hero'>
         <div>
-          <span className='eyebrow'><FaWandMagicSparkles /> Carta encantada</span>
+          <span className='eyebrow'><FaWandMagicSparkles /> {sesion.tipo === 'maestro' ? 'Vista maestro' : 'Vista alumno'}</span>
           <h1>HECHI GO</h1>
-          <p>El maestro autoriza participaciones; cada oportunidad permite abrir una carta y sumar puntos para la casa.</p>
+          <p>{sesion.tipo === 'maestro' ? 'Token de clase: ' + estado.token : 'Token ' + estado.token + ' - espera autorizacion para abrir carta.'}</p>
         </div>
         <div className='hero-actions'>
-          <span className='player-badge' style={{ '--house': casaJugador.color, '--metal': casaJugador.metal }}>{jugadorActual.nombre} - {casaJugador.nombre} - {jugadorActual.oportunidades || 0} oportunidades</span>
-          <button type='button' className='ghost' onClick={salir}>Cambiar jugador</button>
-          <button type='button' className='ghost' onClick={reiniciar}><FaRotate /> Reiniciar clase</button>
+          {sesion.tipo === 'alumno' && <span className='player-badge' style={{ '--house': casaActual.color, '--metal': casaActual.metal }}>{alumnoActual?.nombre} - {casaActual.nombre} - {alumnoActual?.oportunidades || 0} oportunidades</span>}
+          <button type='button' className='ghost' onClick={() => refrescar(estado.token)}>Actualizar</button>
+          <button type='button' className='ghost' onClick={salir}>Salir</button>
         </div>
       </header>
 
@@ -320,15 +265,15 @@ function App() {
         {casas.map((casa) => (
           <article key={casa.id} className='house-card' style={{ '--house': casa.color, '--metal': casa.metal }}>
             <img className='house-crest' src={casa.escudo} alt='' />
-            <span>{contarPorCasa(estado.alumnos, casa.id)}/{estado.objetivos[casa.id]} aprendices</span>
+            <span>{estado.conteos[casa.id]}/{estado.objetivos[casa.id]} aprendices</span>
             <h2>{casa.nombre}</h2>
             <strong>{estado.puntajes[casa.id]} pts</strong>
           </article>
         ))}
       </section>
 
-      <section className='pocket-layout'>
-        <aside className='panel roster'>
+      <section className='pocket-layout no-scroll-grid'>
+        <aside className='panel roster hall-panel'>
           <h2>Gran salon</h2>
           <div className='students'>
             {[...estado.alumnos].sort((a, b) => b.puntos - a.puntos).map((alumno, index) => {
@@ -336,9 +281,10 @@ function App() {
               return (
                 <div className='student-row' key={alumno.id} style={{ '--house': casa.color, '--metal': casa.metal }}>
                   <span className='rank'>{index + 1}</span>
-                  <span><strong>{alumno.nombre}</strong><small>{casa.nombre} - {alumno.cartas.length} cartas - {alumno.oportunidades || 0} oportunidades</small></span>
+                  <span><strong>{alumno.nombre}</strong><small>{casa.nombre} - {alumno.cartas.length} cartas - {alumno.oportunidades} oportunidades</small></span>
                   <b>{alumno.puntos} pts</b>
-                  <button type='button' className='authorize' onClick={() => autorizarParticipacion(alumno.id)}>Autorizar</button>
+                  {sesion.tipo === 'maestro' && <button type='button' className='authorize' onClick={() => autorizar(alumno.id)}>Autorizar</button>}
+                  {sesion.tipo === 'maestro' && <button type='button' className='authorize password' onClick={() => cambiarPassword(alumno)}>Contrasena</button>}
                 </div>
               );
             })}
@@ -346,8 +292,7 @@ function App() {
         </aside>
 
         <section className='pack-stage'>
-          <div className='carousel-shell'>
-            <button className='carousel-nav' type='button' onClick={() => moverSobre(-1)} aria-label='Carta anterior'><FaArrowLeft /></button>
+          <div className='carousel-shell mobile-no-arrows'>
             <div
               className={'pack-carousel ' + (arrastre.activo ? 'dragging' : '')}
               onPointerDown={iniciarArrastre}
@@ -360,56 +305,25 @@ function App() {
                 const offset = index - estado.sobreActivo;
                 const normal = offset > 3 ? offset - sobres.length : offset < -3 ? offset + sobres.length : offset;
                 return (
-                  <button
-                    type='button'
-                    key={sobre}
-                    className={'pack-card ' + (normal === 0 ? 'active' : '')}
-                    style={{ '--offset': normal, '--distance': Math.abs(normal), '--drag': arrastre.delta + 'px' }}
-                    onClick={() => normal === 0 ? abrirCarta() : actualizar({ ...estado, sobreActivo: index, ultimaCarta: null })}
-                  >
+                  <button type='button' key={sobre} className={'pack-card ' + (normal === 0 ? 'active' : '')} style={{ '--offset': normal, '--distance': Math.abs(normal), '--drag': arrastre.delta + 'px' }} onClick={() => normal === 0 ? abrirCarta() : setEstado({ ...estado, sobreActivo: index })}>
                     <img src='/hechi/card-back.png' alt='Reverso de carta HECHI' draggable='false' />
                   </button>
                 );
               })}
             </div>
-            <button className='carousel-nav' type='button' onClick={() => moverSobre(1)} aria-label='Carta siguiente'><FaArrowRight /></button>
           </div>
-
           <button type='button' className='open-pack' onClick={abrirCarta}>Abrir carta</button>
           <p className='message'>{mensaje}</p>
         </section>
 
-        <aside className='panel history'>
+        <aside className='panel history parchment-panel'>
           <h2>Ultimos hechizos</h2>
           {estado.historial.length === 0 && <p className='empty'>Aun no se abre ninguna carta.</p>}
-          {estado.historial.map((item, index) => {
-            const casa = obtenerCasa(item.casaId);
-            return (
-              <div className='history-row' key={item.alumnoId + '-' + item.numero + '-' + index} style={{ '--house': casa.color, '--metal': casa.metal }}>
-                <strong>{item.alumno}</strong>
-                <span>{casa.nombre} +{item.puntos}</span>
-              </div>
-            );
-          })}
+          {estado.historial.map((item) => <div className='history-row' key={item.id} style={{ '--house': obtenerCasa(item.casaId).color, '--metal': obtenerCasa(item.casaId).metal }}><strong>{item.alumno}</strong><span>{obtenerCasa(item.casaId).nombre} +{item.puntos}</span></div>)}
         </aside>
       </section>
 
-      {cartaAbierta && (
-        <section className='card-modal' role='dialog' aria-modal='true'>
-          <button type='button' className='modal-close' onClick={() => setCartaAbierta(null)} aria-label='Cerrar carta'><FaXmark /></button>
-          <div className='modal-card-wrap'>
-            <div className='modal-card-flip'>
-              <div className='modal-card-face modal-card-back'><img src='/hechi/card-back.png' alt='' /></div>
-              <div className='modal-card-face modal-card-front'><img src={'/hechi/card-' + cartaAbierta.numero + '.png'} alt={'Carta ' + cartaAbierta.numero} /></div>
-            </div>
-          </div>
-          <article className='modal-effect' style={{ '--house': obtenerCasa(cartaAbierta.casaId).color, '--metal': obtenerCasa(cartaAbierta.casaId).metal }}>
-            <span>{cartaAbierta.titulo}</span>
-            <h2>+{cartaAbierta.puntos} puntos</h2>
-            <p>{cartaAbierta.descripcion}</p>
-          </article>
-        </section>
-      )}
+      {cartaAbierta && <section className='card-modal' role='dialog' aria-modal='true'><button type='button' className='modal-close' onClick={() => setCartaAbierta(null)} aria-label='Cerrar carta'><FaXmark /></button><div className='modal-card-wrap'><div className='modal-card-flip'><div className='modal-card-face modal-card-back'><img src='/hechi/card-back.png' alt='' /></div><div className='modal-card-face modal-card-front'><img src={'/hechi/card-' + cartaAbierta.numero + '.png'} alt={'Carta ' + cartaAbierta.numero} /></div></div></div><article className='modal-effect' style={{ '--house': obtenerCasa(cartaAbierta.casaId).color, '--metal': obtenerCasa(cartaAbierta.casaId).metal }}><span>{cartaAbierta.titulo}</span><h2>+{cartaAbierta.puntos} puntos</h2><p>{cartaAbierta.descripcion}</p></article></section>}
     </main>
   );
 }
