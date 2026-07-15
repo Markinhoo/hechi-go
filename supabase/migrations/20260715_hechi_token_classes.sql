@@ -4,6 +4,7 @@ create schema if not exists hechi;
 grant usage on schema hechi to anon, authenticated;
 
 drop table if exists hechi.participaciones cascade;
+drop table if exists hechi.solicitudes cascade;
 drop table if exists hechi.alumnos cascade;
 drop table if exists hechi.clases cascade;
 
@@ -35,6 +36,14 @@ create table hechi.alumnos (
   unique (clase_id, nombre)
 );
 
+create table hechi.solicitudes (
+  id uuid primary key default gen_random_uuid(),
+  clase_id uuid not null references hechi.clases(id) on delete cascade,
+  alumno_id uuid not null references hechi.alumnos(id) on delete cascade,
+  estado text not null default 'pendiente' check (estado in ('pendiente','autorizada','cancelada')),
+  created_at timestamptz not null default now()
+);
+
 create table hechi.participaciones (
   id uuid primary key default gen_random_uuid(),
   clase_id uuid not null references hechi.clases(id) on delete cascade,
@@ -48,10 +57,13 @@ create table hechi.participaciones (
 
 create index hechi_clases_token_idx on hechi.clases(token);
 create index hechi_alumnos_clase_idx on hechi.alumnos(clase_id, puntos desc, created_at);
+create index hechi_solicitudes_clase_idx on hechi.solicitudes(clase_id, estado, created_at);
+create unique index hechi_solicitudes_pendiente_unique on hechi.solicitudes(clase_id, alumno_id) where estado = 'pendiente';
 create index hechi_participaciones_clase_idx on hechi.participaciones(clase_id, created_at desc);
 
 alter table hechi.clases enable row level security;
 alter table hechi.alumnos enable row level security;
+alter table hechi.solicitudes enable row level security;
 alter table hechi.participaciones enable row level security;
 
 create or replace function hechi.calcular_objetivos(p_total integer)
@@ -78,6 +90,7 @@ declare
   v_conteos jsonb;
   v_alumnos jsonb;
   v_historial jsonb;
+  v_solicitudes jsonb;
 begin
   select * into v_clase from hechi.clases where id = p_clase_id;
   if not found then
@@ -125,6 +138,22 @@ begin
     limit 8
   ) recientes;
 
+  select coalesce(jsonb_agg(item), '[]'::jsonb)
+  into v_solicitudes
+  from (
+    select jsonb_build_object(
+      'id', s.id,
+      'alumnoId', a.id,
+      'alumno', a.nombre,
+      'casaId', a.casa_id,
+      'createdAt', s.created_at
+    ) as item
+    from hechi.solicitudes s
+    join hechi.alumnos a on a.id = s.alumno_id
+    where s.clase_id = p_clase_id and s.estado = 'pendiente'
+    order by s.created_at asc
+  ) pendientes;
+
   return jsonb_build_object(
     'id', v_clase.id,
     'token', v_clase.token,
@@ -135,6 +164,7 @@ begin
     'conteos', v_conteos,
     'alumnos', v_alumnos,
     'historial', v_historial,
+    'solicitudes', v_solicitudes,
     'sobreActivo', v_clase.sobre_activo
   );
 end;
@@ -290,6 +320,39 @@ begin
 end;
 $$;
 
+
+create or replace function hechi.solicitar_carta(p_token text, p_alumno_id uuid, p_password text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = hechi, public, pg_catalog
+as $$
+declare
+  v_clase hechi.clases%rowtype;
+  v_alumno hechi.alumnos%rowtype;
+begin
+  select * into v_clase from hechi.clases where token = upper(trim(p_token)) and estado = 'activa';
+  if not found then
+    raise exception 'Token de clase no encontrado';
+  end if;
+
+  select * into v_alumno from hechi.alumnos where id = p_alumno_id and clase_id = v_clase.id;
+  if not found or v_alumno.password <> p_password then
+    raise exception 'Credenciales de alumno incorrectas';
+  end if;
+
+  if v_alumno.oportunidades > 0 then
+    return hechi.estado_clase(v_clase.id);
+  end if;
+
+  insert into hechi.solicitudes(clase_id, alumno_id, estado)
+  values (v_clase.id, v_alumno.id, 'pendiente')
+  on conflict do nothing;
+
+  return hechi.estado_clase(v_clase.id);
+end;
+$$;
+
 create or replace function hechi.autorizar_participacion(p_token text, p_pin text, p_alumno_id uuid)
 returns jsonb
 language plpgsql
@@ -298,6 +361,7 @@ set search_path = hechi, public, pg_catalog
 as $$
 declare
   v_clase hechi.clases%rowtype;
+  v_actualizados integer;
 begin
   if auth.uid() is null then
     raise exception 'Debes iniciar sesion como maestro';
@@ -312,9 +376,14 @@ begin
   set oportunidades = oportunidades + 1, updated_at = now()
   where id = p_alumno_id and clase_id = v_clase.id;
 
-  if not found then
+  get diagnostics v_actualizados = row_count;
+  if v_actualizados = 0 then
     raise exception 'Alumno no encontrado en esta clase';
   end if;
+
+  update hechi.solicitudes
+  set estado = 'autorizada'
+  where clase_id = v_clase.id and alumno_id = p_alumno_id and estado = 'pendiente';
 
   return hechi.estado_clase(v_clase.id);
 end;

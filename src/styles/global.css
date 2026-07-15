@@ -136,3 +136,26 @@ body { overscroll-behavior: none; }
   .pack-card { width: 142px; transform: translateX(calc(-50% + (var(--offset) * 64px))) translateY(calc(var(--distance) * 10px)) rotateY(calc(var(--offset) * -16deg)) translateZ(calc(var(--distance) * -34px)) scale(calc(1 - (var(--distance) * .07))); }
   .students, .parchment-panel { max-height: 330px; overflow: auto; }
 }
+
+/* Live request flow and parchment framing */
+.hall-panel, .parchment-panel { background-position: center 18%; }
+.teacher-requests-stage { place-items: stretch; align-content: stretch; }
+.request-board { width: min(100%, 620px); align-self: stretch; display: flex; flex-direction: column; justify-content: center; gap: 14px; padding: 20px; border: 1px solid rgba(255,214,109,.32); border-radius: 12px; color: #ffeeca; background: radial-gradient(circle at 50% 10%, rgba(255,214,109,.18), transparent 34%), rgba(18, 9, 22, .46); box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 18px 40px rgba(0,0,0,.24); }
+.request-board h2 { margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(30px, 4vw, 48px); color: #ffd66d; }
+.request-list { display: grid; gap: 10px; max-height: 360px; overflow: auto; padding-right: 4px; }
+.request-row { display: grid; grid-template-columns: 54px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px; border-radius: 10px; background: linear-gradient(120deg, color-mix(in srgb, var(--house) 82%, #1b101d), rgba(24, 15, 26, .92)); border: 1px solid color-mix(in srgb, var(--metal) 72%, transparent); box-shadow: 0 12px 28px rgba(0,0,0,.2); }
+.request-row img { width: 54px; height: 54px; object-fit: contain; filter: drop-shadow(0 8px 12px rgba(0,0,0,.32)); }
+.request-row strong { display: block; font-size: 18px; }
+.request-row span { display: block; color: #ffe8ad; font-weight: 800; font-size: 13px; }
+.request-row button { padding: 10px 12px; color: #21130d; background: linear-gradient(180deg,#ffd66d,#c9892c); }
+.empty.light { color: rgba(255,238,202,.78); }
+.student-card-actions { width: min(100%, 480px); display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.request-card { padding: 12px; color: #ffeeca; background: linear-gradient(100deg,#174b7a,#1b101d); border: 1px solid rgba(255,214,109,.42); }
+@media(max-width:760px){
+  .hall-panel, .parchment-panel { background-position: center 12%; }
+  .request-board { padding: 16px; justify-content: start; }
+  .request-row { grid-template-columns: 44px 1fr; }
+  .request-row button { grid-column: 1 / 3; }
+  .request-row img { width: 44px; height: 44px; }
+  .student-card-actions { grid-template-columns: 1fr; }
+}

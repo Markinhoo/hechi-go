@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { FaArrowLeft, FaArrowRight, FaHatWizard, FaUserPlus, FaWandMagicSparkles, FaXmark } from 'react-icons/fa6';
 import { supabase } from './lib/supabaseClient';
 
@@ -84,6 +84,7 @@ function MaestroAcceso({ onEntrar, mensaje, setMensaje }) {
   const [token, setToken] = useState(previo?.token || '');
   const [pin, setPin] = useState(previo?.pin || '');
   const [total, setTotal] = useState(30);
+  const autoClase = useRef(false);
   const objetivos = useMemo(() => calcularObjetivos(Math.max(4, Number(total) || 4)), [total]);
 
   useEffect(() => {
@@ -97,6 +98,15 @@ function MaestroAcceso({ onEntrar, mensaje, setMensaje }) {
     return () => { vivo = false; };
   }, []);
 
+  useEffect(() => {
+    if (!authUser || autoClase.current || !previo?.token || !previo?.pin) return;
+    autoClase.current = true;
+    db.rpc('login_maestro', { p_token: limpiarTexto(previo.token), p_pin: previo.pin }).then(({ data, error }) => {
+      if (error) return setMensaje('Sesion de maestro lista. Puedes abrir tu clase con el token guardado.');
+      onEntrar(data, previo.pin);
+    });
+  }, [authUser, onEntrar, previo?.pin, previo?.token, setMensaje]);
+
   const iniciarSesion = async (event) => {
     event.preventDefault();
     setMensaje('Validando login del maestro...');
@@ -104,7 +114,7 @@ function MaestroAcceso({ onEntrar, mensaje, setMensaje }) {
     if (error) return setMensaje(error.message);
     setAuthUser(data.user);
     guardarLocal(TEACHER_KEY, { token, pin, email: email.trim() });
-    setMensaje('Login de maestro correcto. Ahora puedes crear o abrir una clase.');
+    setMensaje(token && pin ? 'Login correcto. Abriendo clase guardada...' : 'Login de maestro correcto. Ahora puedes crear o abrir una clase.');
   };
 
   const cerrarSesion = async () => {
@@ -265,6 +275,17 @@ function App() {
     setMensaje('Participacion autorizada.');
   };
 
+  const solicitarCarta = async () => {
+    if (sesion.tipo !== 'alumno') return;
+    const alumno = estado.alumnos.find((item) => item.id === sesion.alumnoId);
+    if (!alumno) return setMensaje('No encuentro tu usuario en esta clase.');
+    if (alumno.oportunidades > 0) return setMensaje('Ya tienes una oportunidad autorizada. Ahora abre una carta.');
+    const { data, error } = await db.rpc('solicitar_carta', { p_token: sesion.token, p_alumno_id: sesion.alumnoId, p_password: sesion.password });
+    if (error) return setMensaje(error.message);
+    setEstado(data);
+    setMensaje('Solicitud enviada al maestro.');
+  };
+
   const cambiarPassword = async (alumno) => {
     const nueva = window.prompt('Nueva contrasena para ' + alumno.nombre);
     if (!nueva) return;
@@ -305,6 +326,15 @@ function App() {
     if (Math.abs(arrastre.delta) > 42) moverSobre(pasos !== 0 ? -pasos : arrastre.delta < 0 ? 1 : -1);
     setArrastre({ activo: false, inicio: 0, delta: 0 });
   };
+
+  useEffect(() => {
+    if (!sesion?.token || !estado?.token) return undefined;
+    const id = window.setInterval(async () => {
+      const { data } = await db.rpc('cargar_clase', { p_token: sesion.token });
+      if (data) setEstado(data);
+    }, 1800);
+    return () => window.clearInterval(id);
+  }, [sesion?.token, estado?.token]);
 
   const salir = () => { setSesion(null); setEstado(null); setModo('inicio'); setCartaAbierta(null); };
 
@@ -353,7 +383,6 @@ function App() {
                   <span className='rank'>{index + 1}</span>
                   <span><strong>{alumno.nombre}</strong><small>{casa.nombre} - {alumno.cartas.length} cartas - {alumno.oportunidades} oportunidades</small></span>
                   <b>{alumno.puntos} pts</b>
-                  {sesion.tipo === 'maestro' && <button type='button' className='authorize' onClick={() => autorizar(alumno.id)}>Autorizar</button>}
                   {sesion.tipo === 'maestro' && <button type='button' className='authorize password' onClick={() => cambiarPassword(alumno)}>Contrasena</button>}
                 </div>
               );
@@ -361,32 +390,57 @@ function App() {
           </div>
         </aside>
 
-        <section className='pack-stage'>
-          <div className='carousel-shell'>
-            <button className='carousel-nav' type='button' onClick={() => moverSobre(-1)} aria-label='Carta anterior'><FaArrowLeft /></button>
-            <div
-              className={'pack-carousel ' + (arrastre.activo ? 'dragging' : '')}
-              onPointerDown={iniciarArrastre}
-              onPointerMove={moverArrastre}
-              onPointerUp={cerrarArrastre}
-              onPointerCancel={cerrarArrastre}
-              onPointerLeave={cerrarArrastre}
-            >
-              {sobres.map((sobre, index) => {
-                const offset = index - estado.sobreActivo;
-                const normal = offset > 3 ? offset - sobres.length : offset < -3 ? offset + sobres.length : offset;
-                const visualOffset = normal + (arrastre.activo ? arrastre.delta / 118 : 0);
-                const distancia = Math.min(3.4, Math.abs(visualOffset));
-                return (
-                  <button type='button' key={sobre} className={'pack-card ' + (Math.abs(visualOffset) < 0.45 ? 'active' : '')} style={{ '--offset': visualOffset, '--distance': distancia }} onClick={() => normal === 0 ? abrirCarta() : setEstado({ ...estado, sobreActivo: index })}>
-                    <img src='/hechi/card-back.png' alt='Reverso de carta HECHI' draggable='false' />
-                  </button>
-                );
-              })}
+        <section className={'pack-stage ' + (sesion.tipo === 'maestro' ? 'teacher-requests-stage' : '')}>
+          {sesion.tipo === 'maestro' ? (
+            <div className='request-board'>
+              <span className='eyebrow'><FaWandMagicSparkles /> Solicitudes de carta</span>
+              <h2>Permisos pendientes</h2>
+              {(!estado.solicitudes || estado.solicitudes.length === 0) && <p className='empty light'>Cuando un alumno participe y pida carta, aparecera aqui para autorizarlo.</p>}
+              <div className='request-list'>
+                {(estado.solicitudes || []).map((solicitud) => {
+                  const casa = obtenerCasa(solicitud.casaId);
+                  return (
+                    <article className='request-row' key={solicitud.id} style={{ '--house': casa.color, '--metal': casa.metal }}>
+                      <img src={casa.escudo} alt='' />
+                      <div><strong>{solicitud.alumno}</strong><span>{casa.nombre} solicita abrir carta</span></div>
+                      <button type='button' onClick={() => autorizar(solicitud.alumnoId)}>Autorizar</button>
+                    </article>
+                  );
+                })}
+              </div>
             </div>
-            <button className='carousel-nav' type='button' onClick={() => moverSobre(1)} aria-label='Carta siguiente'><FaArrowRight /></button>
-          </div>
-          <button type='button' className='open-pack' onClick={abrirCarta}>Abrir carta</button>
+          ) : (
+            <>
+              <div className='carousel-shell'>
+                <button className='carousel-nav' type='button' onClick={() => moverSobre(-1)} aria-label='Carta anterior'><FaArrowLeft /></button>
+                <div
+                  className={'pack-carousel ' + (arrastre.activo ? 'dragging' : '')}
+                  onPointerDown={iniciarArrastre}
+                  onPointerMove={moverArrastre}
+                  onPointerUp={cerrarArrastre}
+                  onPointerCancel={cerrarArrastre}
+                  onPointerLeave={cerrarArrastre}
+                >
+                  {sobres.map((sobre, index) => {
+                    const offset = index - estado.sobreActivo;
+                    const normal = offset > 3 ? offset - sobres.length : offset < -3 ? offset + sobres.length : offset;
+                    const visualOffset = normal + (arrastre.activo ? arrastre.delta / 118 : 0);
+                    const distancia = Math.min(3.4, Math.abs(visualOffset));
+                    return (
+                      <button type='button' key={sobre} className={'pack-card ' + (Math.abs(visualOffset) < 0.45 ? 'active' : '')} style={{ '--offset': visualOffset, '--distance': distancia }} onClick={() => normal === 0 ? abrirCarta() : setEstado({ ...estado, sobreActivo: index })}>
+                        <img src='/hechi/card-back.png' alt='Reverso de carta HECHI' draggable='false' />
+                      </button>
+                    );
+                  })}
+                </div>
+                <button className='carousel-nav' type='button' onClick={() => moverSobre(1)} aria-label='Carta siguiente'><FaArrowRight /></button>
+              </div>
+              <div className='student-card-actions'>
+                <button type='button' className='request-card' onClick={solicitarCarta}>Solicitar autorizacion</button>
+                <button type='button' className='open-pack' onClick={abrirCarta}>Abrir carta</button>
+              </div>
+            </>
+          )}
           <p className='message'>{mensaje}</p>
         </section>
 
