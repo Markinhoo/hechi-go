@@ -11,6 +11,7 @@ drop table if exists hechi.clases cascade;
 create table hechi.clases (
   id uuid primary key default gen_random_uuid(),
   created_by uuid not null default auth.uid(),
+  nombre text not null default 'Clase HECHI GO',
   token text not null unique,
   total integer not null check (total between 4 and 120),
   objetivos jsonb not null,
@@ -157,6 +158,7 @@ begin
   return jsonb_build_object(
     'id', v_clase.id,
     'token', v_clase.token,
+    'nombre', v_clase.nombre,
     'total', v_clase.total,
     'estado', v_clase.estado,
     'objetivos', v_clase.objetivos,
@@ -170,7 +172,7 @@ begin
 end;
 $$;
 
-create or replace function hechi.crear_clase(p_token text, p_total integer, p_pin text)
+create or replace function hechi.crear_clase(p_token text, p_total integer, p_pin text, p_nombre text default 'Clase HECHI GO')
 returns jsonb
 language plpgsql
 security definer
@@ -184,17 +186,57 @@ begin
     raise exception 'Debes iniciar sesion como maestro';
   end if;
 
+  if length(trim(coalesce(p_nombre, ''))) < 2 then
+    raise exception 'Escribe el nombre del grupo';
+  end if;
+
   if length(trim(coalesce(p_pin, ''))) < 3 then
     raise exception 'El PIN del maestro debe tener al menos 3 caracteres';
   end if;
 
-  insert into hechi.clases(created_by, token, total, objetivos, maestro_pin)
-  values (auth.uid(), upper(trim(p_token)), v_total, hechi.calcular_objetivos(v_total), p_pin)
+  insert into hechi.clases(created_by, nombre, token, total, objetivos, maestro_pin)
+  values (auth.uid(), trim(p_nombre), upper(trim(p_token)), v_total, hechi.calcular_objetivos(v_total), p_pin)
   returning id into v_id;
 
   return hechi.estado_clase(v_id);
 exception when unique_violation then
   raise exception 'Ese token ya existe, intenta crear otra clase';
+end;
+$$;
+
+
+create or replace function hechi.listar_clases_maestro()
+returns jsonb
+language plpgsql
+security definer
+set search_path = hechi, public, pg_catalog
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'Debes iniciar sesion como maestro';
+  end if;
+
+  return coalesce((
+    select jsonb_agg(jsonb_build_object(
+      'id', c.id,
+      'nombre', c.nombre,
+      'token', c.token,
+      'total', c.total,
+      'alumnos', coalesce(a.alumnos, 0),
+      'puntos', coalesce((c.puntajes->>'gryffindor')::integer, 0)
+        + coalesce((c.puntajes->>'slytherin')::integer, 0)
+        + coalesce((c.puntajes->>'ravenclaw')::integer, 0)
+        + coalesce((c.puntajes->>'hufflepuff')::integer, 0),
+      'createdAt', c.created_at
+    ) order by c.created_at desc)
+    from hechi.clases c
+    left join (
+      select clase_id, count(*)::integer alumnos
+      from hechi.alumnos
+      group by clase_id
+    ) a on a.clase_id = c.id
+    where c.created_by = auth.uid()
+  ), '[]'::jsonb);
 end;
 $$;
 
@@ -470,6 +512,61 @@ begin
   values (v_clase.id, v_alumno.id, p_numero, p_puntos, p_titulo, p_descripcion);
 
   return hechi.estado_clase(v_clase.id);
+end;
+$$;
+
+
+create or replace function hechi.reiniciar_clase(p_token text, p_pin text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = hechi, public, pg_catalog
+as $$
+declare
+  v_clase hechi.clases%rowtype;
+begin
+  if auth.uid() is null then
+    raise exception 'Debes iniciar sesion como maestro';
+  end if;
+
+  select * into v_clase from hechi.clases where token = upper(trim(p_token)) and created_by = auth.uid();
+  if not found or v_clase.maestro_pin <> p_pin then
+    raise exception 'No autorizado como maestro';
+  end if;
+
+  delete from hechi.participaciones where clase_id = v_clase.id;
+  delete from hechi.solicitudes where clase_id = v_clase.id;
+  delete from hechi.alumnos where clase_id = v_clase.id;
+  update hechi.clases
+  set puntajes = '{"gryffindor":0,"slytherin":0,"ravenclaw":0,"hufflepuff":0}'::jsonb,
+      sobre_activo = 0,
+      updated_at = now()
+  where id = v_clase.id;
+
+  return hechi.estado_clase(v_clase.id);
+end;
+$$;
+
+create or replace function hechi.eliminar_clase(p_token text, p_pin text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = hechi, public, pg_catalog
+as $$
+declare
+  v_clase hechi.clases%rowtype;
+begin
+  if auth.uid() is null then
+    raise exception 'Debes iniciar sesion como maestro';
+  end if;
+
+  select * into v_clase from hechi.clases where token = upper(trim(p_token)) and created_by = auth.uid();
+  if not found or v_clase.maestro_pin <> p_pin then
+    raise exception 'No autorizado como maestro';
+  end if;
+
+  delete from hechi.clases where id = v_clase.id;
+  return jsonb_build_object('ok', true);
 end;
 $$;
 

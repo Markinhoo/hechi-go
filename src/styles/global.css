@@ -159,3 +159,20 @@ body { overscroll-behavior: none; }
   .request-row img { width: 44px; height: 44px; }
   .student-card-actions { grid-template-columns: 1fr; }
 }
+
+/* Multi-class teacher dashboard */
+.multi-class-card { width: min(100%, 980px); }
+.class-management-grid { display: grid; grid-template-columns: minmax(330px, .95fr) minmax(340px, 1.05fr); gap: 18px; align-items: start; }
+.create-class-panel, .saved-classes-panel { min-width: 0; padding: 16px; border: 1px solid rgba(95,57,20,.18); border-radius: 10px; background: rgba(255,247,223,.42); }
+.panel-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.panel-title-row h2 { margin: 0; }
+.ghost.small { padding: 8px 10px; font-size: 12px; }
+.class-list { display: grid; gap: 10px; margin-top: 12px; max-height: 460px; overflow: auto; }
+.class-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px; border-radius: 10px; color: #21130d; background: linear-gradient(120deg, rgba(255,250,224,.86), rgba(232,194,122,.46)); border: 1px solid rgba(95,57,20,.18); box-shadow: 0 10px 24px rgba(73,37,10,.12); }
+.class-row strong { display: block; color: #4b1220; font-size: 20px; font-family: Georgia, 'Times New Roman', serif; }
+.class-row span { display: block; margin-top: 3px; color: #6b3d18; font-size: 13px; font-weight: 800; }
+.danger-soft { border-color: rgba(255,122,95,.48); color: #ffeeca; background: linear-gradient(100deg,#6b1d22,#1b101d); }
+@media(max-width:860px){
+  .class-management-grid { grid-template-columns: 1fr; }
+  .class-row { grid-template-columns: 1fr; }
+}

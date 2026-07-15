@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FaArrowLeft, FaArrowRight, FaHatWizard, FaUserPlus, FaWandMagicSparkles, FaXmark } from 'react-icons/fa6';
 import { supabase } from './lib/supabaseClient';
 
@@ -81,11 +81,21 @@ function MaestroAcceso({ onEntrar, mensaje, setMensaje }) {
   const [authUser, setAuthUser] = useState(null);
   const [email, setEmail] = useState(previo?.email || '');
   const [password, setPassword] = useState('');
-  const [token, setToken] = useState(previo?.token || '');
+  const [grupo, setGrupo] = useState('9A');
   const [pin, setPin] = useState(previo?.pin || '');
   const [total, setTotal] = useState(30);
-  const autoClase = useRef(false);
+  const [clases, setClases] = useState([]);
+  const [cargandoClases, setCargandoClases] = useState(false);
   const objetivos = useMemo(() => calcularObjetivos(Math.max(4, Number(total) || 4)), [total]);
+
+  const cargarClases = async () => {
+    if (!authUser) return;
+    setCargandoClases(true);
+    const { data, error } = await db.rpc('listar_clases_maestro');
+    setCargandoClases(false);
+    if (error) return setMensaje(error.message);
+    setClases(data || []);
+  };
 
   useEffect(() => {
     let vivo = true;
@@ -99,13 +109,16 @@ function MaestroAcceso({ onEntrar, mensaje, setMensaje }) {
   }, []);
 
   useEffect(() => {
-    if (!authUser || autoClase.current || !previo?.token || !previo?.pin) return;
-    autoClase.current = true;
-    db.rpc('login_maestro', { p_token: limpiarTexto(previo.token), p_pin: previo.pin }).then(({ data, error }) => {
-      if (error) return setMensaje('Sesion de maestro lista. Puedes abrir tu clase con el token guardado.');
-      onEntrar(data, previo.pin);
-    });
-  }, [authUser, onEntrar, previo?.pin, previo?.token, setMensaje]);
+    if (!authUser) return undefined;
+    const id = window.setTimeout(async () => {
+      setCargandoClases(true);
+      const { data, error } = await db.rpc('listar_clases_maestro');
+      setCargandoClases(false);
+      if (error) return setMensaje(error.message);
+      setClases(data || []);
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [authUser, setMensaje]);
 
   const iniciarSesion = async (event) => {
     event.preventDefault();
@@ -113,43 +126,47 @@ function MaestroAcceso({ onEntrar, mensaje, setMensaje }) {
     const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     if (error) return setMensaje(error.message);
     setAuthUser(data.user);
-    guardarLocal(TEACHER_KEY, { token, pin, email: email.trim() });
-    setMensaje(token && pin ? 'Login correcto. Abriendo clase guardada...' : 'Login de maestro correcto. Ahora puedes crear o abrir una clase.');
+    guardarLocal(TEACHER_KEY, { pin, email: email.trim() });
+    setMensaje('Login correcto. Elige una clase existente o crea una nueva.');
   };
 
   const cerrarSesion = async () => {
     await supabase.auth.signOut();
     setAuthUser(null);
+    setClases([]);
     setMensaje('Sesion de maestro cerrada.');
   };
 
   const crear = async () => {
     if (!authUser) return setMensaje('Primero inicia sesion como maestro.');
+    const nombreGrupo = grupo.trim();
+    if (!nombreGrupo) return setMensaje('Escribe el nombre del grupo, por ejemplo 9A.');
     setMensaje('Creando clase...');
     const nuevoToken = generarToken();
     const pinLimpio = pin.trim() || 'maestro';
-    const { data, error } = await db.rpc('crear_clase', { p_token: nuevoToken, p_total: Math.max(4, Number(total) || 4), p_pin: pinLimpio });
+    const { data, error } = await db.rpc('crear_clase', { p_token: nuevoToken, p_total: Math.max(4, Number(total) || 4), p_pin: pinLimpio, p_nombre: nombreGrupo });
     if (error) return setMensaje(error.message);
-    guardarLocal(TEACHER_KEY, { token: data.token, pin: pinLimpio, email: email.trim() });
+    guardarLocal(TEACHER_KEY, { pin: pinLimpio, email: email.trim() });
+    await cargarClases();
     onEntrar(data, pinLimpio);
   };
 
-  const entrar = async (event) => {
-    event.preventDefault();
+  const abrirClase = async (clase) => {
     if (!authUser) return setMensaje('Primero inicia sesion como maestro.');
-    setMensaje('Entrando como maestro...');
-    const tokenLimpio = limpiarTexto(token);
-    const { data, error } = await db.rpc('login_maestro', { p_token: tokenLimpio, p_pin: pin });
+    const pinLimpio = pin.trim();
+    if (!pinLimpio) return setMensaje('Escribe el PIN maestro para abrir ' + clase.nombre + '.');
+    setMensaje('Abriendo ' + clase.nombre + '...');
+    const { data, error } = await db.rpc('login_maestro', { p_token: clase.token, p_pin: pinLimpio });
     if (error) return setMensaje(error.message);
-    guardarLocal(TEACHER_KEY, { token: tokenLimpio, pin, email: email.trim() });
-    onEntrar(data, pin);
+    guardarLocal(TEACHER_KEY, { pin: pinLimpio, email: email.trim() });
+    onEntrar(data, pinLimpio);
   };
 
   return (
     <main className='auth-shell'>
-      <section className='auth-card setup-card teacher-card'>
+      <section className='auth-card setup-card teacher-card multi-class-card'>
         <span className='eyebrow'><FaHatWizard /> Maestro autorizado</span>
-        <h1>Login maestro</h1>
+        <h1>Mis clases</h1>
         {!authUser ? (
           <form onSubmit={iniciarSesion} className='teacher-auth-form'>
             <label className='field-label'>Correo del maestro</label>
@@ -165,21 +182,40 @@ function MaestroAcceso({ onEntrar, mensaje, setMensaje }) {
           </div>
         )}
 
-        <div className={!authUser ? 'locked-class-tools' : 'class-tools'}>
-          <h2>Crear clase</h2>
-          <label className='field-label'>PIN maestro</label>
-          <input value={pin} onChange={(event) => setPin(event.target.value)} placeholder='PIN para administrar la clase' disabled={!authUser} />
-          <label className='field-label'>Total de alumnos</label>
-          <input type='number' min='4' max='120' value={total} onChange={(event) => setTotal(event.target.value)} disabled={!authUser} />
-          <div className='house-preview compact'>
-            {casas.map((casa) => <span key={casa.id} style={{ '--house': casa.color, '--metal': casa.metal }}><img src={casa.escudo} alt='' /><b>{casa.nombre}</b><small>{objetivos[casa.id]}</small></span>)}
-          </div>
-          <button type='button' onClick={crear} disabled={!authUser}>Iniciar clase magica</button>
-          <form onSubmit={entrar} className='teacher-login'>
-            <label className='field-label'>Entrar a clase existente</label>
-            <input value={token} onChange={(event) => setToken(event.target.value.toUpperCase())} placeholder='TOKEN' disabled={!authUser} />
-            <button type='submit' className='secondary' disabled={!authUser}>Entrar con token</button>
-          </form>
+        <div className={!authUser ? 'locked-class-tools class-management-grid' : 'class-management-grid'}>
+          <section className='create-class-panel'>
+            <h2>Crear clase nueva</h2>
+            <label className='field-label'>Nombre del grupo</label>
+            <input value={grupo} onChange={(event) => setGrupo(event.target.value)} placeholder='9A, 9B, 9ABIS...' disabled={!authUser} />
+            <label className='field-label'>PIN maestro</label>
+            <input value={pin} onChange={(event) => setPin(event.target.value)} placeholder='PIN para administrar tus clases' disabled={!authUser} />
+            <label className='field-label'>Total de alumnos</label>
+            <input type='number' min='4' max='120' value={total} onChange={(event) => setTotal(event.target.value)} disabled={!authUser} />
+            <div className='house-preview compact'>
+              {casas.map((casa) => <span key={casa.id} style={{ '--house': casa.color, '--metal': casa.metal }}><img src={casa.escudo} alt='' /><b>{casa.nombre}</b><small>{objetivos[casa.id]}</small></span>)}
+            </div>
+            <button type='button' onClick={crear} disabled={!authUser}>Crear clase nueva</button>
+          </section>
+
+          <section className='saved-classes-panel'>
+            <div className='panel-title-row'>
+              <h2>Clases creadas</h2>
+              <button type='button' className='ghost dark small' onClick={cargarClases} disabled={!authUser || cargandoClases}>{cargandoClases ? '...' : 'Actualizar'}</button>
+            </div>
+            {!authUser && <p className='empty'>Inicia sesion para ver tus clases.</p>}
+            {authUser && clases.length === 0 && <p className='empty'>Aun no tienes clases guardadas.</p>}
+            <div className='class-list'>
+              {clases.map((clase) => (
+                <article className='class-row' key={clase.id}>
+                  <div>
+                    <strong>{clase.nombre}</strong>
+                    <span>Token {clase.token} - {clase.alumnos}/{clase.total} alumnos - {clase.puntos} pts</span>
+                  </div>
+                  <button type='button' onClick={() => abrirClase(clase)}>Abrir</button>
+                </article>
+              ))}
+            </div>
+          </section>
         </div>
         {mensaje && <p className='form-message'>{mensaje}</p>}
       </section>
@@ -295,6 +331,27 @@ function App() {
     setMensaje('Contrasena actualizada para ' + alumno.nombre + '.');
   };
 
+
+  const reiniciarClase = async () => {
+    if (sesion.tipo !== 'maestro') return;
+    if (!window.confirm('Reiniciar esta clase borrara alumnos, puntos, cartas, solicitudes e historial. El token se conserva.')) return;
+    const { data, error } = await db.rpc('reiniciar_clase', { p_token: sesion.token, p_pin: sesion.pin });
+    if (error) return setMensaje(error.message);
+    setEstado(data);
+    setMensaje('Clase reiniciada desde cero. El token sigue siendo ' + data.token + '.');
+  };
+
+  const eliminarClase = async () => {
+    if (sesion.tipo !== 'maestro') return;
+    if (!window.confirm('Eliminar esta clase borrara definitivamente grupo, alumnos, puntos y token.')) return;
+    const { error } = await db.rpc('eliminar_clase', { p_token: sesion.token, p_pin: sesion.pin });
+    if (error) return setMensaje(error.message);
+    setSesion(null);
+    setEstado(null);
+    setModo('maestro');
+    setMensaje('Clase eliminada.');
+  };
+
   const moverSobre = (direccion) => {
     setEstado((actual) => ({ ...actual, sobreActivo: (actual.sobreActivo + direccion + sobres.length) % sobres.length }));
   };
@@ -352,11 +409,13 @@ function App() {
         <div>
           <span className='eyebrow'><FaWandMagicSparkles /> {sesion.tipo === 'maestro' ? 'Vista maestro' : 'Vista alumno'}</span>
           <h1>HECHI GO</h1>
-          <p>{sesion.tipo === 'maestro' ? 'Token de clase: ' + estado.token : 'Token ' + estado.token + ' - espera autorizacion para abrir carta.'}</p>
+          <p>{sesion.tipo === 'maestro' ? (estado.nombre + ' - Token de clase: ' + estado.token) : (estado.nombre + ' - Token ' + estado.token + ' - espera autorizacion para abrir carta.')}</p>
         </div>
         <div className='hero-actions'>
           {sesion.tipo === 'alumno' && <span className='player-badge' style={{ '--house': casaActual.color, '--metal': casaActual.metal }}>{alumnoActual?.nombre} - {casaActual.nombre} - {alumnoActual?.oportunidades || 0} oportunidades</span>}
           <button type='button' className='ghost' onClick={() => refrescar(estado.token)}>Actualizar</button>
+          {sesion.tipo === 'maestro' && <button type='button' className='ghost danger-soft' onClick={reiniciarClase}>Reiniciar clase</button>}
+          {sesion.tipo === 'maestro' && <button type='button' className='ghost danger-soft' onClick={eliminarClase}>Eliminar clase</button>}
           <button type='button' className='ghost' onClick={salir}>Salir</button>
         </div>
       </header>
