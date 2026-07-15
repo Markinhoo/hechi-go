@@ -1,0 +1,25 @@
+.house-preview small{color:var(--metal);font-weight:900}
+
+.compact{grid-template-columns:repeat(4,1fr)}
+
+.game-shell{min-height:100vh;padding:22px;position:relative}
+
+.hero{position:relative;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:28px 30px;border:1px solid var(--line);border-radius:8px;color:#ffeeca;background:radial-gradient(circle at 85% 18%,rgba(255,214,109,.38),transparent 22%),linear-gradient(120deg,#4b1220,#24172f 58%,#123f34);box-shadow:0 22px 64px rgba(0,0,0,.38),inset 0 0 0 1px rgba(255,255,255,.08);overflow:hidden}
+
+.hero .eyebrow,.hero p{color:rgba(255,238,202,.86)}
+
+.hero h1{color:#ffd66d;text-shadow:0 3px 0 rgba(60,21,8,.55),0 0 24px rgba(255,214,109,.2)}
+
+.hero-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+
+.ghost,.player-badge{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid rgba(255,214,109,.34);border-radius:7px;color:#ffeeca;background:rgba(20,10,20,.48);font-size:13px;box-shadow:inset 0 1px rgba(255,255,255,.08)}
+
+.player-badge{background:linear-gradient(120deg,var(--house),#1d1220);border-color:var(--metal);font-weight:1000}
+
+.house-board{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}
+
+.house-card{position:relative;min-height:120px;padding:16px 150px 16px 16px;border-radius:8px;color:#fff;background:radial-gradient(circle at 90% 16%,color-mix(in srgb,var(--metal) 42%,transparent),transparent 28%),linear-gradient(135deg,var(--house),#1b101d);border:1px solid color-mix(in srgb,var(--metal) 70%,transparent);box-shadow:0 16px 36px rgba(0,0,0,.28);overflow:hidden}
+
+.house-crest{position:absolute;right:12px;top:50%;width:132px;max-height:118px;object-fit:contain;transform:translateY(-50%);opacity:.23;filter:blur(.2px) drop-shadow(0 12px 16px rgba(0,0,0,.42));mix-blend-mode:screen}
+
+.house-card span{font-size:12px;color:var(--metal);font-weight:900;text-transform:uppercase}

@@ -1,0 +1,19 @@
+.auth-card::before,.panel::before{content:'';position:absolute;inset:8px;border:1px solid rgba(95,57,20,.22);border-radius:6px;pointer-events:none}
+
+.auth-card h1,.hero h1{margin:6px 0;font-family:Georgia,'Times New Roman',serif;font-size:clamp(42px,7vw,78px);line-height:.9;letter-spacing:.02em}
+
+.auth-card p,.hero p{color:#6b3d18;line-height:1.55}
+
+.auth-card form{display:grid;gap:10px;margin-top:22px}
+
+.auth-card button{padding:13px 16px}
+
+.field-label{display:block;margin:18px 0 8px;font-weight:900;color:#4b1220}
+
+.eyebrow{display:inline-flex;align-items:center;gap:8px;color:#7c5315;font-size:12px;font-weight:1000;letter-spacing:.14em;text-transform:uppercase}
+
+.house-preview{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin:18px 0}
+
+.house-preview span{position:relative;min-height:84px;display:grid;gap:2px;padding:10px 80px 10px 10px;border-radius:7px;color:#fff;background:linear-gradient(120deg,var(--house),#20131f);border:1px solid color-mix(in srgb,var(--metal) 62%,transparent);overflow:hidden}
+
+.house-preview img{position:absolute;right:8px;top:50%;width:66px;transform:translateY(-50%);opacity:.45;filter:drop-shadow(0 8px 12px rgba(0,0,0,.35))}

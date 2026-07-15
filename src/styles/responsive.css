@@ -1,0 +1,19 @@
+.house-card h2{margin:10px 0 2px;font-family:Georgia,'Times New Roman',serif}
+
+.house-card strong{font-size:32px;color:#fff4cf}
+
+.pocket-layout{display:grid;grid-template-columns:minmax(240px,.8fr) minmax(420px,1.5fr) minmax(240px,.8fr);gap:18px;margin-top:18px}
+
+.panel{position:relative;border:1px solid var(--line);border-radius:8px;color:var(--ink);background:linear-gradient(145deg,rgba(255,243,212,.94),rgba(223,188,116,.88));box-shadow:0 18px 45px rgba(0,0,0,.26),inset 0 0 0 1px rgba(255,255,255,.26);padding:20px}
+
+.panel h2{margin:0 0 14px;color:#4b1220;font-family:Georgia,'Times New Roman',serif;font-size:24px}
+
+.students{display:grid;gap:8px;max-height:550px;overflow:auto}
+
+.student-row{display:grid;grid-template-columns:30px 1fr auto auto;align-items:center;gap:9px;padding:10px;color:var(--ink);background:rgba(255,247,223,.74);border:1px solid color-mix(in srgb,var(--house) 34%,transparent);border-radius:7px}
+
+.authorize{padding:8px 10px;color:#ffeeca;background:linear-gradient(100deg,var(--house),#1b101d);border:1px solid var(--metal);font-size:12px;box-shadow:none}
+
+.student-row small{display:block;margin-top:2px;color:#72511d;font-size:12px}
+
+.student-row b{color:#4b1220;white-space:nowrap}
