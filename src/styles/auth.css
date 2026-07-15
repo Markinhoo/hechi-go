@@ -20,3 +20,11 @@ input{width:100%;border:1px solid #9b7437;border-radius:7px;padding:12px 13px;co
 @keyframes stormClouds { 0% { transform: translate3d(-2%, -1%, 0) scale(1); filter: blur(18px) brightness(.95); } 50% { transform: translate3d(2%, 1%, 0) scale(1.04); filter: blur(22px) brightness(1.08); } 100% { transform: translate3d(4%, -2%, 0) scale(1.02); filter: blur(18px) brightness(.9); } }
 @keyframes lightningFlash { 0%, 8%, 10%, 13%, 100% { opacity: 0; filter: brightness(1); } 8.5% { opacity: .88; filter: brightness(1.8); } 9.2% { opacity: .08; } 11% { opacity: .72; filter: brightness(1.5); } 12% { opacity: 0; } 62% { opacity: 0; } 63% { opacity: .55; } 63.6% { opacity: 0; } }
 @media(prefers-reduced-motion:reduce){ .auth-shell::before, .auth-shell::after { animation: none; } .auth-shell::after { opacity: .08; } }
+
+/* Galaxy login background replaces the previous cloud/lightning layer */
+.galaxy-auth-shell { background: #050611; }
+.galaxy-auth-shell::before, .galaxy-auth-shell::after { display: none; }
+.login-galaxy-bg { position: fixed; inset: 0; z-index: -2; pointer-events: auto; background: radial-gradient(circle at 50% 50%, rgba(35, 18, 64, .65), #050611 58%); }
+.login-galaxy-bg::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at 50% 42%, rgba(255, 214, 109, .14), transparent 30%), linear-gradient(180deg, rgba(5, 6, 17, .08), rgba(5, 6, 17, .48)); }
+.galaxy-auth-shell .unified-login-card { background: linear-gradient(145deg, rgba(255,244,211,.9), rgba(228,194,126,.84)); box-shadow: 0 28px 90px rgba(0,0,0,.52), 0 0 80px rgba(126, 93, 255, .18), inset 0 0 0 1px rgba(255,255,255,.38); }
+@media(prefers-reduced-motion:reduce){ .login-galaxy-bg { opacity: .82; } }

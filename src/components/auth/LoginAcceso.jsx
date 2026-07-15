@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { FaHatWizard } from 'react-icons/fa6';
+import Galaxy from '../effects/Galaxy';
 import { PLAYER_KEY, TEACHER_KEY } from '../../data/gameData';
 import { db, supabase } from '../../services/hechiApi';
 import { cargarLocal, guardarLocal, limpiarTexto } from '../../utils/gameUtils';
@@ -35,7 +36,10 @@ function LoginAcceso({ onAlumno, onMaestro, mensaje, setMensaje }) {
   };
 
   return (
-    <main className='auth-shell'>
+    <main className='auth-shell galaxy-auth-shell'>
+      <div className='login-galaxy-bg' aria-hidden='true'>
+        <Galaxy mouseRepulsion mouseInteraction density={1.45} glowIntensity={0.48} saturation={0.72} hueShift={245} starSpeed={0.72} speed={1.05} twinkleIntensity={0.46} rotationSpeed={0.08} transparent={false} />
+      </div>
       <section className='auth-card login-card unified-login-card'>
         <span className='eyebrow'><FaHatWizard /> Acceso HECHI</span>
         <h1>HECHI GO</h1>
