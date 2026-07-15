@@ -2,6 +2,9 @@
 import { useEffect, useRef } from 'react';
 import './Galaxy.css';
 
+const DEFAULT_FOCAL = [0.5, 0.5];
+const DEFAULT_ROTATION = [1.0, 0.0];
+
 const vertexShader = `
 attribute vec2 uv;
 attribute vec2 position;
@@ -160,8 +163,8 @@ void main() {
 `;
 
 export default function Galaxy({
-  focal = [0.5, 0.5],
-  rotation = [1.0, 0.0],
+  focal = DEFAULT_FOCAL,
+  rotation = DEFAULT_ROTATION,
   starSpeed = 0.5,
   density = 1,
   hueShift = 140,
