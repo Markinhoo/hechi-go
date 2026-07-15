@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react';
-import { FaHatWizard, FaUserPlus, FaWandMagicSparkles, FaXmark } from 'react-icons/fa6';
+import { useEffect, useMemo, useState } from 'react';
+import { FaArrowLeft, FaArrowRight, FaHatWizard, FaUserPlus, FaWandMagicSparkles, FaXmark } from 'react-icons/fa6';
 import { supabase } from './lib/supabaseClient';
 
 const TOTAL_CARTAS = 28;
 const PLAYER_KEY = 'hechi-pocket-player-v3';
-const TEACHER_KEY = 'hechi-pocket-teacher-v3';
+const TEACHER_KEY = 'hechi-pocket-teacher-v4';
 const db = supabase.schema('hechi');
 
 const casas = [
@@ -56,13 +56,17 @@ function guardarLocal(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
+function limpiarTexto(texto) {
+  return texto.trim().toUpperCase();
+}
+
 function Inicio({ onModo }) {
   return (
     <main className='auth-shell'>
-      <section className='auth-card setup-card'>
+      <section className='auth-card setup-card welcome-card'>
         <span className='eyebrow'><FaHatWizard /> Acceso HECHI</span>
         <h1>HECHI GO</h1>
-        <p>El maestro crea una clase y comparte el token. Los alumnos entran con token, nombre y contrasena.</p>
+        <p>El maestro entra con su login autorizado. Los alumnos solo se unen a una clase usando el token, su nombre y contrasena.</p>
         <div className='mode-grid'>
           <button type='button' onClick={() => onModo('maestro')}>Soy maestro</button>
           <button type='button' className='secondary' onClick={() => onModo('alumno')}>Soy alumno</button>
@@ -73,47 +77,100 @@ function Inicio({ onModo }) {
 }
 
 function MaestroAcceso({ onEntrar, mensaje, setMensaje }) {
-  const [token, setToken] = useState(cargarLocal(TEACHER_KEY)?.token || '');
-  const [pin, setPin] = useState(cargarLocal(TEACHER_KEY)?.pin || '');
+  const previo = cargarLocal(TEACHER_KEY);
+  const [authUser, setAuthUser] = useState(null);
+  const [email, setEmail] = useState(previo?.email || '');
+  const [password, setPassword] = useState('');
+  const [token, setToken] = useState(previo?.token || '');
+  const [pin, setPin] = useState(previo?.pin || '');
   const [total, setTotal] = useState(30);
   const objetivos = useMemo(() => calcularObjetivos(Math.max(4, Number(total) || 4)), [total]);
 
+  useEffect(() => {
+    let vivo = true;
+    supabase.auth.getUser().then(({ data }) => {
+      if (vivo && data?.user) {
+        setAuthUser(data.user);
+        setEmail(data.user.email || '');
+      }
+    });
+    return () => { vivo = false; };
+  }, []);
+
+  const iniciarSesion = async (event) => {
+    event.preventDefault();
+    setMensaje('Validando login del maestro...');
+    const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    if (error) return setMensaje(error.message);
+    setAuthUser(data.user);
+    guardarLocal(TEACHER_KEY, { token, pin, email: email.trim() });
+    setMensaje('Login de maestro correcto. Ahora puedes crear o abrir una clase.');
+  };
+
+  const cerrarSesion = async () => {
+    await supabase.auth.signOut();
+    setAuthUser(null);
+    setMensaje('Sesion de maestro cerrada.');
+  };
+
   const crear = async () => {
+    if (!authUser) return setMensaje('Primero inicia sesion como maestro.');
     setMensaje('Creando clase...');
     const nuevoToken = generarToken();
-    const { data, error } = await db.rpc('crear_clase', { p_token: nuevoToken, p_total: Math.max(4, Number(total) || 4), p_pin: pin.trim() || 'maestro' });
+    const pinLimpio = pin.trim() || 'maestro';
+    const { data, error } = await db.rpc('crear_clase', { p_token: nuevoToken, p_total: Math.max(4, Number(total) || 4), p_pin: pinLimpio });
     if (error) return setMensaje(error.message);
-    guardarLocal(TEACHER_KEY, { token: data.token, pin: pin.trim() || 'maestro' });
-    onEntrar(data, pin.trim() || 'maestro');
+    guardarLocal(TEACHER_KEY, { token: data.token, pin: pinLimpio, email: email.trim() });
+    onEntrar(data, pinLimpio);
   };
 
   const entrar = async (event) => {
     event.preventDefault();
+    if (!authUser) return setMensaje('Primero inicia sesion como maestro.');
     setMensaje('Entrando como maestro...');
-    const { data, error } = await db.rpc('login_maestro', { p_token: token.trim().toUpperCase(), p_pin: pin });
+    const tokenLimpio = limpiarTexto(token);
+    const { data, error } = await db.rpc('login_maestro', { p_token: tokenLimpio, p_pin: pin });
     if (error) return setMensaje(error.message);
-    guardarLocal(TEACHER_KEY, { token: token.trim().toUpperCase(), pin });
+    guardarLocal(TEACHER_KEY, { token: tokenLimpio, pin, email: email.trim() });
     onEntrar(data, pin);
   };
 
   return (
     <main className='auth-shell'>
-      <section className='auth-card setup-card'>
-        <span className='eyebrow'><FaHatWizard /> Maestro</span>
-        <h1>Crear clase</h1>
-        <label className='field-label'>PIN maestro</label>
-        <input value={pin} onChange={(event) => setPin(event.target.value)} placeholder='PIN para administrar la clase' />
-        <label className='field-label'>Total de alumnos</label>
-        <input type='number' min='4' max='120' value={total} onChange={(event) => setTotal(event.target.value)} />
-        <div className='house-preview compact'>
-          {casas.map((casa) => <span key={casa.id} style={{ '--house': casa.color, '--metal': casa.metal }}><img src={casa.escudo} alt='' /><b>{casa.nombre}</b><small>{objetivos[casa.id]}</small></span>)}
+      <section className='auth-card setup-card teacher-card'>
+        <span className='eyebrow'><FaHatWizard /> Maestro autorizado</span>
+        <h1>Login maestro</h1>
+        {!authUser ? (
+          <form onSubmit={iniciarSesion} className='teacher-auth-form'>
+            <label className='field-label'>Correo del maestro</label>
+            <input type='email' value={email} onChange={(event) => setEmail(event.target.value)} placeholder='tu correo de Supabase Auth' required />
+            <label className='field-label'>Contrasena</label>
+            <input type='password' value={password} onChange={(event) => setPassword(event.target.value)} placeholder='Contrasena del maestro' required />
+            <button type='submit'>Entrar como maestro</button>
+          </form>
+        ) : (
+          <div className='teacher-session'>
+            <span>Sesion activa: {authUser.email}</span>
+            <button type='button' className='ghost dark' onClick={cerrarSesion}>Cerrar login</button>
+          </div>
+        )}
+
+        <div className={!authUser ? 'locked-class-tools' : 'class-tools'}>
+          <h2>Crear clase</h2>
+          <label className='field-label'>PIN maestro</label>
+          <input value={pin} onChange={(event) => setPin(event.target.value)} placeholder='PIN para administrar la clase' disabled={!authUser} />
+          <label className='field-label'>Total de alumnos</label>
+          <input type='number' min='4' max='120' value={total} onChange={(event) => setTotal(event.target.value)} disabled={!authUser} />
+          <div className='house-preview compact'>
+            {casas.map((casa) => <span key={casa.id} style={{ '--house': casa.color, '--metal': casa.metal }}><img src={casa.escudo} alt='' /><b>{casa.nombre}</b><small>{objetivos[casa.id]}</small></span>)}
+          </div>
+          <button type='button' onClick={crear} disabled={!authUser}>Iniciar clase magica</button>
+          <form onSubmit={entrar} className='teacher-login'>
+            <label className='field-label'>Entrar a clase existente</label>
+            <input value={token} onChange={(event) => setToken(event.target.value.toUpperCase())} placeholder='TOKEN' disabled={!authUser} />
+            <button type='submit' className='secondary' disabled={!authUser}>Entrar con token</button>
+          </form>
         </div>
-        <button type='button' onClick={crear}>Iniciar clase magica</button>
-        <form onSubmit={entrar} className='teacher-login'>
-          <label className='field-label'>Entrar a clase existente</label>
-          <input value={token} onChange={(event) => setToken(event.target.value.toUpperCase())} placeholder='TOKEN' />
-          <button type='submit' className='secondary'>Entrar con token</button>
-        </form>
         {mensaje && <p className='form-message'>{mensaje}</p>}
       </section>
     </main>
@@ -128,18 +185,20 @@ function AlumnoAcceso({ onEntrar, mensaje, setMensaje }) {
 
   const entrar = async (event) => {
     event.preventDefault();
-    setMensaje('Entrando a la clase...');
-    const { data, error } = await db.rpc('entrar_alumno', { p_token: token.trim().toUpperCase(), p_nombre: nombre.trim(), p_password: password });
+    setMensaje('Creando o abriendo tu usuario de clase...');
+    const tokenLimpio = limpiarTexto(token);
+    const { data, error } = await db.rpc('entrar_alumno', { p_token: tokenLimpio, p_nombre: nombre.trim(), p_password: password });
     if (error) return setMensaje(error.message);
-    guardarLocal(PLAYER_KEY, { token: token.trim().toUpperCase(), nombre: nombre.trim(), password, alumnoId: data.alumno_id });
-    onEntrar(data, { token: token.trim().toUpperCase(), nombre: nombre.trim(), password, alumnoId: data.alumno_id });
+    guardarLocal(PLAYER_KEY, { token: tokenLimpio, nombre: nombre.trim(), password, alumnoId: data.alumno_id });
+    onEntrar(data, { token: tokenLimpio, nombre: nombre.trim(), password, alumnoId: data.alumno_id });
   };
 
   return (
     <main className='auth-shell'>
       <section className='auth-card login-card'>
         <span className='eyebrow'><FaUserPlus /> Alumno</span>
-        <h1>Unirse a clase</h1>
+        <h1>Crear usuario</h1>
+        <p>Tu usuario solo sirve para entrar a la clase del token. No puede crear clases.</p>
         <form onSubmit={entrar}>
           <input value={token} onChange={(event) => setToken(event.target.value.toUpperCase())} placeholder='Token de clase' required />
           <input value={nombre} onChange={(event) => setNombre(event.target.value)} placeholder='Nombre del alumno' required />
@@ -180,7 +239,7 @@ function App() {
 
   const refrescar = async (token) => {
     const { data, error } = await db.rpc('cargar_clase', { p_token: token });
-    if (error) throw error;
+    if (error) return setMensaje(error.message);
     setEstado(data);
     return data;
   };
@@ -232,9 +291,20 @@ function App() {
     setMensaje(obtenerCasa(alumno.casaId).nombre + ' gana ' + efecto.puntos + ' puntos.');
   };
 
-  const iniciarArrastre = (event) => { event.currentTarget.setPointerCapture?.(event.pointerId); setArrastre({ activo: true, inicio: event.clientX, delta: 0 }); };
-  const moverArrastre = (event) => { if (arrastre.activo) setArrastre((actual) => ({ ...actual, delta: Math.max(-150, Math.min(150, event.clientX - actual.inicio)) })); };
-  const cerrarArrastre = () => { if (!arrastre.activo) return; if (Math.abs(arrastre.delta) > 34) moverSobre(arrastre.delta < 0 ? 1 : -1); setArrastre({ activo: false, inicio: 0, delta: 0 }); };
+  const iniciarArrastre = (event) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    setArrastre({ activo: true, inicio: event.clientX, delta: 0 });
+  };
+  const moverArrastre = (event) => {
+    if (arrastre.activo) setArrastre((actual) => ({ ...actual, delta: Math.max(-220, Math.min(220, event.clientX - actual.inicio)) }));
+  };
+  const cerrarArrastre = () => {
+    if (!arrastre.activo) return;
+    const pasos = Math.trunc(arrastre.delta / 110);
+    if (Math.abs(arrastre.delta) > 42) moverSobre(pasos !== 0 ? -pasos : arrastre.delta < 0 ? 1 : -1);
+    setArrastre({ activo: false, inicio: 0, delta: 0 });
+  };
 
   const salir = () => { setSesion(null); setEstado(null); setModo('inicio'); setCartaAbierta(null); };
 
@@ -292,7 +362,8 @@ function App() {
         </aside>
 
         <section className='pack-stage'>
-          <div className='carousel-shell mobile-no-arrows'>
+          <div className='carousel-shell'>
+            <button className='carousel-nav' type='button' onClick={() => moverSobre(-1)} aria-label='Carta anterior'><FaArrowLeft /></button>
             <div
               className={'pack-carousel ' + (arrastre.activo ? 'dragging' : '')}
               onPointerDown={iniciarArrastre}
@@ -304,13 +375,16 @@ function App() {
               {sobres.map((sobre, index) => {
                 const offset = index - estado.sobreActivo;
                 const normal = offset > 3 ? offset - sobres.length : offset < -3 ? offset + sobres.length : offset;
+                const visualOffset = normal + (arrastre.activo ? arrastre.delta / 118 : 0);
+                const distancia = Math.min(3.4, Math.abs(visualOffset));
                 return (
-                  <button type='button' key={sobre} className={'pack-card ' + (normal === 0 ? 'active' : '')} style={{ '--offset': normal, '--distance': Math.abs(normal), '--drag': arrastre.delta + 'px' }} onClick={() => normal === 0 ? abrirCarta() : setEstado({ ...estado, sobreActivo: index })}>
+                  <button type='button' key={sobre} className={'pack-card ' + (Math.abs(visualOffset) < 0.45 ? 'active' : '')} style={{ '--offset': visualOffset, '--distance': distancia }} onClick={() => normal === 0 ? abrirCarta() : setEstado({ ...estado, sobreActivo: index })}>
                     <img src='/hechi/card-back.png' alt='Reverso de carta HECHI' draggable='false' />
                   </button>
                 );
               })}
             </div>
+            <button className='carousel-nav' type='button' onClick={() => moverSobre(1)} aria-label='Carta siguiente'><FaArrowRight /></button>
           </div>
           <button type='button' className='open-pack' onClick={abrirCarta}>Abrir carta</button>
           <p className='message'>{mensaje}</p>

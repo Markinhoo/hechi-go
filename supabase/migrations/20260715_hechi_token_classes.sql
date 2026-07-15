@@ -9,6 +9,7 @@ drop table if exists hechi.clases cascade;
 
 create table hechi.clases (
   id uuid primary key default gen_random_uuid(),
+  created_by uuid not null default auth.uid(),
   token text not null unique,
   total integer not null check (total between 4 and 120),
   objetivos jsonb not null,
@@ -149,12 +150,16 @@ declare
   v_id uuid;
   v_total integer := greatest(4, least(120, coalesce(p_total, 30)));
 begin
+  if auth.uid() is null then
+    raise exception 'Debes iniciar sesion como maestro';
+  end if;
+
   if length(trim(coalesce(p_pin, ''))) < 3 then
     raise exception 'El PIN del maestro debe tener al menos 3 caracteres';
   end if;
 
-  insert into hechi.clases(token, total, objetivos, maestro_pin)
-  values (upper(trim(p_token)), v_total, hechi.calcular_objetivos(v_total), p_pin)
+  insert into hechi.clases(created_by, token, total, objetivos, maestro_pin)
+  values (auth.uid(), upper(trim(p_token)), v_total, hechi.calcular_objetivos(v_total), p_pin)
   returning id into v_id;
 
   return hechi.estado_clase(v_id);
@@ -172,7 +177,11 @@ as $$
 declare
   v_clase hechi.clases%rowtype;
 begin
-  select * into v_clase from hechi.clases where token = upper(trim(p_token));
+  if auth.uid() is null then
+    raise exception 'Debes iniciar sesion como maestro';
+  end if;
+
+  select * into v_clase from hechi.clases where token = upper(trim(p_token)) and created_by = auth.uid();
   if not found or v_clase.maestro_pin <> p_pin then
     raise exception 'Token o PIN de maestro incorrecto';
   end if;
@@ -290,7 +299,11 @@ as $$
 declare
   v_clase hechi.clases%rowtype;
 begin
-  select * into v_clase from hechi.clases where token = upper(trim(p_token));
+  if auth.uid() is null then
+    raise exception 'Debes iniciar sesion como maestro';
+  end if;
+
+  select * into v_clase from hechi.clases where token = upper(trim(p_token)) and created_by = auth.uid();
   if not found or v_clase.maestro_pin <> p_pin then
     raise exception 'No autorizado como maestro';
   end if;
@@ -320,7 +333,11 @@ begin
     raise exception 'La nueva contrasena debe tener al menos 3 caracteres';
   end if;
 
-  select * into v_clase from hechi.clases where token = upper(trim(p_token));
+  if auth.uid() is null then
+    raise exception 'Debes iniciar sesion como maestro';
+  end if;
+
+  select * into v_clase from hechi.clases where token = upper(trim(p_token)) and created_by = auth.uid();
   if not found or v_clase.maestro_pin <> p_pin then
     raise exception 'No autorizado como maestro';
   end if;

@@ -87,3 +87,52 @@ body { overscroll-behavior: none; }
 .roster { min-height: 0; display: flex; flex-direction: column; }
 .roster .students { flex: 1; }
 .parchment-panel { min-height: 0; overflow: auto; }
+
+/* Refinement: authenticated teacher flow, wider panels, desktop arrows, mobile breathing room */
+.auth-shell { min-height: 100vh; overflow: auto; align-items: start; padding: 26px; }
+.auth-card { width: min(100%, 720px); }
+.teacher-card h1 { font-size: clamp(52px, 8vw, 78px); }
+.teacher-card h2 { margin: 24px 0 4px; color: #4b1220; font-family: Georgia, 'Times New Roman', serif; font-size: 28px; }
+.teacher-auth-form { margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid rgba(95,57,20,.22); }
+.teacher-session { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 12px 0 18px; padding: 12px; border: 1px solid rgba(95,57,20,.2); border-radius: 8px; background: rgba(255,247,223,.56); color: #4b1220; font-weight: 900; }
+.ghost.dark { color: #ffeeca; background: linear-gradient(100deg,#4b1220,#1b101d); }
+.locked-class-tools { opacity: .48; filter: grayscale(.25); }
+.house-preview.compact { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.house-preview.compact span { min-width: 0; padding: 12px 70px 12px 10px; min-height: 102px; }
+.house-preview.compact img { right: -18px; width: 112px; }
+.hall-panel, .parchment-panel { background: linear-gradient(90deg, rgba(255, 248, 225, .82), rgba(232, 194, 122, .54)), url('/backgrounds/parchment-section.png') center/cover no-repeat; }
+.panel { min-height: 0; }
+.pocket-layout { grid-template-columns: minmax(310px, .95fr) minmax(520px, 1.45fr) minmax(310px, .95fr); align-items: stretch; }
+.no-scroll-grid { min-height: 0; }
+.student-row { grid-template-columns: 30px minmax(0, 1fr) auto auto auto; }
+.carousel-shell { grid-template-columns: 52px 1fr 52px; }
+.carousel-nav { display: grid; width: 46px; height: 46px; place-items: center; align-self: center; }
+.pack-carousel { touch-action: none; }
+.pack-card { transform: translateX(calc(-50% + (var(--offset) * clamp(74px, 7vw, 106px)))) translateY(calc(var(--distance) * 13px)) rotateY(calc(var(--offset) * -19deg)) translateZ(calc(var(--distance) * -42px)) scale(calc(1 - (var(--distance) * .075))); opacity: calc(1 - (var(--distance) * .14)); }
+.pack-card.active { z-index: 20; }
+@media(max-width:1100px){
+  html, body, #root { overflow: auto; height: auto; min-height: 100%; }
+  .magic-surface { height: auto; min-height: 100vh; overflow-x: hidden; overflow-y: auto; }
+  .app-fixed { height: auto; min-height: 100vh; overflow: visible; display: block; }
+  .pocket-layout { grid-template-columns: 1fr; grid-template-rows: none; }
+  .pack-stage { min-height: 360px; }
+  .carousel-shell { grid-template-columns: 1fr; }
+  .carousel-nav { display: none; }
+}
+@media(max-width:760px){
+  .auth-shell { padding: 14px; place-items: start center; }
+  .auth-card { width: 100%; padding: 22px; }
+  .teacher-card h1, .auth-card h1 { font-size: clamp(42px, 16vw, 64px); }
+  .teacher-session { flex-direction: column; align-items: stretch; }
+  .house-preview.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .house-preview.compact span { min-height: 90px; padding-right: 74px; }
+  .game-shell { padding: 10px; }
+  .hero { position: relative; }
+  .house-board { grid-template-columns: 1fr 1fr; }
+  .pocket-layout { display: grid; gap: 12px; margin-top: 12px; }
+  .panel { min-height: 280px; }
+  .pack-stage { min-height: 390px; padding: 18px 10px; }
+  .pack-carousel { height: 270px; min-height: 250px; overflow: visible; }
+  .pack-card { width: 142px; transform: translateX(calc(-50% + (var(--offset) * 64px))) translateY(calc(var(--distance) * 10px)) rotateY(calc(var(--offset) * -16deg)) translateZ(calc(var(--distance) * -34px)) scale(calc(1 - (var(--distance) * .07))); }
+  .students, .parchment-panel { max-height: 330px; overflow: auto; }
+}
