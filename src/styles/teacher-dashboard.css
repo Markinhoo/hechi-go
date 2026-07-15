@@ -366,3 +366,12 @@ body { overscroll-behavior: none; }
   .class-management-grid { grid-template-columns: 1fr; }
   .class-row { grid-template-columns: 1fr; }
 }
+
+/* Center teacher request panel inside the middle block */
+.teacher-requests-stage { place-items: center; align-content: center; }
+.teacher-requests-stage .request-board { width: min(92%, 680px); min-height: min(72%, 360px); align-self: center; justify-self: center; }
+.teacher-requests-stage .message { justify-self: center; }
+@media(max-width:760px){
+  .teacher-requests-stage { place-items: stretch; align-content: start; }
+  .teacher-requests-stage .request-board { width: 100%; min-height: 0; }
+}
