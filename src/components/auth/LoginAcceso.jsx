@@ -7,8 +7,8 @@ import { cargarLocal, guardarLocal, limpiarTexto } from '../../utils/gameUtils';
 function LoginAcceso({ onAlumno, onMaestro, mensaje, setMensaje }) {
   const alumnoPrevio = cargarLocal(PLAYER_KEY);
   const maestroPrevio = cargarLocal(TEACHER_KEY);
-  const [identificador, setIdentificador] = useState(maestroPrevio?.email || alumnoPrevio?.token || '');
-  const [nombre, setNombre] = useState(alumnoPrevio?.nombre || '');
+  const [identificador, setIdentificador] = useState(maestroPrevio?.email || alumnoPrevio?.nombre || '');
+  const [token, setToken] = useState(alumnoPrevio?.token || '');
   const [password, setPassword] = useState(alumnoPrevio?.password || '');
 
   const esCorreo = identificador.includes('@');
@@ -26,11 +26,12 @@ function LoginAcceso({ onAlumno, onMaestro, mensaje, setMensaje }) {
     }
 
     setMensaje('Entrando a la clase...');
-    const tokenLimpio = limpiarTexto(identificador);
-    const { data, error } = await db.rpc('entrar_alumno', { p_token: tokenLimpio, p_nombre: nombre.trim(), p_password: password });
+    const tokenLimpio = limpiarTexto(token);
+    const nombreAlumno = identificador.trim();
+    const { data, error } = await db.rpc('entrar_alumno', { p_token: tokenLimpio, p_nombre: nombreAlumno, p_password: password });
     if (error) return setMensaje(error.message);
-    guardarLocal(PLAYER_KEY, { token: tokenLimpio, nombre: nombre.trim(), password, alumnoId: data.alumno_id });
-    onAlumno(data, { token: tokenLimpio, nombre: nombre.trim(), password, alumnoId: data.alumno_id });
+    guardarLocal(PLAYER_KEY, { token: tokenLimpio, nombre: nombreAlumno, password, alumnoId: data.alumno_id });
+    onAlumno(data, { token: tokenLimpio, nombre: nombreAlumno, password, alumnoId: data.alumno_id });
   };
 
   return (
@@ -38,19 +39,19 @@ function LoginAcceso({ onAlumno, onMaestro, mensaje, setMensaje }) {
       <section className='auth-card login-card unified-login-card'>
         <span className='eyebrow'><FaHatWizard /> Acceso HECHI</span>
         <h1>HECHI GO</h1>
-        <p>Entra con tu correo de maestro o con el token de clase si eres alumno.</p>
+        <p>Entra con tu correo si eres maestro, o con tu usuario y token si eres alumno.</p>
         <form onSubmit={entrar}>
-          <label className='field-label'>Correo maestro o token de clase</label>
-          <input value={identificador} onChange={(event) => setIdentificador(event.target.value)} placeholder='maestro@correo.com o TOKEN' required />
-          {!esCorreo && (
-            <>
-              <label className='field-label'>Nombre del alumno</label>
-              <input value={nombre} onChange={(event) => setNombre(event.target.value)} placeholder='Nombre del alumno' required />
-            </>
-          )}
+          <label className='field-label'>Correo o usuario</label>
+          <input value={identificador} onChange={(event) => setIdentificador(event.target.value)} placeholder='maestro@correo.com o nombre del alumno' required />
           <label className='field-label'>Contrasena</label>
           <input type='password' value={password} onChange={(event) => setPassword(event.target.value)} placeholder={esCorreo ? 'Contrasena de maestro' : 'Contrasena de alumno'} required />
-          <button type='submit'>{esCorreo ? 'Entrar como maestro' : 'Entrar como alumno'}</button>
+          {!esCorreo && (
+            <>
+              <label className='field-label'>Token de clase</label>
+              <input value={token} onChange={(event) => setToken(event.target.value.toUpperCase())} placeholder='TOKEN' required />
+            </>
+          )}
+          <button type='submit'>Entrar</button>
         </form>
         {mensaje && <p className='form-message'>{mensaje}</p>}
       </section>
