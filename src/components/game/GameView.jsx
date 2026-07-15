@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FaArrowLeft, FaArrowRight, FaWandMagicSparkles } from 'react-icons/fa6';
 import { casas, TOTAL_CARTAS } from '../../data/gameData';
 import { db } from '../../services/hechiApi';
@@ -6,8 +6,11 @@ import { efectoCarta, obtenerCasa, randomEntero } from '../../utils/gameUtils';
 import CardModal from './CardModal';
 
 function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setMensaje }) {
-  const [arrastre, setArrastre] = useState({ activo: false, inicio: 0, delta: 0 });
+  const [arrastre, setArrastre] = useState({ activo: false, inicio: 0, startPos: 0, lastX: 0, lastTime: 0, velocity: 0 });
+  const [posicionCarrusel, setPosicionCarrusel] = useState(estado.sobreActivo || 0);
   const [cartaAbierta, setCartaAbierta] = useState(null);
+  const autoAbrirRef = useRef(false);
+  const abrirCartaRef = useRef(null);
   const sobres = Array.from({ length: 7 }, (_, index) => index);
 
   const refrescar = async (token) => {
@@ -24,15 +27,19 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     setMensaje('Participacion autorizada.');
   };
 
-  const solicitarCarta = async () => {
+  const solicitarCarta = async (abrirCuandoAutoricen = false) => {
     if (sesion.tipo !== 'alumno') return;
     const alumno = estado.alumnos.find((item) => item.id === sesion.alumnoId);
     if (!alumno) return setMensaje('No encuentro tu usuario en esta clase.');
-    if (alumno.oportunidades > 0) return setMensaje('Ya tienes una oportunidad autorizada. Ahora abre una carta.');
+    if (alumno.oportunidades > 0) {
+      if (abrirCuandoAutoricen) abrirCarta();
+      return setMensaje('Ya tienes una oportunidad autorizada. Ahora abre una carta.');
+    }
+    if (abrirCuandoAutoricen) autoAbrirRef.current = true;
     const { data, error } = await db.rpc('solicitar_carta', { p_token: sesion.token, p_alumno_id: sesion.alumnoId, p_password: sesion.password });
     if (error) return setMensaje(error.message);
     setEstado(data);
-    setMensaje('Solicitud enviada al maestro.');
+    setMensaje('Solicitud enviada al maestro. La carta se abrira cuando autorice.');
   };
 
   const cambiarPassword = async (alumno) => {
@@ -65,13 +72,13 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   };
 
   const moverSobre = (direccion) => {
-    setEstado((actual) => ({ ...actual, sobreActivo: (actual.sobreActivo + direccion + sobres.length) % sobres.length }));
+    setPosicionCarrusel((actual) => Math.round(actual + direccion));
   };
 
   const abrirCarta = async () => {
     if (sesion.tipo !== 'alumno') return setMensaje('Solo el alumno puede abrir su carta.');
     const alumno = estado.alumnos.find((item) => item.id === sesion.alumnoId);
-    if (!alumno || alumno.oportunidades <= 0) return setMensaje('Necesitas autorizacion del maestro para abrir carta.');
+    if (!alumno || alumno.oportunidades <= 0) return solicitarCarta(true);
     const numero = randomEntero(TOTAL_CARTAS) + 1;
     const efecto = efectoCarta(numero);
     const { data, error } = await db.rpc('abrir_carta', { p_token: sesion.token, p_alumno_id: sesion.alumnoId, p_password: sesion.password, p_numero: numero, p_puntos: efecto.puntos, p_titulo: efecto.titulo, p_descripcion: efecto.descripcion });
@@ -81,21 +88,33 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     setMensaje(obtenerCasa(alumno.casaId).nombre + ' gana ' + efecto.puntos + ' puntos.');
   };
 
+  useEffect(() => {
+    abrirCartaRef.current = abrirCarta;
+  });
+
   const iniciarArrastre = (event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     event.currentTarget.setPointerCapture?.(event.pointerId);
-    setArrastre({ activo: true, inicio: event.clientX, delta: 0 });
+    const ahora = performance.now();
+    setArrastre({ activo: true, inicio: event.clientX, startPos: posicionCarrusel, lastX: event.clientX, lastTime: ahora, velocity: 0 });
   };
 
   const moverArrastre = (event) => {
-    if (arrastre.activo) setArrastre((actual) => ({ ...actual, delta: Math.max(-220, Math.min(220, event.clientX - actual.inicio)) }));
+    if (!arrastre.activo) return;
+    const ahora = performance.now();
+    const delta = event.clientX - arrastre.inicio;
+    const siguiente = arrastre.startPos - delta / 118;
+    const dt = Math.max(1, ahora - arrastre.lastTime);
+    const velocity = (event.clientX - arrastre.lastX) / dt;
+    setPosicionCarrusel(siguiente);
+    setArrastre((actual) => ({ ...actual, lastX: event.clientX, lastTime: ahora, velocity }));
   };
 
   const cerrarArrastre = () => {
     if (!arrastre.activo) return;
-    const pasos = Math.trunc(arrastre.delta / 110);
-    if (Math.abs(arrastre.delta) > 42) moverSobre(pasos !== 0 ? -pasos : arrastre.delta < 0 ? 1 : -1);
-    setArrastre({ activo: false, inicio: 0, delta: 0 });
+    const impulso = -arrastre.velocity * 1.65;
+    setPosicionCarrusel((actual) => Math.round(actual + impulso));
+    setArrastre({ activo: false, inicio: 0, startPos: 0, lastX: 0, lastTime: 0, velocity: 0 });
   };
 
   useEffect(() => {
@@ -106,6 +125,14 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     }, 1800);
     return () => window.clearInterval(id);
   }, [sesion?.token, estado?.token, setEstado]);
+
+  useEffect(() => {
+    if (sesion.tipo !== 'alumno' || !autoAbrirRef.current) return;
+    const alumno = estado.alumnos.find((item) => item.id === sesion.alumnoId);
+    if (!alumno || alumno.oportunidades <= 0) return;
+    autoAbrirRef.current = false;
+    abrirCartaRef.current?.();
+  }, [estado.alumnos, sesion.alumnoId, sesion.tipo]);
 
   const salir = () => { setSesion(null); setEstado(null); setModo('inicio'); setCartaAbierta(null); };
   const alumnoActual = sesion.tipo === 'alumno' ? estado.alumnos.find((alumno) => alumno.id === sesion.alumnoId) : null;
@@ -188,14 +215,15 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
                   onPointerCancel={cerrarArrastre}
                   onPointerLeave={cerrarArrastre}
                 >
-                  {sobres.map((sobre, index) => {
-                    const offset = index - estado.sobreActivo;
-                    const normal = offset > 3 ? offset - sobres.length : offset < -3 ? offset + sobres.length : offset;
-                    const visualOffset = normal + (arrastre.activo ? arrastre.delta / 118 : 0);
+                  {Array.from({ length: 13 }, (_, item) => item - 6).map((offset) => {
+                    const centro = Math.round(posicionCarrusel);
+                    const progreso = posicionCarrusel - centro;
+                    const visualOffset = offset - progreso;
+                    const cartaId = ((centro + offset) % sobres.length + sobres.length) % sobres.length;
                     const distancia = Math.min(3.4, Math.abs(visualOffset));
                     return (
-                      <button type='button' key={sobre} className={'pack-card ' + (Math.abs(visualOffset) < 0.45 ? 'active' : '')} style={{ '--offset': visualOffset, '--distance': distancia }} onClick={() => normal === 0 ? abrirCarta() : setEstado({ ...estado, sobreActivo: index })}>
-                        <img src='/hechi/card-back.png' alt='Reverso de carta HECHI' draggable='false' />
+                      <button type='button' key={centro + '-' + offset} className={'pack-card ' + (Math.abs(visualOffset) < 0.45 ? 'active' : '')} style={{ '--offset': visualOffset, '--distance': distancia }} onClick={() => Math.abs(visualOffset) < 0.45 ? abrirCarta() : setPosicionCarrusel(centro + offset)}>
+                        <img src='/hechi/card-back.png' alt={'Carta ' + (cartaId + 1)} draggable='false' />
                       </button>
                     );
                   })}
@@ -203,7 +231,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
                 <button className='carousel-nav' type='button' onClick={() => moverSobre(1)} aria-label='Carta siguiente'><FaArrowRight /></button>
               </div>
               <div className='student-card-actions'>
-                <button type='button' className='request-card' onClick={solicitarCarta}>Solicitar autorizacion</button>
+                <button type='button' className='request-card' onClick={() => solicitarCarta(true)}>Solicitar autorizacion</button>
                 <button type='button' className='open-pack' onClick={abrirCarta}>Abrir carta</button>
               </div>
             </>

@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import Inicio from './components/auth/Inicio';
-import AlumnoAcceso from './components/auth/AlumnoAcceso';
+import LoginAcceso from './components/auth/LoginAcceso';
 import MaestroAcceso from './components/auth/MaestroAcceso';
 import GameView from './components/game/GameView';
 import MagicSurface from './components/layout/MagicSurface';
@@ -35,12 +34,10 @@ function App() {
     setMensaje('Bienvenido al gran salon. Espera autorizacion para abrir carta.');
   };
 
-  let contenido = <Inicio onModo={setModo} />;
+  let contenido = <LoginAcceso onAlumno={entrarAlumno} onMaestro={() => setModo('maestro')} mensaje={mensaje} setMensaje={setMensaje} />;
 
   if (modo === 'maestro') {
     contenido = <MaestroAcceso onEntrar={entrarMaestro} mensaje={mensaje} setMensaje={setMensaje} />;
-  } else if (modo === 'alumno') {
-    contenido = <AlumnoAcceso onEntrar={entrarAlumno} mensaje={mensaje} setMensaje={setMensaje} />;
   } else if (modo === 'juego' && estado && sesion) {
     contenido = (
       <GameView
