@@ -91,7 +91,7 @@ function MaestroAcceso({ onEntrar, mensaje, setMensaje }) {
   };
 
   return (
-    <main className='auth-shell'>
+    <main className='auth-shell teacher-auth-shell'>
       <section className='auth-card setup-card teacher-card multi-class-card'>
         <span className='eyebrow'><FaHatWizard /> Maestro autorizado</span>
         <h1>Mis clases</h1>
