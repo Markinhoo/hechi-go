@@ -101,13 +101,26 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     const numero = randomEntero(TOTAL_CARTAS) + 1;
     const efecto = efectoCarta(numero);
     if (efecto.tipo === 'rival') {
-      setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, pendienteRival: true });
-      setMensaje('Crucio: elige una casa rival para restarle 3 puntos.');
+      setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteRival: true });
+      setMensaje(efecto.titulo + ': elige una casa rival.');
+      return null;
+    }
+    if (efecto.tipo === 'intercambio') {
+      const hayRivalDisponible = estado.alumnos.some((item) => item.casaId !== alumno.casaId && item.casaId !== estado.casaProtegida);
+      if (alumno.casaId === estado.casaProtegida || !hayRivalDisponible) {
+        const data = await registrarCarta({ numero, efecto });
+        if (!data) return null;
+        setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id });
+        setMensaje('Confundo no encontro intercambio valido por la proteccion activa.');
+        return data;
+      }
+      setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteIntercambio: true });
+      setMensaje('Confundo: elige alumnos para intercambiar casas.');
       return null;
     }
     const data = await registrarCarta({ numero, efecto });
     if (!data) return null;
-    setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId });
+    setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id });
     if (efecto.tipo === 'proteccion') {
       setMensaje(obtenerCasa(alumno.casaId).nombre + ' queda protegida y activa x2 para su siguiente accion.');
     } else {
@@ -129,6 +142,27 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     const puntosFinales = Math.abs(data?.historial?.[0]?.puntos || cartaAbierta.puntos);
     setCartaAbierta({ ...cartaAbierta, casaObjetivo, pendienteRival: false, puntos: -(puntosFinales) });
     setMensaje(rival.nombre + ' pierde ' + puntosFinales + ' puntos por Crucio.');
+  };
+
+  const seleccionarIntercambio = async ({ origenId, destinoId }) => {
+    if (!cartaAbierta || cartaAbierta.tipo !== 'intercambio' || !cartaAbierta.pendienteIntercambio) return;
+    if (!origenId || !destinoId || origenId === destinoId) return setMensaje('Elige dos alumnos diferentes para el intercambio.');
+    const { data, error } = await db.rpc('intercambiar_alumnos', {
+      p_token: sesion.token,
+      p_alumno_id: sesion.alumnoId,
+      p_password: sesion.password,
+      p_numero: cartaAbierta.numero,
+      p_titulo: cartaAbierta.titulo,
+      p_descripcion: cartaAbierta.descripcion,
+      p_origen_id: origenId,
+      p_destino_id: destinoId
+    });
+    if (error) return setMensaje(error.message);
+    const origen = estado.alumnos.find((alumno) => alumno.id === origenId);
+    const destino = estado.alumnos.find((alumno) => alumno.id === destinoId);
+    setEstado(data);
+    setCartaAbierta({ ...cartaAbierta, pendienteIntercambio: false });
+    setMensaje('Confundo intercambio a ' + (origen?.nombre || 'un alumno') + ' con ' + (destino?.nombre || 'otro alumno') + '.');
   };
 
   useEffect(() => {
@@ -298,9 +332,12 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       <CardModal
         carta={cartaAbierta}
         casasRivales={casas.filter((casa) => casa.id !== alumnoActual?.casaId && casa.id !== estado.casaProtegida)}
+        alumnosIntercambio={estado.alumnos.filter((alumno) => alumno.casaId !== estado.casaProtegida)}
         onSelectRival={seleccionarCasaRival}
+        onSelectExchange={seleccionarIntercambio}
         onClose={() => {
-          if (cartaAbierta?.pendienteRival) return setMensaje('Primero elige la casa rival para aplicar Crucio.');
+          if (cartaAbierta?.pendienteRival) return setMensaje('Primero elige la casa rival para aplicar la carta.');
+          if (cartaAbierta?.pendienteIntercambio) return setMensaje('Primero completa el intercambio de Confundo.');
           return setCartaAbierta(null);
         }}
       />
