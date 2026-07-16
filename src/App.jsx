@@ -20,8 +20,8 @@ function App() {
     window.setTimeout(() => setDestellos((actual) => actual.filter((d) => d.id !== id)), intenso ? 900 : 620);
   };
 
-  const entrarMaestro = (data, pin) => {
-    setSesion({ tipo: 'maestro', token: data.token, pin });
+  const entrarMaestro = (data) => {
+    setSesion({ tipo: 'maestro', token: data.token });
     setEstado(data);
     setModo('juego');
     setMensaje('Comparte este token con tus alumnos: ' + data.token);

@@ -16,7 +16,6 @@ create table hechi.clases (
   total integer not null check (total between 4 and 120),
   objetivos jsonb not null,
   puntajes jsonb not null default '{"gryffindor":0,"slytherin":0,"ravenclaw":0,"hufflepuff":0}',
-  maestro_pin text not null,
   sobre_activo integer not null default 0,
   estado text not null default 'activa' check (estado in ('activa', 'cerrada')),
   created_at timestamptz not null default now(),
@@ -172,7 +171,7 @@ begin
 end;
 $$;
 
-create or replace function hechi.crear_clase(p_token text, p_total integer, p_pin text, p_nombre text default 'Clase HECHI GO')
+create or replace function hechi.crear_clase(p_token text, p_total integer, p_nombre text default 'Clase HECHI GO')
 returns jsonb
 language plpgsql
 security definer
@@ -190,12 +189,9 @@ begin
     raise exception 'Escribe el nombre del grupo';
   end if;
 
-  if length(trim(coalesce(p_pin, ''))) < 3 then
-    raise exception 'El PIN del maestro debe tener al menos 3 caracteres';
-  end if;
 
-  insert into hechi.clases(created_by, nombre, token, total, objetivos, maestro_pin)
-  values (auth.uid(), trim(p_nombre), upper(trim(p_token)), v_total, hechi.calcular_objetivos(v_total), p_pin)
+  insert into hechi.clases(created_by, nombre, token, total, objetivos)
+  values (auth.uid(), trim(p_nombre), upper(trim(p_token)), v_total, hechi.calcular_objetivos(v_total))
   returning id into v_id;
 
   return hechi.estado_clase(v_id);
@@ -240,7 +236,7 @@ begin
 end;
 $$;
 
-create or replace function hechi.login_maestro(p_token text, p_pin text)
+create or replace function hechi.login_maestro(p_token text)
 returns jsonb
 language plpgsql
 security definer
@@ -254,8 +250,8 @@ begin
   end if;
 
   select * into v_clase from hechi.clases where token = upper(trim(p_token)) and created_by = auth.uid();
-  if not found or v_clase.maestro_pin <> p_pin then
-    raise exception 'Token o PIN de maestro incorrecto';
+  if not found then
+    raise exception 'Token de maestro incorrecto';
   end if;
   return hechi.estado_clase(v_clase.id);
 end;
@@ -395,7 +391,7 @@ begin
 end;
 $$;
 
-create or replace function hechi.autorizar_participacion(p_token text, p_pin text, p_alumno_id uuid)
+create or replace function hechi.autorizar_participacion(p_token text, p_alumno_id uuid)
 returns jsonb
 language plpgsql
 security definer
@@ -410,7 +406,7 @@ begin
   end if;
 
   select * into v_clase from hechi.clases where token = upper(trim(p_token)) and created_by = auth.uid();
-  if not found or v_clase.maestro_pin <> p_pin then
+  if not found then
     raise exception 'No autorizado como maestro';
   end if;
 
@@ -431,7 +427,7 @@ begin
 end;
 $$;
 
-create or replace function hechi.cambiar_password_alumno(p_token text, p_pin text, p_alumno_id uuid, p_password text)
+create or replace function hechi.cambiar_password_alumno(p_token text, p_alumno_id uuid, p_password text)
 returns jsonb
 language plpgsql
 security definer
@@ -449,7 +445,7 @@ begin
   end if;
 
   select * into v_clase from hechi.clases where token = upper(trim(p_token)) and created_by = auth.uid();
-  if not found or v_clase.maestro_pin <> p_pin then
+  if not found then
     raise exception 'No autorizado como maestro';
   end if;
 
@@ -516,7 +512,7 @@ end;
 $$;
 
 
-create or replace function hechi.reiniciar_clase(p_token text, p_pin text)
+create or replace function hechi.reiniciar_clase(p_token text)
 returns jsonb
 language plpgsql
 security definer
@@ -530,7 +526,7 @@ begin
   end if;
 
   select * into v_clase from hechi.clases where token = upper(trim(p_token)) and created_by = auth.uid();
-  if not found or v_clase.maestro_pin <> p_pin then
+  if not found then
     raise exception 'No autorizado como maestro';
   end if;
 
@@ -547,7 +543,7 @@ begin
 end;
 $$;
 
-create or replace function hechi.eliminar_clase(p_token text, p_pin text)
+create or replace function hechi.eliminar_clase(p_token text)
 returns jsonb
 language plpgsql
 security definer
@@ -561,7 +557,7 @@ begin
   end if;
 
   select * into v_clase from hechi.clases where token = upper(trim(p_token)) and created_by = auth.uid();
-  if not found or v_clase.maestro_pin <> p_pin then
+  if not found then
     raise exception 'No autorizado como maestro';
   end if;
 

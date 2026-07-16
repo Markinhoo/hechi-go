@@ -21,7 +21,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   };
 
   const autorizar = async (alumnoId) => {
-    const { data, error } = await db.rpc('autorizar_participacion', { p_token: sesion.token, p_pin: sesion.pin, p_alumno_id: alumnoId });
+    const { data, error } = await db.rpc('autorizar_participacion', { p_token: sesion.token, p_alumno_id: alumnoId });
     if (error) return setMensaje(error.message);
     setEstado(data);
     setMensaje('Participacion autorizada.');
@@ -45,7 +45,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const cambiarPassword = async (alumno) => {
     const nueva = window.prompt('Nueva contrasena para ' + alumno.nombre);
     if (!nueva) return;
-    const { data, error } = await db.rpc('cambiar_password_alumno', { p_token: sesion.token, p_pin: sesion.pin, p_alumno_id: alumno.id, p_password: nueva });
+    const { data, error } = await db.rpc('cambiar_password_alumno', { p_token: sesion.token, p_alumno_id: alumno.id, p_password: nueva });
     if (error) return setMensaje(error.message);
     setEstado(data);
     setMensaje('Contrasena actualizada para ' + alumno.nombre + '.');
@@ -54,7 +54,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const reiniciarClase = async () => {
     if (sesion.tipo !== 'maestro') return;
     if (!window.confirm('Reiniciar esta clase borrara alumnos, puntos, cartas, solicitudes e historial. El token se conserva.')) return;
-    const { data, error } = await db.rpc('reiniciar_clase', { p_token: sesion.token, p_pin: sesion.pin });
+    const { data, error } = await db.rpc('reiniciar_clase', { p_token: sesion.token });
     if (error) return setMensaje(error.message);
     setEstado(data);
     setMensaje('Clase reiniciada desde cero. El token sigue siendo ' + data.token + '.');
@@ -63,7 +63,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const eliminarClase = async () => {
     if (sesion.tipo !== 'maestro') return;
     if (!window.confirm('Eliminar esta clase borrara definitivamente grupo, alumnos, puntos y token.')) return;
-    const { error } = await db.rpc('eliminar_clase', { p_token: sesion.token, p_pin: sesion.pin });
+    const { error } = await db.rpc('eliminar_clase', { p_token: sesion.token });
     if (error) return setMensaje(error.message);
     setSesion(null);
     setEstado(null);

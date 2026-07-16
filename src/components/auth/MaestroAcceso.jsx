@@ -10,7 +10,6 @@ function MaestroAcceso({ onEntrar, mensaje, setMensaje }) {
   const [email, setEmail] = useState(previo?.email || '');
   const [password, setPassword] = useState('');
   const [grupo, setGrupo] = useState('9A');
-  const [pin, setPin] = useState(previo?.pin || '');
   const [total, setTotal] = useState(30);
   const [clases, setClases] = useState([]);
   const [cargandoClases, setCargandoClases] = useState(false);
@@ -54,7 +53,7 @@ function MaestroAcceso({ onEntrar, mensaje, setMensaje }) {
     const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     if (error) return setMensaje(error.message);
     setAuthUser(data.user);
-    guardarLocal(TEACHER_KEY, { pin, email: email.trim() });
+    guardarLocal(TEACHER_KEY, { email: email.trim() });
     setMensaje('Login correcto. Elige una clase existente o crea una nueva.');
   };
 
@@ -71,23 +70,20 @@ function MaestroAcceso({ onEntrar, mensaje, setMensaje }) {
     if (!nombreGrupo) return setMensaje('Escribe el nombre del grupo, por ejemplo 9A.');
     setMensaje('Creando clase...');
     const nuevoToken = generarToken();
-    const pinLimpio = pin.trim() || 'maestro';
-    const { data, error } = await db.rpc('crear_clase', { p_token: nuevoToken, p_total: Math.max(4, Number(total) || 4), p_pin: pinLimpio, p_nombre: nombreGrupo });
+    const { data, error } = await db.rpc('crear_clase', { p_token: nuevoToken, p_total: Math.max(4, Number(total) || 4), p_nombre: nombreGrupo });
     if (error) return setMensaje(error.message);
-    guardarLocal(TEACHER_KEY, { pin: pinLimpio, email: email.trim() });
+    guardarLocal(TEACHER_KEY, { email: email.trim() });
     await cargarClases();
-    onEntrar(data, pinLimpio);
+    onEntrar(data);
   };
 
   const abrirClase = async (clase) => {
     if (!authUser) return setMensaje('Primero inicia sesion como maestro.');
-    const pinLimpio = pin.trim();
-    if (!pinLimpio) return setMensaje('Escribe el PIN maestro para abrir ' + clase.nombre + '.');
     setMensaje('Abriendo ' + clase.nombre + '...');
-    const { data, error } = await db.rpc('login_maestro', { p_token: clase.token, p_pin: pinLimpio });
+    const { data, error } = await db.rpc('login_maestro', { p_token: clase.token });
     if (error) return setMensaje(error.message);
-    guardarLocal(TEACHER_KEY, { pin: pinLimpio, email: email.trim() });
-    onEntrar(data, pinLimpio);
+    guardarLocal(TEACHER_KEY, { email: email.trim() });
+    onEntrar(data);
   };
 
   return (
@@ -115,8 +111,6 @@ function MaestroAcceso({ onEntrar, mensaje, setMensaje }) {
             <h2>Crear clase nueva</h2>
             <label className='field-label'>Nombre del grupo</label>
             <input value={grupo} onChange={(event) => setGrupo(event.target.value)} placeholder='9A, 9B, 9ABIS...' disabled={!authUser} />
-            <label className='field-label'>PIN maestro</label>
-            <input value={pin} onChange={(event) => setPin(event.target.value)} placeholder='PIN para administrar tus clases' disabled={!authUser} />
             <label className='field-label'>Total de alumnos</label>
             <input type='number' min='4' max='120' value={total} onChange={(event) => setTotal(event.target.value)} disabled={!authUser} />
             <div className='house-preview compact'>
