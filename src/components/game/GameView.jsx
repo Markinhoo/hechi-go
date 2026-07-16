@@ -108,7 +108,12 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     const data = await registrarCarta({ numero, efecto });
     if (!data) return null;
     setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId });
-    setMensaje(obtenerCasa(alumno.casaId).nombre + ' gana ' + efecto.puntos + ' puntos.');
+    if (efecto.tipo === 'proteccion') {
+      setMensaje(obtenerCasa(alumno.casaId).nombre + ' queda protegida y activa x2 para su siguiente accion.');
+    } else {
+      const puntosFinales = data?.historial?.[0]?.puntos || efecto.puntos;
+      setMensaje(obtenerCasa(alumno.casaId).nombre + ' gana ' + puntosFinales + ' puntos.');
+    }
     return data;
   };
 
@@ -121,8 +126,9 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     const data = await registrarCarta({ numero: cartaAbierta.numero, efecto, casaObjetivo });
     if (!data) return;
     const rival = obtenerCasa(casaObjetivo);
-    setCartaAbierta({ ...cartaAbierta, casaObjetivo, pendienteRival: false });
-    setMensaje(rival.nombre + ' pierde 3 puntos por Crucio.');
+    const puntosFinales = Math.abs(data?.historial?.[0]?.puntos || cartaAbierta.puntos);
+    setCartaAbierta({ ...cartaAbierta, casaObjetivo, pendienteRival: false, puntos: -(puntosFinales) });
+    setMensaje(rival.nombre + ' pierde ' + puntosFinales + ' puntos por Crucio.');
   };
 
   useEffect(() => {
@@ -199,6 +205,8 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
             <span>{estado.conteos[casa.id]}/{estado.objetivos[casa.id]} aprendices</span>
             <h2>{casa.nombre}</h2>
             <strong>{estado.puntajes[casa.id]} pts</strong>
+            {estado.casaProtegida === casa.id && <em className='house-status protected'>Protegida</em>}
+            {estado.casaMultiplicador === casa.id && <em className='house-status multiplier'>x2 pendiente</em>}
           </article>
         ))}
       </section>
@@ -289,7 +297,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
 
       <CardModal
         carta={cartaAbierta}
-        casasRivales={casas.filter((casa) => casa.id !== alumnoActual?.casaId)}
+        casasRivales={casas.filter((casa) => casa.id !== alumnoActual?.casaId && casa.id !== estado.casaProtegida)}
         onSelectRival={seleccionarCasaRival}
         onClose={() => {
           if (cartaAbierta?.pendienteRival) return setMensaje('Primero elige la casa rival para aplicar Crucio.');

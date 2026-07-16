@@ -4,7 +4,7 @@ import { obtenerCasa } from '../../utils/gameUtils';
 function CardModal({ carta, onClose, casasRivales = [], onSelectRival }) {
   if (!carta) return null;
   const casa = obtenerCasa(carta.casaId);
-  const puntosTexto = carta.puntos > 0 ? '+' + carta.puntos : String(carta.puntos);
+  const puntosTexto = carta.tipo === 'proteccion' ? 'Proteccion activa' : (carta.puntos > 0 ? '+' + carta.puntos + ' puntos' : String(carta.puntos) + ' puntos');
   const esperaRival = carta.tipo === 'rival' && carta.pendienteRival;
 
   return (
@@ -18,7 +18,7 @@ function CardModal({ carta, onClose, casasRivales = [], onSelectRival }) {
       </div>
       <article className={'modal-effect ' + (carta.puntos < 0 ? 'negative' : '')} style={{ '--house': casa.color, '--metal': casa.metal }}>
         <span>{carta.titulo}</span>
-        <h2>{puntosTexto} puntos</h2>
+        <h2>{puntosTexto}</h2>
         <p>{carta.descripcion}</p>
         {esperaRival && (
           <div className='rival-options' aria-label='Selecciona una casa rival'>

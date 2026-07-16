@@ -12,6 +12,7 @@ export const casas = [
 export const efectosCartas = Array.from({ length: TOTAL_CARTAS }, (_, index) => {
   const numero = index + 1;
   if (numero === 1) return { puntos: 1, titulo: 'Alohomora', descripcion: 'SUMA +1 A LA CASA' };
+  if (numero === 2) return { puntos: 0, titulo: 'Expecto Patronus', descripcion: 'PROTEGE A TU CASA Y DUPLICA LA SIGUIENTE PARTICIPACION', tipo: 'proteccion' };
   if (numero === 9) return { puntos: -3, titulo: 'Crucio', descripcion: 'RESTA -3 A UNA CASA RIVAL', tipo: 'rival' };
   if ([4, 12, 21, 28].includes(numero)) return { puntos: 40, titulo: 'Hechizo supremo', descripcion: 'La casa recibe una gran recompensa por una participacion brillante.' };
   if ([7, 14, 23].includes(numero)) return { puntos: 30, titulo: 'Reliquia poderosa', descripcion: 'La casa sube con fuerza en el marcador.' };

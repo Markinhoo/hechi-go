@@ -70,6 +70,12 @@
 
 .house-card strong{font-size:42px}
 
+.house-status{position:relative;z-index:2;display:inline-flex;width:max-content;margin-top:8px;padding:5px 9px;border-radius:999px;font-style:normal;font-size:12px;font-weight:1000;text-transform:uppercase;letter-spacing:.04em;background:rgba(15,9,16,.58);border:1px solid var(--metal);box-shadow:0 0 18px color-mix(in srgb,var(--metal) 28%,transparent)}
+
+.house-status.protected{color:#d9fff1}
+
+.house-status.multiplier{margin-left:6px;color:#fff0a6}
+
 .house-preview img{right:-10px;width:118px;opacity:.34}
 
 .house-preview span{padding-right:120px;min-height:104px}
