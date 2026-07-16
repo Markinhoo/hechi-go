@@ -22,7 +22,7 @@ function CardModal({ carta, onClose, casasRivales = [], onSelectRival }) {
         <p>{carta.descripcion}</p>
         {esperaRival && (
           <div className='rival-options' aria-label='Selecciona una casa rival'>
-            <small>Elige la casa rival que perdera 3 puntos</small>
+            <small>Elige la casa rival que perdera {Math.abs(carta.puntos)} puntos</small>
             <div>
               {casasRivales.map((rival) => (
                 <button
