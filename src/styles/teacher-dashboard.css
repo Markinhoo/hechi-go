@@ -375,3 +375,30 @@ body { overscroll-behavior: none; }
   .teacher-requests-stage { place-items: stretch; align-content: start; }
   .teacher-requests-stage .request-board { width: 100%; min-height: 0; }
 }
+
+/* Compact and scrollable mobile teacher class dashboard */
+@media(max-width:760px){
+  html, body, #root { height: auto; min-height: 100%; overflow-y: auto; }
+  .magic-surface { height: auto; min-height: 100dvh; overflow-x: hidden; overflow-y: auto; }
+  .auth-shell:not(.galaxy-auth-shell) { min-height: 100dvh; height: auto; overflow-y: auto; padding: 10px; align-items: start; place-items: start center; }
+  .multi-class-card { width: 100%; padding: 14px; max-height: none; }
+  .multi-class-card::before { inset: 5px; }
+  .teacher-card h1 { font-size: clamp(34px, 14vw, 48px); line-height: .92; margin-bottom: 8px; }
+  .teacher-card h2 { font-size: 23px; margin: 12px 0 4px; }
+  .teacher-session { margin: 8px 0 12px; padding: 9px; gap: 8px; }
+  .class-management-grid { gap: 10px; }
+  .create-class-panel, .saved-classes-panel { padding: 11px; border-radius: 8px; }
+  .field-label { margin: 10px 0 5px; font-size: 14px; }
+  input { padding: 9px 10px; min-height: 38px; border-radius: 6px; }
+  .house-preview.compact { gap: 6px; margin: 10px 0; }
+  .house-preview.compact span { min-height: 66px; padding: 8px 48px 8px 8px; }
+  .house-preview.compact img { width: 76px; right: -18px; }
+  .house-preview b { font-size: 13px; }
+  .house-preview small { font-size: 13px; }
+  .create-class-panel > button, .class-row button, .ghost.small { padding: 9px 10px; }
+  .class-list { max-height: none; overflow: visible; gap: 8px; }
+  .class-row { padding: 10px; gap: 8px; }
+  .class-row strong { font-size: 18px; }
+  .class-row span { font-size: 12px; }
+  .form-message { margin-top: 10px; font-size: 14px; }
+}
