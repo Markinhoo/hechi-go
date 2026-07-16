@@ -21,6 +21,7 @@ drop function if exists hechi.autorizar_participacion(text, text, uuid);
 drop function if exists hechi.cambiar_password_alumno(text, uuid, text);
 drop function if exists hechi.cambiar_password_alumno(text, text, uuid, text);
 drop function if exists hechi.abrir_carta(text, uuid, text, integer, integer, text, text);
+drop function if exists hechi.abrir_carta(text, uuid, text, integer, integer, text, text, text);
 drop function if exists hechi.reiniciar_clase(text);
 drop function if exists hechi.reiniciar_clase(text, text);
 drop function if exists hechi.eliminar_clase(text);
@@ -72,7 +73,8 @@ create table hechi.participaciones (
   clase_id uuid not null references hechi.clases(id) on delete cascade,
   alumno_id uuid not null references hechi.alumnos(id) on delete cascade,
   carta integer not null check (carta between 1 and 28),
-  puntos integer not null check (puntos between 0 and 100),
+  puntos integer not null check (puntos between -100 and 100),
+  casa_objetivo text check (casa_objetivo in ('gryffindor','slytherin','ravenclaw','hufflepuff')),
   titulo text not null,
   descripcion text not null,
   created_at timestamptz not null default now()
@@ -147,7 +149,9 @@ begin
     select jsonb_build_object(
       'id', p.id,
       'alumno', a.nombre,
-      'casaId', a.casa_id,
+      'casaId', coalesce(p.casa_objetivo, a.casa_id),
+      'casaAlumno', a.casa_id,
+      'casaObjetivo', p.casa_objetivo,
       'carta', p.carta,
       'puntos', p.puntos,
       'titulo', p.titulo,
@@ -484,7 +488,7 @@ begin
 end;
 $$;
 
-create or replace function hechi.abrir_carta(p_token text, p_alumno_id uuid, p_password text, p_numero integer, p_puntos integer, p_titulo text, p_descripcion text)
+create or replace function hechi.abrir_carta(p_token text, p_alumno_id uuid, p_password text, p_numero integer, p_puntos integer, p_titulo text, p_descripcion text, p_casa_objetivo text default null)
 returns jsonb
 language plpgsql
 security definer
@@ -493,6 +497,7 @@ as $$
 declare
   v_clase hechi.clases%rowtype;
   v_alumno hechi.alumnos%rowtype;
+  v_casa_objetivo text;
   v_nuevos_puntos integer;
 begin
   if not (p_numero between 1 and 28) then
@@ -512,23 +517,35 @@ begin
     raise exception 'Necesitas autorizacion del maestro para abrir carta';
   end if;
 
+  if p_puntos < 0 then
+    v_casa_objetivo := lower(trim(coalesce(p_casa_objetivo, '')));
+    if v_casa_objetivo not in ('gryffindor','slytherin','ravenclaw','hufflepuff') then
+      raise exception 'Selecciona una casa rival valida';
+    end if;
+    if v_casa_objetivo = v_alumno.casa_id then
+      raise exception 'No puedes restarle puntos a tu propia casa';
+    end if;
+  else
+    v_casa_objetivo := v_alumno.casa_id;
+  end if;
+
   update hechi.alumnos
   set oportunidades = oportunidades - 1,
-      puntos = puntos + p_puntos,
+      puntos = puntos + greatest(p_puntos, 0),
       cartas = array_append(cartas, p_numero),
       updated_at = now()
   where id = v_alumno.id;
 
-  v_nuevos_puntos := coalesce((v_clase.puntajes->>v_alumno.casa_id)::integer, 0) + p_puntos;
+  v_nuevos_puntos := greatest(0, coalesce((v_clase.puntajes->>v_casa_objetivo)::integer, 0) + p_puntos);
 
   update hechi.clases
-  set puntajes = puntajes || jsonb_build_object(v_alumno.casa_id, v_nuevos_puntos),
+  set puntajes = puntajes || jsonb_build_object(v_casa_objetivo, v_nuevos_puntos),
       sobre_activo = floor(random() * 7)::integer,
       updated_at = now()
   where id = v_clase.id;
 
-  insert into hechi.participaciones(clase_id, alumno_id, carta, puntos, titulo, descripcion)
-  values (v_clase.id, v_alumno.id, p_numero, p_puntos, p_titulo, p_descripcion);
+  insert into hechi.participaciones(clase_id, alumno_id, carta, puntos, casa_objetivo, titulo, descripcion)
+  values (v_clase.id, v_alumno.id, p_numero, p_puntos, v_casa_objetivo, p_titulo, p_descripcion);
 
   return hechi.estado_clase(v_clase.id);
 end;

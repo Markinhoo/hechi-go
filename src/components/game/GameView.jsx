@@ -75,17 +75,54 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     setPosicionCarrusel((actual) => Math.round(actual + direccion));
   };
 
+  const registrarCarta = async ({ numero, efecto, casaObjetivo = null }) => {
+    const { data, error } = await db.rpc('abrir_carta', {
+      p_token: sesion.token,
+      p_alumno_id: sesion.alumnoId,
+      p_password: sesion.password,
+      p_numero: numero,
+      p_puntos: efecto.puntos,
+      p_titulo: efecto.titulo,
+      p_descripcion: efecto.descripcion,
+      p_casa_objetivo: casaObjetivo
+    });
+    if (error) {
+      setMensaje(error.message);
+      return null;
+    }
+    setEstado(data);
+    return data;
+  };
+
   const abrirCarta = async () => {
     if (sesion.tipo !== 'alumno') return setMensaje('Solo el alumno puede abrir su carta.');
     const alumno = estado.alumnos.find((item) => item.id === sesion.alumnoId);
     if (!alumno || alumno.oportunidades <= 0) return solicitarCarta(true);
     const numero = randomEntero(TOTAL_CARTAS) + 1;
     const efecto = efectoCarta(numero);
-    const { data, error } = await db.rpc('abrir_carta', { p_token: sesion.token, p_alumno_id: sesion.alumnoId, p_password: sesion.password, p_numero: numero, p_puntos: efecto.puntos, p_titulo: efecto.titulo, p_descripcion: efecto.descripcion });
-    if (error) return setMensaje(error.message);
-    setEstado(data);
+    if (efecto.tipo === 'rival') {
+      setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, pendienteRival: true });
+      setMensaje('Crucio: elige una casa rival para restarle 3 puntos.');
+      return null;
+    }
+    const data = await registrarCarta({ numero, efecto });
+    if (!data) return null;
     setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId });
     setMensaje(obtenerCasa(alumno.casaId).nombre + ' gana ' + efecto.puntos + ' puntos.');
+    return data;
+  };
+
+  const seleccionarCasaRival = async (casaObjetivo) => {
+    if (!cartaAbierta || cartaAbierta.tipo !== 'rival' || !cartaAbierta.pendienteRival) return;
+    const alumno = estado.alumnos.find((item) => item.id === sesion.alumnoId);
+    if (!alumno) return setMensaje('No encuentro tu usuario en esta clase.');
+    if (casaObjetivo === alumno.casaId) return setMensaje('Debes elegir una casa rival.');
+    const efecto = { puntos: cartaAbierta.puntos, titulo: cartaAbierta.titulo, descripcion: cartaAbierta.descripcion, tipo: cartaAbierta.tipo };
+    const data = await registrarCarta({ numero: cartaAbierta.numero, efecto, casaObjetivo });
+    if (!data) return;
+    const rival = obtenerCasa(casaObjetivo);
+    setCartaAbierta({ ...cartaAbierta, casaObjetivo, pendienteRival: false });
+    setMensaje(rival.nombre + ' pierde 3 puntos por Crucio.');
   };
 
   useEffect(() => {
@@ -242,11 +279,23 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         <aside className='panel history parchment-panel'>
           <h2>Ultimos hechizos</h2>
           {estado.historial.length === 0 && <p className='empty'>Aun no se abre ninguna carta.</p>}
-          {estado.historial.map((item) => <div className='history-row' key={item.id} style={{ '--house': obtenerCasa(item.casaId).color, '--metal': obtenerCasa(item.casaId).metal }}><strong>{item.alumno}</strong><span>{obtenerCasa(item.casaId).nombre} +{item.puntos}</span></div>)}
+          {estado.historial.map((item) => {
+            const casaHistorial = obtenerCasa(item.casaId);
+            const puntosHistorial = item.puntos > 0 ? '+' + item.puntos : String(item.puntos);
+            return <div className='history-row' key={item.id} style={{ '--house': casaHistorial.color, '--metal': casaHistorial.metal }}><strong>{item.alumno}</strong><span>{casaHistorial.nombre} {puntosHistorial}</span></div>;
+          })}
         </aside>
       </section>
 
-      <CardModal carta={cartaAbierta} onClose={() => setCartaAbierta(null)} />
+      <CardModal
+        carta={cartaAbierta}
+        casasRivales={casas.filter((casa) => casa.id !== alumnoActual?.casaId)}
+        onSelectRival={seleccionarCasaRival}
+        onClose={() => {
+          if (cartaAbierta?.pendienteRival) return setMensaje('Primero elige la casa rival para aplicar Crucio.');
+          return setCartaAbierta(null);
+        }}
+      />
     </main>
   );
 }

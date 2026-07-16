@@ -102,6 +102,19 @@
 
 .modal-effect p{margin:0;color:#ffeeca}
 
+
+.modal-effect.negative{background:linear-gradient(120deg,#4b1020,#16101d 54%,var(--house));}
+
+.rival-options{display:grid;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,238,202,.22)}
+
+.rival-options small{color:#ffeeca;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+
+.rival-options>div{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+
+.rival-choice{padding:10px 14px;border-radius:999px;color:#fff7df;background:linear-gradient(120deg,var(--house),#1b101d);border:1px solid var(--metal);box-shadow:0 10px 24px rgba(0,0,0,.28),0 0 22px color-mix(in srgb,var(--metal) 26%,transparent);font-weight:1000}
+
+.rival-choice:hover{transform:translateY(-2px);filter:brightness(1.08)}
+
 .pull-result{display:none}
 
 @keyframes sparkFade{0%{opacity:.95;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-110%) scale(.25)}}
