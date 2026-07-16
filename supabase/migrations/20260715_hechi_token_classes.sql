@@ -3,6 +3,29 @@ create schema if not exists hechi;
 
 grant usage on schema hechi to anon, authenticated;
 
+-- Clean up previous HECHI function signatures before recreating them.
+-- Supabase/Postgres does not allow changing parameter names or arity with CREATE OR REPLACE.
+drop function if exists hechi.calcular_objetivos(integer);
+drop function if exists hechi.estado_clase(uuid);
+drop function if exists hechi.crear_clase(text, integer, text);
+drop function if exists hechi.crear_clase(text, integer, text, text);
+drop function if exists hechi.listar_clases_maestro();
+drop function if exists hechi.login_maestro(text);
+drop function if exists hechi.login_maestro(text, text);
+drop function if exists hechi.cargar_clase(text);
+drop function if exists hechi.elegir_casa(uuid);
+drop function if exists hechi.entrar_alumno(text, text, text);
+drop function if exists hechi.solicitar_carta(text, uuid, text);
+drop function if exists hechi.autorizar_participacion(text, uuid);
+drop function if exists hechi.autorizar_participacion(text, text, uuid);
+drop function if exists hechi.cambiar_password_alumno(text, uuid, text);
+drop function if exists hechi.cambiar_password_alumno(text, text, uuid, text);
+drop function if exists hechi.abrir_carta(text, uuid, text, integer, integer, text, text);
+drop function if exists hechi.reiniciar_clase(text);
+drop function if exists hechi.reiniciar_clase(text, text);
+drop function if exists hechi.eliminar_clase(text);
+drop function if exists hechi.eliminar_clase(text, text);
+
 drop table if exists hechi.participaciones cascade;
 drop table if exists hechi.solicitudes cascade;
 drop table if exists hechi.alumnos cascade;
