@@ -18,12 +18,16 @@ export const efectosCartas = Array.from({ length: TOTAL_CARTAS }, (_, index) => 
   if (numero === 5) return { puntos: 1, titulo: 'Envejecedora', descripcion: '+1 A SU CASA. CADA VEZ QUE SALGA AUMENTA SU VALOR', tipo: 'acumulativa' };
   if (numero === 6) return { puntos: 0, titulo: 'Imperio', descripcion: 'INTERCAMBIA DE CASA CON OTRO JUGADOR', tipo: 'intercambio' };
   if (numero === 7) return { puntos: 2, titulo: 'Incendio', descripcion: 'SUMA +2 A LA CASA' };
+  if (numero === 8) return { puntos: 0, titulo: 'Felix Felicis', descripcion: 'DUPLICA LAS PREGUNTAS BIEN EN EL EXAMEN', tipo: 'guardable' };
   if (numero === 9) return { puntos: -3, titulo: 'Crucio', descripcion: 'RESTA -3 A UNA CASA RIVAL', tipo: 'rival' };
   if (numero === 11) return { puntos: 3, titulo: 'Engorgio', descripcion: 'SUMA +3 A LA CASA' };
+  if (numero === 13) return { puntos: 0, titulo: 'Muertos en Vida', descripcion: 'RESCATA A ALGUIEN DE REPROBAR', tipo: 'guardable' };
   if (numero === 16) return { puntos: 0, titulo: 'Amortentia', descripcion: 'SUMA +2 A TI Y OTRO COMPANERO', tipo: 'companeroBonus' };
   if (numero === 17) return { puntos: 0, titulo: 'Elixir de Vida', descripcion: 'QUITA LA MITAD DE LOS PUNTOS NEGATIVOS A SU CASA', tipo: 'limpiaNegativos' };
   if (numero === 18) return { puntos: 1, titulo: 'Crecehuesos', descripcion: 'SUMA +1 O JUSTIFICA UNA FALTA', tipo: 'guardable' };
+  if (numero === 19) return { puntos: 0, titulo: 'Invisibilidad', descripcion: 'SE PROTEGE CONTRA CUALQUIER HECHIZO', tipo: 'guardable' };
   if ([12, 21, 28].includes(numero)) return { puntos: 40, titulo: 'Hechizo supremo', descripcion: 'La casa recibe una gran recompensa por una participacion brillante.' };
+  if (numero === 22) return { puntos: 0, titulo: 'Vigorizante', descripcion: 'JUSTIFICA TODAS SUS FALTAS', tipo: 'guardable' };
   if ([14, 23].includes(numero)) return { puntos: 30, titulo: 'Reliquia poderosa', descripcion: 'La casa sube con fuerza en el marcador.' };
   if ([10, 15, 20, 25].includes(numero)) return { puntos: 20, titulo: 'Encantamiento mayor', descripcion: 'La participacion suma una ventaja importante.' };
   if (numero % 2 === 0) return { puntos: 15, titulo: 'Carta especial', descripcion: 'Buen aporte para la casa.' };
