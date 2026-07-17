@@ -255,6 +255,8 @@ body { overscroll-behavior: none; }
 
 .authorize.password { background: linear-gradient(100deg, #5b3415, #1b101d); }
 
+.authorize.delete-student { background: linear-gradient(100deg, #8d1f2a, #1b101d); }
+
 .pack-stage { min-height: 0; align-content: center; overflow: hidden; padding: 16px; }
 
 .carousel-shell { grid-template-columns: 1fr; touch-action: none; }
@@ -363,6 +365,8 @@ body { overscroll-behavior: none; }
 
 .carousel-nav { display: grid; width: 46px; height: 46px; place-items: center; align-self: center; }
 
+.carousel-nav { position: relative; z-index: 30; pointer-events: auto; }
+
 .pack-carousel { touch-action: none; }
 
 .pack-card { transform: translateX(calc(-50% + (var(--offset) * clamp(74px, 7vw, 106px)))) translateY(calc(var(--distance) * 13px)) rotateY(calc(var(--offset) * -19deg)) translateZ(calc(var(--distance) * -42px)) scale(calc(1 - (var(--distance) * .075))); opacity: calc(1 - (var(--distance) * .14)); }
@@ -423,6 +427,8 @@ body { overscroll-behavior: none; }
 .student-card-actions { width: min(100%, 480px); display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
 .request-card { padding: 12px; color: #ffeeca; background: linear-gradient(100deg,#174b7a,#1b101d); border: 1px solid rgba(255,214,109,.42); }
+
+.tap-card-hint{width:min(100%,560px);margin:0;color:#ffeeca;text-align:center;font-weight:900;text-shadow:0 2px 12px rgba(0,0,0,.4)}
 
 @media(max-width:760px){
   .hall-panel, .parchment-panel { background-position: center 12%; }

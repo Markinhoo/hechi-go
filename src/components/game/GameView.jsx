@@ -51,6 +51,15 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     setMensaje('Contrasena actualizada para ' + alumno.nombre + '.');
   };
 
+  const eliminarAlumno = async (alumno) => {
+    if (sesion.tipo !== 'maestro') return;
+    if (!window.confirm('Eliminar a ' + alumno.nombre + ' de esta clase? Se borraran sus cartas, puntos y solicitudes.')) return;
+    const { data, error } = await db.rpc('eliminar_alumno', { p_token: sesion.token, p_alumno_id: alumno.id });
+    if (error) return setMensaje(error.message);
+    setEstado(data);
+    setMensaje(alumno.nombre + ' fue eliminado de la clase.');
+  };
+
   const reiniciarClase = async () => {
     if (sesion.tipo !== 'maestro') return;
     if (!window.confirm('Reiniciar esta clase borrara alumnos, puntos, cartas, solicitudes e historial. El token se conserva.')) return;
@@ -71,7 +80,9 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     setMensaje('Clase eliminada.');
   };
 
-  const moverSobre = (direccion) => {
+  const moverSobre = (direccion, event) => {
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
     setPosicionCarrusel((actual) => Math.round(actual + direccion));
   };
 
@@ -278,7 +289,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     const id = window.setInterval(async () => {
       const { data } = await db.rpc('cargar_clase', { p_token: sesion.token });
       if (data) setEstado(data);
-    }, 1800);
+    }, 900);
     return () => window.clearInterval(id);
   }, [sesion?.token, estado?.token, setEstado]);
 
@@ -341,6 +352,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
                   <span><strong>{alumno.nombre}</strong><small>{casa.nombre} - {alumno.cartas.length} cartas - {alumno.oportunidades} oportunidades</small></span>
                   <b>{alumno.puntos} pts</b>
                   {sesion.tipo === 'maestro' && <button type='button' className='authorize password' onClick={() => cambiarPassword(alumno)}>Contrasena</button>}
+                  {sesion.tipo === 'maestro' && <button type='button' className='authorize delete-student' onClick={() => eliminarAlumno(alumno)}>Eliminar</button>}
                 </div>
               );
             })}
@@ -369,7 +381,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
           ) : (
             <>
               <div className='carousel-shell'>
-                <button className='carousel-nav' type='button' onClick={() => moverSobre(-1)} aria-label='Carta anterior'><FaArrowLeft /></button>
+                <button className='carousel-nav' type='button' onClick={(event) => moverSobre(-1, event)} aria-label='Carta anterior'><FaArrowLeft /></button>
                 <div
                   className={'pack-carousel ' + (arrastre.activo ? 'dragging' : '')}
                   onPointerDown={iniciarArrastre}
@@ -391,12 +403,9 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
                     );
                   })}
                 </div>
-                <button className='carousel-nav' type='button' onClick={() => moverSobre(1)} aria-label='Carta siguiente'><FaArrowRight /></button>
+                <button className='carousel-nav' type='button' onClick={(event) => moverSobre(1, event)} aria-label='Carta siguiente'><FaArrowRight /></button>
               </div>
-              <div className='student-card-actions'>
-                <button type='button' className='request-card' onClick={() => solicitarCarta(true)}>Solicitar autorizacion</button>
-                <button type='button' className='open-pack' onClick={abrirCarta}>Abrir carta</button>
-              </div>
+              <p className='tap-card-hint'>Toca la carta central para pedir autorizacion. Cuando el maestro autorice, se abrira automaticamente.</p>
               <div className='stored-cards-panel'>
                 <div>
                   <strong>Cartas guardadas</strong>
