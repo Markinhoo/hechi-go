@@ -34,10 +34,17 @@ function App() {
     setMensaje('Bienvenido al gran salon. Espera autorizacion para abrir carta.');
   };
 
+  const volverLoginPrincipal = () => {
+    setSesion(null);
+    setEstado(null);
+    setModo('inicio');
+    setMensaje('Sesion de maestro cerrada.');
+  };
+
   let contenido = <LoginAcceso onAlumno={entrarAlumno} onMaestro={() => setModo('maestro')} mensaje={mensaje} setMensaje={setMensaje} />;
 
   if (modo === 'maestro') {
-    contenido = <MaestroAcceso onEntrar={entrarMaestro} mensaje={mensaje} setMensaje={setMensaje} />;
+    contenido = <MaestroAcceso onEntrar={entrarMaestro} onSalir={volverLoginPrincipal} mensaje={mensaje} setMensaje={setMensaje} />;
   } else if (modo === 'juego' && estado && sesion) {
     contenido = (
       <GameView

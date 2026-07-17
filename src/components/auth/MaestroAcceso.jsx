@@ -4,7 +4,7 @@ import { casas, TEACHER_KEY } from '../../data/gameData';
 import { db, supabase } from '../../services/hechiApi';
 import { calcularObjetivos, cargarLocal, generarToken, guardarLocal } from '../../utils/gameUtils';
 
-function MaestroAcceso({ onEntrar, mensaje, setMensaje }) {
+function MaestroAcceso({ onEntrar, onSalir, mensaje, setMensaje }) {
   const previo = cargarLocal(TEACHER_KEY);
   const [authUser, setAuthUser] = useState(null);
   const [email, setEmail] = useState(previo?.email || '');
@@ -58,10 +58,12 @@ function MaestroAcceso({ onEntrar, mensaje, setMensaje }) {
   };
 
   const cerrarSesion = async () => {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) return setMensaje(error.message);
     setAuthUser(null);
     setClases([]);
-    setMensaje('Sesion de maestro cerrada.');
+    setPassword('');
+    onSalir?.();
   };
 
   const crear = async () => {
