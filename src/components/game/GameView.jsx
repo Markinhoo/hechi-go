@@ -181,11 +181,11 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     }
     const data = await registrarCarta({ numero, efecto });
     if (!data) return null;
-    setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id });
+    const puntosFinales = data?.historial?.[0]?.puntos ?? efecto.puntos;
+    setCartaAbierta({ numero, ...efecto, puntos: puntosFinales, casaId: alumno.casaId, alumnoId: alumno.id });
     if (efecto.tipo === 'proteccion') {
       setMensaje(obtenerCasa(alumno.casaId).nombre + ' queda protegida y activa x2 para su siguiente accion.');
     } else {
-      const puntosFinales = data?.historial?.[0]?.puntos || efecto.puntos;
       setMensaje(obtenerCasa(alumno.casaId).nombre + ' gana ' + puntosFinales + ' puntos.');
     }
     return data;

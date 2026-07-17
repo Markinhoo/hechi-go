@@ -15,6 +15,7 @@ export const efectosCartas = Array.from({ length: TOTAL_CARTAS }, (_, index) => 
   if (numero === 2) return { puntos: 0, titulo: 'Expecto Patronus', descripcion: 'PROTEGE A TU CASA Y DUPLICA LA SIGUIENTE PARTICIPACION', tipo: 'proteccion' };
   if (numero === 3) return { puntos: -5, titulo: 'Avada Kedavra', descripcion: 'RESTA -5 A UNA CASA RIVAL', tipo: 'rival' };
   if (numero === 4) return { puntos: 0, titulo: 'Confundo', descripcion: 'INTERCAMBIA PUNTOS ENTRE ALUMNOS', tipo: 'puntosIntercambio' };
+  if (numero === 5) return { puntos: 1, titulo: 'Envejecedora', descripcion: '+1 A SU CASA. CADA VEZ QUE SALGA AUMENTA SU VALOR', tipo: 'acumulativa' };
   if (numero === 6) return { puntos: 0, titulo: 'Imperio', descripcion: 'INTERCAMBIA DE CASA CON OTRO JUGADOR', tipo: 'intercambio' };
   if (numero === 7) return { puntos: 2, titulo: 'Incendio', descripcion: 'SUMA +2 A LA CASA' };
   if (numero === 9) return { puntos: -3, titulo: 'Crucio', descripcion: 'RESTA -3 A UNA CASA RIVAL', tipo: 'rival' };
@@ -24,7 +25,7 @@ export const efectosCartas = Array.from({ length: TOTAL_CARTAS }, (_, index) => 
   if (numero === 18) return { puntos: 1, titulo: 'Crecehuesos', descripcion: 'SUMA +1 O JUSTIFICA UNA FALTA', tipo: 'guardable' };
   if ([12, 21, 28].includes(numero)) return { puntos: 40, titulo: 'Hechizo supremo', descripcion: 'La casa recibe una gran recompensa por una participacion brillante.' };
   if ([14, 23].includes(numero)) return { puntos: 30, titulo: 'Reliquia poderosa', descripcion: 'La casa sube con fuerza en el marcador.' };
-  if ([5, 10, 15, 20, 25].includes(numero)) return { puntos: 20, titulo: 'Encantamiento mayor', descripcion: 'La participacion suma una ventaja importante.' };
+  if ([10, 15, 20, 25].includes(numero)) return { puntos: 20, titulo: 'Encantamiento mayor', descripcion: 'La participacion suma una ventaja importante.' };
   if (numero % 2 === 0) return { puntos: 15, titulo: 'Carta especial', descripcion: 'Buen aporte para la casa.' };
   return { puntos: 10, titulo: 'Carta comun', descripcion: 'Suma base por participacion autorizada.' };
 });
