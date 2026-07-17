@@ -17,6 +17,7 @@ export const efectosCartas = Array.from({ length: TOTAL_CARTAS }, (_, index) => 
   if (numero === 6) return { puntos: 0, titulo: 'Confundo', descripcion: 'INTERCAMBIA JUGADORES ENTRE CASAS', tipo: 'intercambio' };
   if (numero === 7) return { puntos: 2, titulo: 'Incendio', descripcion: 'SUMA +2 A LA CASA' };
   if (numero === 9) return { puntos: -3, titulo: 'Crucio', descripcion: 'RESTA -3 A UNA CASA RIVAL', tipo: 'rival' };
+  if (numero === 11) return { puntos: 3, titulo: 'Engorgio', descripcion: 'SUMA +3 A LA CASA' };
   if ([4, 12, 21, 28].includes(numero)) return { puntos: 40, titulo: 'Hechizo supremo', descripcion: 'La casa recibe una gran recompensa por una participacion brillante.' };
   if ([14, 23].includes(numero)) return { puntos: 30, titulo: 'Reliquia poderosa', descripcion: 'La casa sube con fuerza en el marcador.' };
   if ([5, 10, 15, 20, 25].includes(numero)) return { puntos: 20, titulo: 'Encantamiento mayor', descripcion: 'La participacion suma una ventaja importante.' };
