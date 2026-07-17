@@ -524,3 +524,125 @@ body { overscroll-behavior: none; }
   .teacher-auth-shell .class-management-grid { display: block; }
   .teacher-auth-shell .saved-classes-panel { margin-top: 10px; }
 }
+
+/* Legibility pass for Harry P typography and dynamic house-cup header */
+.house-cup-hero {
+  background:
+    radial-gradient(circle at 84% 18%, color-mix(in srgb, var(--winner-metal) 34%, transparent), transparent 24%),
+    linear-gradient(105deg, #4b1220 0%, #5a1328 24%, #24172f 56%, color-mix(in srgb, var(--winner-house) 86%, #10131b) 100%);
+  border-color: color-mix(in srgb, var(--winner-metal) 62%, transparent);
+}
+
+.house-cup-hero h1 {
+  max-width: 760px;
+  color: #ffd66d;
+  font-size: clamp(44px, 5.4vw, 72px);
+  line-height: .88;
+  text-shadow: 0 3px 0 rgba(60,21,8,.6), 0 0 28px color-mix(in srgb, var(--winner-metal) 30%, transparent);
+}
+
+.house-cup-hero p,
+.request-board .empty.light,
+.tap-card-hint,
+.message {
+  font-size: clamp(17px, 1.45vw, 23px);
+  line-height: 1.45;
+  letter-spacing: .02em;
+}
+
+.eyebrow {
+  font-size: clamp(15px, 1.1vw, 18px);
+  letter-spacing: .11em;
+}
+
+.ghost,
+.authorize,
+.request-row button,
+.carousel-nav,
+.stored-card button,
+.create-class-panel > button,
+.class-row button,
+.auth-card button {
+  min-height: 42px;
+  font-size: clamp(16px, 1.1vw, 19px);
+  letter-spacing: .02em;
+}
+
+.hero-actions {
+  align-items: center;
+}
+
+.player-badge {
+  font-size: clamp(16px, 1.1vw, 19px);
+}
+
+.house-card span,
+.house-score-breakdown dt,
+.house-score-breakdown dd,
+.house-status,
+.class-row span,
+.stored-cards-panel small,
+.stored-cards-panel p,
+.request-row span,
+.student-row small,
+.history-row span {
+  font-size: clamp(15px, 1.02vw, 18px);
+  line-height: 1.3;
+}
+
+.rank {
+  width: 34px;
+  height: 34px;
+  font-size: 17px;
+}
+
+.student-row,
+.history-row,
+.request-row {
+  font-size: clamp(17px, 1.08vw, 20px);
+}
+
+.student-row b,
+.history-row strong,
+.request-row strong,
+.stored-cards-panel strong {
+  font-size: clamp(18px, 1.22vw, 22px);
+}
+
+.panel h2,
+.request-board h2 {
+  letter-spacing: .015em;
+}
+
+@media(max-width:760px){
+  .house-cup-hero h1 {
+    font-size: clamp(34px, 13vw, 54px);
+  }
+
+  .house-cup-hero p,
+  .request-board .empty.light,
+  .tap-card-hint,
+  .message {
+    font-size: 18px;
+  }
+
+  .ghost,
+  .authorize,
+  .request-row button,
+  .stored-card button,
+  .create-class-panel > button,
+  .class-row button,
+  .auth-card button {
+    min-height: 40px;
+    font-size: 16px;
+  }
+
+  .house-card span,
+  .house-score-breakdown dt,
+  .house-score-breakdown dd,
+  .house-status,
+  .student-row small,
+  .history-row span {
+    font-size: 14px;
+  }
+}

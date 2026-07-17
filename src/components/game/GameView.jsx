@@ -304,14 +304,20 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const salir = () => { setSesion(null); setEstado(null); setModo('inicio'); setCartaAbierta(null); };
   const alumnoActual = sesion.tipo === 'alumno' ? estado.alumnos.find((alumno) => alumno.id === sesion.alumnoId) : null;
   const casaActual = obtenerCasa(alumnoActual?.casaId);
+  const puntajesCasas = casas.map((casa) => ({ ...casa, puntos: estado.puntajes?.[casa.id] ?? 0 }));
+  const maxPuntos = Math.max(...puntajesCasas.map((casa) => casa.puntos));
+  const ganadoras = puntajesCasas.filter((casa) => casa.puntos === maxPuntos);
+  const casaGanadora = maxPuntos > 0 && ganadoras.length === 1 ? ganadoras[0] : null;
+  const heroStyle = { '--winner-house': casaGanadora?.color || '#2f4f3d', '--winner-metal': casaGanadora?.metal || '#ffd66d' };
+  const tituloClase = 'Copa de las Casas - ' + (estado.nombre || 'Clase');
 
   return (
     <main className='game-shell app-fixed'>
-      <header className='hero compact-hero'>
+      <header className='hero compact-hero house-cup-hero' style={heroStyle}>
         <div>
           <span className='eyebrow'><FaWandMagicSparkles /> {sesion.tipo === 'maestro' ? 'Vista maestro' : 'Vista alumno'}</span>
-          <h1>HECHI GO</h1>
-          <p>{sesion.tipo === 'maestro' ? (estado.nombre + ' - Token de clase: ' + estado.token) : (estado.nombre + ' - Token ' + estado.token + ' - espera autorizacion para abrir carta.')}</p>
+          <h1>{tituloClase}</h1>
+          <p>{sesion.tipo === 'maestro' ? ('Token de clase: ' + estado.token + (casaGanadora ? ' - Va ganando ' + casaGanadora.nombre : '')) : ('Token ' + estado.token + ' - espera autorizacion para abrir carta.')}</p>
         </div>
         <div className='hero-actions'>
           {sesion.tipo === 'alumno' && <span className='player-badge' style={{ '--house': casaActual.color, '--metal': casaActual.metal }}>{alumnoActual?.nombre} - {casaActual.nombre} - {alumnoActual?.oportunidades || 0} oportunidades</span>}
