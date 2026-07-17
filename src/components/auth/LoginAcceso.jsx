@@ -41,8 +41,8 @@ function LoginAcceso({ onAlumno, onMaestro, mensaje, setMensaje }) {
         <Galaxy mouseRepulsion mouseInteraction density={1.45} glowIntensity={0.48} saturation={0.72} hueShift={245} starSpeed={0.72} speed={1.05} twinkleIntensity={0.46} rotationSpeed={0.08} transparent={false} />
       </div>
       <section className='auth-card login-card unified-login-card'>
-        <span className='eyebrow'><FaHatWizard /> Acceso HECHI</span>
-        <h1>HECHI GO</h1>
+        <span className='eyebrow'><FaHatWizard /> Acceso m?gico</span>
+        <h1>La Copa de las Casas <span>(UTD)</span></h1>
         <p>Entra con tu correo si eres maestro, o con tu usuario y token si eres alumno.</p>
         <form onSubmit={entrar}>
           <label className='field-label'>Correo o usuario</label>

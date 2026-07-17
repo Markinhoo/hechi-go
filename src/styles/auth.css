@@ -33,3 +33,77 @@ input{width:100%;border:1px solid #9b7437;border-radius:7px;padding:12px 13px;co
 .auth-shell:not(.galaxy-auth-shell) { background: radial-gradient(circle at 50% 110%, rgba(255,214,109,.08), transparent 34%), linear-gradient(145deg, #120b13 0%, #1b1420 48%, #0d1118 100%); }
 .auth-shell:not(.galaxy-auth-shell)::before,
 .auth-shell:not(.galaxy-auth-shell)::after { display: none; }
+
+
+/* Main login: centered and branded for La Copa de las Casas */
+.galaxy-auth-shell.auth-shell {
+  min-height: 100dvh;
+  height: auto;
+  display: grid;
+  place-items: center;
+  align-items: center;
+  justify-items: center;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: clamp(18px, 4vh, 42px) 18px;
+}
+
+.galaxy-auth-shell .unified-login-card {
+  width: min(100%, 720px);
+  isolation: isolate;
+  background: linear-gradient(145deg, rgba(255, 244, 211, .94), rgba(228, 194, 126, .9));
+  box-shadow: 0 28px 90px rgba(0,0,0,.55), 0 0 80px rgba(255, 204, 86, .16), inset 0 0 0 1px rgba(255,255,255,.38);
+}
+
+.galaxy-auth-shell .unified-login-card::after {
+  content: '';
+  position: absolute;
+  inset: -12px;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(145deg, rgba(255, 241, 197, .82), rgba(222, 178, 92, .68)),
+    url('/backgrounds/login-houses-wood.png') center / cover no-repeat;
+  filter: blur(2.8px) saturate(.78) sepia(.18);
+  opacity: .38;
+  transform: scale(1.025);
+}
+
+.galaxy-auth-shell .unified-login-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.galaxy-auth-shell .unified-login-card h1 {
+  max-width: 620px;
+  font-family: 'Harry P', 'Magic School One', 'Parry Hotter', Georgia, 'Times New Roman', fantasy, serif;
+  font-size: clamp(40px, 8vw, 80px);
+  line-height: .82;
+  text-transform: uppercase;
+  letter-spacing: .035em;
+  color: #2a1209;
+  text-shadow: 0 2px 0 rgba(255, 224, 139, .58), 0 8px 22px rgba(77, 35, 8, .24);
+}
+
+.galaxy-auth-shell .unified-login-card h1 span {
+  display: block;
+  margin-top: .14em;
+  font-size: .42em;
+  letter-spacing: .16em;
+}
+
+@media (max-width: 720px) {
+  .galaxy-auth-shell.auth-shell {
+    min-height: 100dvh;
+    place-items: center;
+    padding: 14px;
+  }
+
+  .galaxy-auth-shell .unified-login-card {
+    padding: 24px 20px;
+  }
+
+  .galaxy-auth-shell .unified-login-card h1 {
+    font-size: clamp(34px, 13vw, 56px);
+  }
+}
