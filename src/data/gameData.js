@@ -20,6 +20,7 @@ export const efectosCartas = Array.from({ length: TOTAL_CARTAS }, (_, index) => 
   if (numero === 9) return { puntos: -3, titulo: 'Crucio', descripcion: 'RESTA -3 A UNA CASA RIVAL', tipo: 'rival' };
   if (numero === 11) return { puntos: 3, titulo: 'Engorgio', descripcion: 'SUMA +3 A LA CASA' };
   if (numero === 16) return { puntos: 0, titulo: 'Amortentia', descripcion: 'SUMA +2 A TI Y OTRO COMPANERO', tipo: 'companeroBonus' };
+  if (numero === 17) return { puntos: 0, titulo: 'Elixir de Vida', descripcion: 'QUITA LA MITAD DE LOS PUNTOS NEGATIVOS A SU CASA', tipo: 'limpiaNegativos' };
   if (numero === 18) return { puntos: 1, titulo: 'Crecehuesos', descripcion: 'SUMA +1 O JUSTIFICA UNA FALTA', tipo: 'guardable' };
   if ([12, 21, 28].includes(numero)) return { puntos: 40, titulo: 'Hechizo supremo', descripcion: 'La casa recibe una gran recompensa por una participacion brillante.' };
   if ([14, 23].includes(numero)) return { puntos: 30, titulo: 'Reliquia poderosa', descripcion: 'La casa sube con fuerza en el marcador.' };

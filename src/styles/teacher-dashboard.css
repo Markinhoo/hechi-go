@@ -91,6 +91,15 @@
 
 .house-card strong{font-size:42px}
 
+
+.house-score-breakdown{position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,max-content);gap:6px;margin:8px 0 0;padding:0}
+
+.house-score-breakdown div{display:grid;grid-template-columns:auto auto;gap:4px;align-items:center;padding:4px 7px;border-radius:999px;background:rgba(10,7,12,.42);border:1px solid rgba(255,255,255,.16)}
+
+.house-score-breakdown dt,.house-score-breakdown dd{margin:0;font-size:12px;font-weight:1000;color:#fff7df}
+
+.house-score-breakdown dt{color:var(--metal)}
+
 .house-status{position:relative;z-index:2;display:inline-flex;width:max-content;margin-top:8px;padding:5px 9px;border-radius:999px;font-style:normal;font-size:12px;font-weight:1000;text-transform:uppercase;letter-spacing:.04em;background:rgba(15,9,16,.58);border:1px solid var(--metal);box-shadow:0 0 18px color-mix(in srgb,var(--metal) 28%,transparent)}
 
 .house-status.protected{color:#d9fff1}

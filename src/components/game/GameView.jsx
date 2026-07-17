@@ -318,6 +318,11 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
             <span>{estado.conteos[casa.id]}/{estado.objetivos[casa.id]} aprendices</span>
             <h2>{casa.nombre}</h2>
             <strong>{estado.puntajes[casa.id]} pts</strong>
+            <dl className='house-score-breakdown'>
+              <div><dt>+</dt><dd>{estado.puntajesPositivos?.[casa.id] ?? estado.puntajes[casa.id]}</dd></div>
+              <div><dt>-</dt><dd>{estado.puntajesNegativos?.[casa.id] ?? 0}</dd></div>
+              <div><dt>Total</dt><dd>{estado.puntajes[casa.id]}</dd></div>
+            </dl>
             {estado.casaProtegida === casa.id && <em className='house-status protected'>Protegida</em>}
             {estado.casaMultiplicador === casa.id && <em className='house-status multiplier'>x2 pendiente</em>}
           </article>
