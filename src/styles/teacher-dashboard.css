@@ -335,7 +335,7 @@ body { overscroll-behavior: none; }
 
 .teacher-card h1 { font-size: clamp(52px, 8vw, 78px); }
 
-.teacher-card h2 { margin: 24px 0 4px; color: #4b1220; font-family: Georgia, 'Times New Roman', serif; font-size: 28px; }
+.teacher-card h2 { margin: 24px 0 4px; color: #4b1220; font-family: 'Harry P', 'Magic School One', 'Parry Hotter', Georgia, 'Times New Roman', fantasy, serif; font-size: 28px; }
 
 .teacher-auth-form { margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid rgba(95,57,20,.22); }
 
@@ -408,7 +408,7 @@ body { overscroll-behavior: none; }
 
 .request-board { width: min(100%, 620px); align-self: stretch; display: flex; flex-direction: column; justify-content: center; gap: 14px; padding: 20px; border: 1px solid rgba(255,214,109,.32); border-radius: 12px; color: #ffeeca; background: radial-gradient(circle at 50% 10%, rgba(255,214,109,.18), transparent 34%), rgba(18, 9, 22, .46); box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 18px 40px rgba(0,0,0,.24); }
 
-.request-board h2 { margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(30px, 4vw, 48px); color: #ffd66d; }
+.request-board h2 { margin: 0; font-family: 'Harry P', 'Magic School One', 'Parry Hotter', Georgia, 'Times New Roman', fantasy, serif; font-size: clamp(30px, 4vw, 48px); color: #ffd66d; }
 
 .request-list { display: grid; gap: 10px; max-height: 360px; overflow: auto; padding-right: 4px; }
 
@@ -456,7 +456,7 @@ body { overscroll-behavior: none; }
 
 .class-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px; border-radius: 10px; color: #21130d; background: linear-gradient(120deg, rgba(255,250,224,.86), rgba(232,194,122,.46)); border: 1px solid rgba(95,57,20,.18); box-shadow: 0 10px 24px rgba(73,37,10,.12); }
 
-.class-row strong { display: block; color: #4b1220; font-size: 20px; font-family: Georgia, 'Times New Roman', serif; }
+.class-row strong { display: block; color: #4b1220; font-size: 20px; font-family: 'Harry P', 'Magic School One', 'Parry Hotter', Georgia, 'Times New Roman', fantasy, serif; }
 
 .class-row span { display: block; margin-top: 3px; color: #6b3d18; font-size: 13px; font-weight: 800; }
 

@@ -1,4 +1,4 @@
-.house-card h2{margin:10px 0 2px;font-family:Georgia,'Times New Roman',serif}
+.house-card h2{margin:10px 0 2px;font-family:'Harry P', 'Magic School One', 'Parry Hotter', Georgia, 'Times New Roman', fantasy, serif}
 
 .house-card strong{font-size:32px;color:#fff4cf}
 
@@ -6,7 +6,7 @@
 
 .panel{position:relative;border:1px solid var(--line);border-radius:8px;color:var(--ink);background:linear-gradient(145deg,rgba(255,243,212,.94),rgba(223,188,116,.88));box-shadow:0 18px 45px rgba(0,0,0,.26),inset 0 0 0 1px rgba(255,255,255,.26);padding:20px}
 
-.panel h2{margin:0 0 14px;color:#4b1220;font-family:Georgia,'Times New Roman',serif;font-size:24px}
+.panel h2{margin:0 0 14px;color:#4b1220;font-family:'Harry P', 'Magic School One', 'Parry Hotter', Georgia, 'Times New Roman', fantasy, serif;font-size:24px}
 
 .students{display:grid;gap:8px;max-height:550px;overflow:auto}
 
