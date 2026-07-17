@@ -140,6 +140,19 @@
 
 .exchange-section select{width:100%;padding:10px;border-radius:8px;color:#2b160d;background:#fff4d5;border:1px solid rgba(122,78,25,.55);font-weight:800}
 
+
+.point-swap-options{display:grid;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,238,202,.22);max-height:32vh;overflow:auto}
+
+.point-swap-options small{color:#ffeeca;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+
+.point-swap-options span{color:#ffeeca;font-size:13px}
+
+.point-swap-options>div{display:grid;gap:8px}
+
+.point-swap-choice{padding:10px 12px;border-radius:10px;color:#fff7df;background:linear-gradient(120deg,var(--house),#1b101d);border:1px solid var(--metal);box-shadow:0 10px 24px rgba(0,0,0,.24);font-weight:900;text-align:left}
+
+.point-swap-choice:hover{transform:translateY(-2px);filter:brightness(1.08)}
+
 .pull-result{display:none}
 
 @keyframes sparkFade{0%{opacity:.95;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-110%) scale(.25)}}

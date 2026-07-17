@@ -105,6 +105,19 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       setMensaje(efecto.titulo + ': elige una casa rival.');
       return null;
     }
+    if (efecto.tipo === 'puntosIntercambio') {
+      const hayAlumnoDisponible = estado.alumnos.some((item) => item.id !== alumno.id);
+      if (!hayAlumnoDisponible) {
+        const data = await registrarCarta({ numero, efecto });
+        if (!data) return null;
+        setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id });
+        setMensaje('Confundo no encontro otro alumno para intercambiar puntos.');
+        return data;
+      }
+      setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendientePuntosIntercambio: true });
+      setMensaje('Confundo: elige un alumno para intercambiar puntos.');
+      return null;
+    }
     if (efecto.tipo === 'intercambio') {
       const hayRivalDisponible = estado.alumnos.some((item) => item.casaId !== alumno.casaId && item.casaId !== estado.casaProtegida);
       if (alumno.casaId === estado.casaProtegida || !hayRivalDisponible) {
@@ -163,6 +176,25 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     setEstado(data);
     setCartaAbierta({ ...cartaAbierta, pendienteIntercambio: false });
     setMensaje('Imperio intercambio a ' + (origen?.nombre || 'un alumno') + ' con ' + (destino?.nombre || 'otro alumno') + '.');
+  };
+
+  const seleccionarIntercambioPuntos = async (objetivoId) => {
+    if (!cartaAbierta || cartaAbierta.tipo !== 'puntosIntercambio' || !cartaAbierta.pendientePuntosIntercambio) return;
+    if (!objetivoId || objetivoId === sesion.alumnoId) return setMensaje('Elige otro alumno para intercambiar puntos.');
+    const { data, error } = await db.rpc('intercambiar_puntos_alumnos', {
+      p_token: sesion.token,
+      p_alumno_id: sesion.alumnoId,
+      p_password: sesion.password,
+      p_numero: cartaAbierta.numero,
+      p_titulo: cartaAbierta.titulo,
+      p_descripcion: cartaAbierta.descripcion,
+      p_objetivo_id: objetivoId
+    });
+    if (error) return setMensaje(error.message);
+    const objetivo = estado.alumnos.find((alumno) => alumno.id === objetivoId);
+    setEstado(data);
+    setCartaAbierta({ ...cartaAbierta, pendientePuntosIntercambio: false });
+    setMensaje('Confundo aplico intercambio de puntos con ' + (objetivo?.nombre || 'otro alumno') + '.');
   };
 
   useEffect(() => {
@@ -333,11 +365,14 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         carta={cartaAbierta}
         casasRivales={casas.filter((casa) => casa.id !== alumnoActual?.casaId && casa.id !== estado.casaProtegida)}
         alumnosIntercambio={estado.alumnos.filter((alumno) => alumno.casaId !== estado.casaProtegida)}
+        alumnosPuntos={estado.alumnos}
         onSelectRival={seleccionarCasaRival}
         onSelectExchange={seleccionarIntercambio}
+        onSelectPointSwap={seleccionarIntercambioPuntos}
         onClose={() => {
           if (cartaAbierta?.pendienteRival) return setMensaje('Primero elige la casa rival para aplicar la carta.');
           if (cartaAbierta?.pendienteIntercambio) return setMensaje('Primero completa el intercambio de Imperio.');
+          if (cartaAbierta?.pendientePuntosIntercambio) return setMensaje('Primero completa el intercambio de puntos de Confundo.');
           return setCartaAbierta(null);
         }}
       />

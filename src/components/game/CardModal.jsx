@@ -2,18 +2,20 @@ import { useMemo, useState } from 'react';
 import { FaXmark } from 'react-icons/fa6';
 import { obtenerCasa } from '../../utils/gameUtils';
 
-function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [], onSelectRival, onSelectExchange }) {
+function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [], alumnosPuntos = [], onSelectRival, onSelectExchange, onSelectPointSwap }) {
   const [companeroId, setCompaneroId] = useState('');
   const [rivalId, setRivalId] = useState('');
   const cartaActiva = carta || { casaId: 'gryffindor', tipo: '', puntos: 0, alumnoId: '' };
   const casa = obtenerCasa(cartaActiva.casaId);
-  const puntosTexto = cartaActiva.tipo === 'proteccion' ? 'Proteccion activa' : (cartaActiva.tipo === 'intercambio' ? 'Intercambio magico' : (cartaActiva.puntos > 0 ? '+' + cartaActiva.puntos + ' puntos' : String(cartaActiva.puntos) + ' puntos'));
+  const puntosTexto = cartaActiva.tipo === 'proteccion' ? 'Proteccion activa' : (cartaActiva.tipo === 'intercambio' ? 'Intercambio magico' : (cartaActiva.tipo === 'puntosIntercambio' ? 'Intercambio de puntos' : (cartaActiva.puntos > 0 ? '+' + cartaActiva.puntos + ' puntos' : String(cartaActiva.puntos) + ' puntos')));
   const esperaRival = cartaActiva.tipo === 'rival' && cartaActiva.pendienteRival;
   const esperaIntercambio = cartaActiva.tipo === 'intercambio' && cartaActiva.pendienteIntercambio;
+  const esperaPuntosIntercambio = cartaActiva.tipo === 'puntosIntercambio' && cartaActiva.pendientePuntosIntercambio;
   const miCasa = cartaActiva.casaId;
   const alumnosMiCasa = useMemo(() => alumnosIntercambio.filter((alumno) => alumno.casaId === miCasa && alumno.id !== cartaActiva.alumnoId), [alumnosIntercambio, cartaActiva.alumnoId, miCasa]);
   const alumnosRivales = useMemo(() => alumnosIntercambio.filter((alumno) => alumno.casaId !== miCasa), [alumnosIntercambio, miCasa]);
   const casaPropiaDisponible = alumnosIntercambio.some((alumno) => alumno.id === cartaActiva.alumnoId);
+  const alumnosParaPuntos = useMemo(() => alumnosPuntos.filter((alumno) => alumno.id !== cartaActiva.alumnoId), [alumnosPuntos, cartaActiva.alumnoId]);
 
   if (!carta) return null;
 
@@ -76,6 +78,22 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
               </select>
               <button type='button' className='exchange-apply' disabled={!companeroId || !rivalId} onClick={() => onSelectExchange?.({ origenId: companeroId, destinoId: rivalId })}>Aplicar intercambio</button>
             </div>}
+          </div>
+        )}
+        {esperaPuntosIntercambio && (
+          <div className='point-swap-options' aria-label='Intercambio de puntos'>
+            <small>Elige un alumno. Si eres lider absoluto, absorbes sus puntos; si no, intercambian puntos.</small>
+            {alumnosParaPuntos.length === 0 && <span>No hay otros alumnos disponibles.</span>}
+            <div>
+              {alumnosParaPuntos.map((alumno) => {
+                const casaAlumno = obtenerCasa(alumno.casaId);
+                return (
+                  <button key={alumno.id} type='button' className='point-swap-choice' style={{ '--house': casaAlumno.color, '--metal': casaAlumno.metal }} onClick={() => onSelectPointSwap?.(alumno.id)}>
+                    {alumno.nombre} - {casaAlumno.nombre} - {alumno.puntos} pts
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
       </article>
