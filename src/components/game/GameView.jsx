@@ -111,11 +111,11 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         const data = await registrarCarta({ numero, efecto });
         if (!data) return null;
         setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id });
-        setMensaje('Confundo no encontro intercambio valido por la proteccion activa.');
+        setMensaje('Imperio no encontro intercambio valido por la proteccion activa.');
         return data;
       }
       setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteIntercambio: true });
-      setMensaje('Confundo: elige alumnos para intercambiar casas.');
+      setMensaje('Imperio: elige alumnos para intercambiar casas.');
       return null;
     }
     const data = await registrarCarta({ numero, efecto });
@@ -162,7 +162,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     const destino = estado.alumnos.find((alumno) => alumno.id === destinoId);
     setEstado(data);
     setCartaAbierta({ ...cartaAbierta, pendienteIntercambio: false });
-    setMensaje('Confundo intercambio a ' + (origen?.nombre || 'un alumno') + ' con ' + (destino?.nombre || 'otro alumno') + '.');
+    setMensaje('Imperio intercambio a ' + (origen?.nombre || 'un alumno') + ' con ' + (destino?.nombre || 'otro alumno') + '.');
   };
 
   useEffect(() => {
@@ -337,7 +337,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         onSelectExchange={seleccionarIntercambio}
         onClose={() => {
           if (cartaAbierta?.pendienteRival) return setMensaje('Primero elige la casa rival para aplicar la carta.');
-          if (cartaAbierta?.pendienteIntercambio) return setMensaje('Primero completa el intercambio de Confundo.');
+          if (cartaAbierta?.pendienteIntercambio) return setMensaje('Primero completa el intercambio de Imperio.');
           return setCartaAbierta(null);
         }}
       />

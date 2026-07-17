@@ -14,7 +14,7 @@ export const efectosCartas = Array.from({ length: TOTAL_CARTAS }, (_, index) => 
   if (numero === 1) return { puntos: 1, titulo: 'Alohomora', descripcion: 'SUMA +1 A LA CASA' };
   if (numero === 2) return { puntos: 0, titulo: 'Expecto Patronus', descripcion: 'PROTEGE A TU CASA Y DUPLICA LA SIGUIENTE PARTICIPACION', tipo: 'proteccion' };
   if (numero === 3) return { puntos: -5, titulo: 'Avada Kedavra', descripcion: 'RESTA -5 A UNA CASA RIVAL', tipo: 'rival' };
-  if (numero === 6) return { puntos: 0, titulo: 'Confundo', descripcion: 'INTERCAMBIA JUGADORES ENTRE CASAS', tipo: 'intercambio' };
+  if (numero === 6) return { puntos: 0, titulo: 'Imperio', descripcion: 'INTERCAMBIA DE CASA CON OTRO JUGADOR', tipo: 'intercambio' };
   if (numero === 7) return { puntos: 2, titulo: 'Incendio', descripcion: 'SUMA +2 A LA CASA' };
   if (numero === 9) return { puntos: -3, titulo: 'Crucio', descripcion: 'RESTA -3 A UNA CASA RIVAL', tipo: 'rival' };
   if (numero === 11) return { puntos: 3, titulo: 'Engorgio', descripcion: 'SUMA +3 A LA CASA' };

@@ -51,7 +51,7 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
         {esperaIntercambio && (
           <div className='exchange-options' aria-label='Opciones de intercambio'>
             <small>Elige como se hara el intercambio. No se puede usar una casa protegida.</small>
-            {!casaPropiaDisponible && <span>Tu casa esta protegida, asi que Confundo no puede mover alumnos de tu casa.</span>}
+            {!casaPropiaDisponible && <span>Tu casa esta protegida, asi que Imperio no puede mover alumnos de tu casa.</span>}
             {casaPropiaDisponible && <div className='exchange-section'>
               <strong>Intercambiarme yo</strong>
               {alumnosRivales.length === 0 && <span>No hay alumnos disponibles de otra casa.</span>}
