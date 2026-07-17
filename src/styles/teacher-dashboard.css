@@ -646,3 +646,152 @@ body { overscroll-behavior: none; }
     font-size: 14px;
   }
 }
+
+/* Teacher controls, stronger readability, and reliable card reveal */
+.student-row {
+  grid-template-columns: 34px minmax(180px, 1fr) auto auto auto auto;
+  gap: 10px;
+}
+
+.authorize.remove-points {
+  background: linear-gradient(100deg, #b46c16, #32131c);
+}
+
+.request-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.request-actions button {
+  min-width: 112px;
+}
+
+.request-actions .reject-request {
+  color: #ffeeca;
+  background: linear-gradient(100deg, #5b1723, #1b101d);
+  border-color: rgba(255, 122, 95, .58);
+}
+
+.field-label,
+.auth-card p,
+.hero p,
+.empty,
+.form-message,
+.teacher-session,
+.class-row span,
+.stored-cards-panel small,
+.stored-cards-panel p,
+.exchange-options small,
+.rival-options small,
+.point-swap-options small,
+.companion-bonus-options small,
+.modal-effect p {
+  font-size: clamp(18px, 1.22vw, 22px);
+  line-height: 1.42;
+}
+
+input,
+select,
+button,
+.ghost,
+.authorize,
+.class-row button,
+.request-row button {
+  font-size: clamp(18px, 1.18vw, 22px);
+}
+
+.modal-effect span,
+.pull-result span {
+  font-size: clamp(17px, 1.12vw, 20px);
+}
+
+.modal-effect h2,
+.pull-result h2 {
+  font-size: clamp(36px, 3.5vw, 52px);
+}
+
+.modal-card-flip {
+  animation: cardRevealLift 1.05s cubic-bezier(.2,.8,.2,1) forwards;
+}
+
+.modal-card-back {
+  animation: modalBackHide 1.05s cubic-bezier(.2,.8,.2,1) forwards;
+}
+
+.modal-card-front {
+  opacity: 0;
+  transform: rotateY(0deg) translateZ(2px) scale(.96);
+  animation: modalFrontShow 1.05s cubic-bezier(.2,.8,.2,1) forwards;
+}
+
+@keyframes cardRevealLift {
+  0% { transform: translateY(84px) scale(.58); filter: brightness(.8); }
+  48% { transform: translateY(0) scale(1.08); filter: brightness(1.35); }
+  100% { transform: translateY(0) scale(1); filter: brightness(1); }
+}
+
+@keyframes modalBackHide {
+  0%, 46% { opacity: 1; transform: rotateY(0deg) translateZ(2px); }
+  58%, 100% { opacity: 0; transform: rotateY(-90deg) translateZ(2px); }
+}
+
+@keyframes modalFrontShow {
+  0%, 46% { opacity: 0; transform: rotateY(90deg) translateZ(2px) scale(.96); }
+  62%, 100% { opacity: 1; transform: rotateY(0deg) translateZ(2px) scale(1); }
+}
+
+@media(max-width:1100px){
+  .student-row {
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+  }
+
+  .student-row .authorize {
+    grid-column: auto;
+  }
+
+  .student-row .password,
+  .student-row .remove-points,
+  .student-row .delete-student {
+    grid-column: span 1;
+  }
+}
+
+@media(max-width:760px){
+  .student-row {
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+  }
+
+  .student-row .password,
+  .student-row .remove-points,
+  .student-row .delete-student {
+    grid-column: 1 / -1;
+  }
+
+  .request-actions {
+    grid-column: 1 / 3;
+    justify-content: stretch;
+  }
+
+  .request-actions button {
+    flex: 1 1 150px;
+  }
+
+  .field-label,
+  .auth-card p,
+  .hero p,
+  .empty,
+  .form-message,
+  .teacher-session,
+  .class-row span,
+  .stored-cards-panel small,
+  .stored-cards-panel p,
+  .exchange-options small,
+  .rival-options small,
+  .point-swap-options small,
+  .companion-bonus-options small,
+  .modal-effect p {
+    font-size: 18px;
+  }
+}

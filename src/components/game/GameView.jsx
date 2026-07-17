@@ -27,6 +27,13 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     setMensaje('Participacion autorizada.');
   };
 
+  const rechazar = async (alumnoId) => {
+    const { data, error } = await db.rpc('rechazar_participacion', { p_token: sesion.token, p_alumno_id: alumnoId });
+    if (error) return setMensaje(error.message);
+    setEstado(data);
+    setMensaje('Solicitud cancelada.');
+  };
+
   const solicitarCarta = async (abrirCuandoAutoricen = false) => {
     if (sesion.tipo !== 'alumno') return;
     const alumno = estado.alumnos.find((item) => item.id === sesion.alumnoId);
@@ -43,12 +50,29 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   };
 
   const cambiarPassword = async (alumno) => {
-    const nueva = window.prompt('Nueva contrasena para ' + alumno.nombre);
-    if (!nueva) return;
-    const { data, error } = await db.rpc('cambiar_password_alumno', { p_token: sesion.token, p_alumno_id: alumno.id, p_password: nueva });
+    if (sesion.tipo !== 'maestro') return;
+    const nueva = window.prompt('Nueva contrasena para ' + alumno.nombre + ' (minimo 3 caracteres)');
+    const passwordNueva = (nueva || '').trim();
+    if (!passwordNueva) return setMensaje('Cambio de contrasena cancelado.');
+    if (passwordNueva.length < 3) return setMensaje('La nueva contrasena debe tener al menos 3 caracteres.');
+    setMensaje('Actualizando contrasena de ' + alumno.nombre + '...');
+    const { data, error } = await db.rpc('cambiar_password_alumno', { p_token: sesion.token, p_alumno_id: alumno.id, p_password: passwordNueva });
     if (error) return setMensaje(error.message);
     setEstado(data);
     setMensaje('Contrasena actualizada para ' + alumno.nombre + '.');
+  };
+
+  const quitarPuntosAlumno = async (alumno) => {
+    if (sesion.tipo !== 'maestro') return;
+    const entrada = window.prompt('Cuantos puntos quieres quitarle a ' + alumno.nombre + '?', '1');
+    if (entrada === null) return setMensaje('Quitar puntos cancelado.');
+    const puntos = Math.floor(Number(entrada));
+    if (!Number.isFinite(puntos) || puntos <= 0) return setMensaje('Escribe una cantidad valida mayor a 0.');
+    setMensaje('Quitando ' + puntos + ' puntos a ' + alumno.nombre + '...');
+    const { data, error } = await db.rpc('quitar_puntos_alumno', { p_token: sesion.token, p_alumno_id: alumno.id, p_puntos: puntos });
+    if (error) return setMensaje(error.message);
+    setEstado(data);
+    setMensaje('Se quitaron puntos a ' + alumno.nombre + '.');
   };
 
   const eliminarAlumno = async (alumno) => {
@@ -358,6 +382,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
                   <span><strong>{alumno.nombre}</strong><small>{casa.nombre} - {alumno.cartas.length} cartas - {alumno.oportunidades} oportunidades</small></span>
                   <b>{alumno.puntos} pts</b>
                   {sesion.tipo === 'maestro' && <button type='button' className='authorize password' onClick={() => cambiarPassword(alumno)}>Contrasena</button>}
+                  {sesion.tipo === 'maestro' && <button type='button' className='authorize remove-points' onClick={() => quitarPuntosAlumno(alumno)}>Quitar puntos</button>}
                   {sesion.tipo === 'maestro' && <button type='button' className='authorize delete-student' onClick={() => eliminarAlumno(alumno)}>Eliminar</button>}
                 </div>
               );
@@ -378,7 +403,10 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
                     <article className='request-row' key={solicitud.id} style={{ '--house': casa.color, '--metal': casa.metal }}>
                       <img src={casa.escudo} alt='' />
                       <div><strong>{solicitud.alumno}</strong><span>{casa.nombre} solicita abrir carta</span></div>
-                      <button type='button' onClick={() => autorizar(solicitud.alumnoId)}>Autorizar</button>
+                      <div className='request-actions'>
+                        <button type='button' onClick={() => autorizar(solicitud.alumnoId)}>Autorizar</button>
+                        <button type='button' className='reject-request' onClick={() => rechazar(solicitud.alumnoId)}>No autorizar</button>
+                      </div>
                     </article>
                   );
                 })}
