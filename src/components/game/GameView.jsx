@@ -118,6 +118,19 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       setMensaje('Confundo: elige un alumno para intercambiar puntos.');
       return null;
     }
+    if (efecto.tipo === 'companeroBonus') {
+      const hayCompaneroDisponible = estado.alumnos.some((item) => item.id !== alumno.id);
+      if (!hayCompaneroDisponible) {
+        const data = await registrarCarta({ numero, efecto });
+        if (!data) return null;
+        setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id });
+        setMensaje('Amortentia no encontro otro companero disponible.');
+        return data;
+      }
+      setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteCompaneroBonus: true });
+      setMensaje('Amortentia: elige un companero para sumar puntos a ambos.');
+      return null;
+    }
     if (efecto.tipo === 'intercambio') {
       const hayRivalDisponible = estado.alumnos.some((item) => item.casaId !== alumno.casaId && item.casaId !== estado.casaProtegida);
       if (alumno.casaId === estado.casaProtegida || !hayRivalDisponible) {
@@ -195,6 +208,26 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     setEstado(data);
     setCartaAbierta({ ...cartaAbierta, pendientePuntosIntercambio: false });
     setMensaje('Confundo aplico intercambio de puntos con ' + (objetivo?.nombre || 'otro alumno') + '.');
+  };
+
+  const seleccionarCompaneroBonus = async (companeroId) => {
+    if (!cartaAbierta || cartaAbierta.tipo !== 'companeroBonus' || !cartaAbierta.pendienteCompaneroBonus) return;
+    if (!companeroId || companeroId === sesion.alumnoId) return setMensaje('Elige otro companero.');
+    const { data, error } = await db.rpc('sumar_puntos_companero', {
+      p_token: sesion.token,
+      p_alumno_id: sesion.alumnoId,
+      p_password: sesion.password,
+      p_numero: cartaAbierta.numero,
+      p_titulo: cartaAbierta.titulo,
+      p_descripcion: cartaAbierta.descripcion,
+      p_companero_id: companeroId
+    });
+    if (error) return setMensaje(error.message);
+    const companero = estado.alumnos.find((alumno) => alumno.id === companeroId);
+    const puntos = data?.historial?.[0]?.puntos || 2;
+    setEstado(data);
+    setCartaAbierta({ ...cartaAbierta, pendienteCompaneroBonus: false, puntos });
+    setMensaje('Amortentia sumo +' + puntos + ' a ti y a ' + (companero?.nombre || 'otro companero') + '.');
   };
 
   useEffect(() => {
@@ -366,13 +399,16 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         casasRivales={casas.filter((casa) => casa.id !== alumnoActual?.casaId && casa.id !== estado.casaProtegida)}
         alumnosIntercambio={estado.alumnos.filter((alumno) => alumno.casaId !== estado.casaProtegida)}
         alumnosPuntos={estado.alumnos}
+        alumnosCompanero={estado.alumnos}
         onSelectRival={seleccionarCasaRival}
         onSelectExchange={seleccionarIntercambio}
         onSelectPointSwap={seleccionarIntercambioPuntos}
+        onSelectCompanionBonus={seleccionarCompaneroBonus}
         onClose={() => {
           if (cartaAbierta?.pendienteRival) return setMensaje('Primero elige la casa rival para aplicar la carta.');
           if (cartaAbierta?.pendienteIntercambio) return setMensaje('Primero completa el intercambio de Imperio.');
           if (cartaAbierta?.pendientePuntosIntercambio) return setMensaje('Primero completa el intercambio de puntos de Confundo.');
+          if (cartaAbierta?.pendienteCompaneroBonus) return setMensaje('Primero elige el companero para Amortentia.');
           return setCartaAbierta(null);
         }}
       />
