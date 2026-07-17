@@ -25,6 +25,7 @@ drop function if exists hechi.abrir_carta(text, uuid, text, integer, integer, te
 drop function if exists hechi.intercambiar_alumnos(text, uuid, text, integer, text, text, uuid, uuid);
 drop function if exists hechi.intercambiar_puntos_alumnos(text, uuid, text, integer, text, text, uuid);
 drop function if exists hechi.sumar_puntos_companero(text, uuid, text, integer, text, text, uuid);
+drop function if exists hechi.usar_carta_guardada(text, uuid, text, text);
 drop function if exists hechi.reiniciar_clase(text);
 drop function if exists hechi.reiniciar_clase(text, text);
 drop function if exists hechi.eliminar_clase(text);
@@ -59,6 +60,7 @@ create table hechi.alumnos (
   casa_id text not null check (casa_id in ('gryffindor','slytherin','ravenclaw','hufflepuff')),
   puntos integer not null default 0 check (puntos >= 0),
   cartas integer[] not null default '{}',
+  cartas_guardadas jsonb not null default '[]'::jsonb,
   oportunidades integer not null default 0 check (oportunidades >= 0),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -142,6 +144,7 @@ begin
     'casaId', casa_id,
     'puntos', puntos,
     'cartas', cartas,
+    'cartasGuardadas', cartas_guardadas,
     'oportunidades', oportunidades
   ) order by puntos desc, created_at), '[]'::jsonb)
   into v_alumnos
@@ -571,6 +574,7 @@ begin
   set oportunidades = oportunidades - 1,
       puntos = puntos + greatest(v_puntos_efectivos, 0),
       cartas = array_append(cartas, p_numero),
+      cartas_guardadas = case when p_numero = 18 then cartas_guardadas || jsonb_build_array(jsonb_build_object('id', gen_random_uuid()::text, 'numero', p_numero, 'titulo', p_titulo, 'descripcion', p_descripcion, 'createdAt', now())) else cartas_guardadas end,
       updated_at = now()
   where id = v_alumno.id;
 
@@ -853,6 +857,50 @@ begin
 
   insert into hechi.participaciones(clase_id, alumno_id, carta, puntos, casa_objetivo, titulo, descripcion)
   values (v_clase.id, v_alumno.id, p_numero, v_puntos, v_companero.casa_id, p_titulo, p_descripcion);
+
+  return hechi.estado_clase(v_clase.id);
+end;
+$$;
+
+
+create or replace function hechi.usar_carta_guardada(p_token text, p_alumno_id uuid, p_password text, p_carta_id text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = hechi, public, pg_catalog
+as $$
+declare
+  v_clase hechi.clases%rowtype;
+  v_alumno hechi.alumnos%rowtype;
+  v_existe boolean;
+begin
+  select * into v_clase from hechi.clases where token = upper(trim(p_token)) and estado = 'activa';
+  if not found then
+    raise exception 'Token de clase no encontrado';
+  end if;
+
+  select * into v_alumno from hechi.alumnos where id = p_alumno_id and clase_id = v_clase.id;
+  if not found or v_alumno.password <> p_password then
+    raise exception 'Credenciales de alumno incorrectas';
+  end if;
+
+  select exists (
+    select 1 from jsonb_array_elements(v_alumno.cartas_guardadas) carta
+    where carta->>'id' = p_carta_id
+  ) into v_existe;
+
+  if not v_existe then
+    raise exception 'Carta guardada no encontrada';
+  end if;
+
+  update hechi.alumnos
+  set cartas_guardadas = coalesce((
+        select jsonb_agg(carta)
+        from jsonb_array_elements(cartas_guardadas) carta
+        where carta->>'id' <> p_carta_id
+      ), '[]'::jsonb),
+      updated_at = now()
+  where id = v_alumno.id;
 
   return hechi.estado_clase(v_clase.id);
 end;

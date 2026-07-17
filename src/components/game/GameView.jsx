@@ -230,6 +230,20 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     setMensaje('Amortentia sumo +' + puntos + ' a ti y a ' + (companero?.nombre || 'otro companero') + '.');
   };
 
+  const usarCartaGuardada = async (carta) => {
+    if (sesion.tipo !== 'alumno') return;
+    if (!window.confirm('Usar ' + carta.titulo + '? Se eliminara de tus cartas guardadas.')) return;
+    const { data, error } = await db.rpc('usar_carta_guardada', {
+      p_token: sesion.token,
+      p_alumno_id: sesion.alumnoId,
+      p_password: sesion.password,
+      p_carta_id: carta.id
+    });
+    if (error) return setMensaje(error.message);
+    setEstado(data);
+    setMensaje(carta.titulo + ' usada como justificante.');
+  };
+
   useEffect(() => {
     abrirCartaRef.current = abrirCarta;
   });
@@ -377,6 +391,22 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
               <div className='student-card-actions'>
                 <button type='button' className='request-card' onClick={() => solicitarCarta(true)}>Solicitar autorizacion</button>
                 <button type='button' className='open-pack' onClick={abrirCarta}>Abrir carta</button>
+              </div>
+              <div className='stored-cards-panel'>
+                <div>
+                  <strong>Cartas guardadas</strong>
+                  <small>Presentalas al maestro cuando quieras usarlas.</small>
+                </div>
+                {(!alumnoActual?.cartasGuardadas || alumnoActual.cartasGuardadas.length === 0) && <p>No tienes cartas guardadas todavia.</p>}
+                <div className='stored-cards-list'>
+                  {(alumnoActual?.cartasGuardadas || []).map((carta) => (
+                    <article className='stored-card' key={carta.id}>
+                      <img src={'/hechi/card-' + carta.numero + '.png'} alt={carta.titulo} />
+                      <span><b>{carta.titulo}</b><small>{carta.descripcion}</small></span>
+                      <button type='button' onClick={() => usarCartaGuardada(carta)}>Usar</button>
+                    </article>
+                  ))}
+                </div>
               </div>
             </>
           )}
