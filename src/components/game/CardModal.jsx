@@ -2,22 +2,24 @@ import { useMemo, useState } from 'react';
 import { FaXmark } from 'react-icons/fa6';
 import { obtenerCasa } from '../../utils/gameUtils';
 
-function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [], alumnosPuntos = [], alumnosCompanero = [], onSelectRival, onSelectExchange, onSelectPointSwap, onSelectCompanionBonus }) {
+function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [], alumnosPuntos = [], alumnosCompanero = [], alumnosReplica = [], onSelectRival, onSelectExchange, onSelectPointSwap, onSelectCompanionBonus, onSelectReplica }) {
   const [companeroId, setCompaneroId] = useState('');
   const [rivalId, setRivalId] = useState('');
   const cartaActiva = carta || { casaId: 'gryffindor', tipo: '', puntos: 0, alumnoId: '' };
   const casa = obtenerCasa(cartaActiva.casaId);
-  const puntosTexto = cartaActiva.tipo === 'proteccion' ? 'Proteccion activa' : (cartaActiva.tipo === 'intercambio' ? 'Intercambio magico' : (cartaActiva.tipo === 'puntosIntercambio' ? 'Intercambio de puntos' : (cartaActiva.tipo === 'companeroBonus' ? 'Bonificacion compartida' : (cartaActiva.puntos > 0 ? '+' + cartaActiva.puntos + ' puntos' : String(cartaActiva.puntos) + ' puntos'))));
+  const puntosTexto = cartaActiva.tipo === 'proteccion' ? 'Proteccion activa' : (cartaActiva.tipo === 'intercambio' ? 'Intercambio magico' : (cartaActiva.tipo === 'puntosIntercambio' ? 'Intercambio de puntos' : (cartaActiva.tipo === 'companeroBonus' ? 'Bonificacion compartida' : (cartaActiva.tipo === 'replicaPuntos' ? 'Replica de puntos' : (cartaActiva.puntos > 0 ? '+' + cartaActiva.puntos + ' puntos' : String(cartaActiva.puntos) + ' puntos')))));
   const esperaRival = cartaActiva.tipo === 'rival' && cartaActiva.pendienteRival;
   const esperaIntercambio = cartaActiva.tipo === 'intercambio' && cartaActiva.pendienteIntercambio;
   const esperaPuntosIntercambio = cartaActiva.tipo === 'puntosIntercambio' && cartaActiva.pendientePuntosIntercambio;
   const esperaCompaneroBonus = cartaActiva.tipo === 'companeroBonus' && cartaActiva.pendienteCompaneroBonus;
+  const esperaReplicaPuntos = cartaActiva.tipo === 'replicaPuntos' && cartaActiva.pendienteReplicaPuntos;
   const miCasa = cartaActiva.casaId;
   const alumnosMiCasa = useMemo(() => alumnosIntercambio.filter((alumno) => alumno.casaId === miCasa && alumno.id !== cartaActiva.alumnoId), [alumnosIntercambio, cartaActiva.alumnoId, miCasa]);
   const alumnosRivales = useMemo(() => alumnosIntercambio.filter((alumno) => alumno.casaId !== miCasa), [alumnosIntercambio, miCasa]);
   const casaPropiaDisponible = alumnosIntercambio.some((alumno) => alumno.id === cartaActiva.alumnoId);
   const alumnosParaPuntos = useMemo(() => alumnosPuntos.filter((alumno) => alumno.id !== cartaActiva.alumnoId), [alumnosPuntos, cartaActiva.alumnoId]);
   const alumnosParaCompanero = useMemo(() => alumnosCompanero.filter((alumno) => alumno.id !== cartaActiva.alumnoId), [alumnosCompanero, cartaActiva.alumnoId]);
+  const alumnosParaReplica = useMemo(() => alumnosReplica.filter((alumno) => alumno.id !== cartaActiva.alumnoId), [alumnosReplica, cartaActiva.alumnoId]);
 
   if (!carta) return null;
 
@@ -107,6 +109,22 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
                 const casaAlumno = obtenerCasa(alumno.casaId);
                 return (
                   <button key={alumno.id} type='button' className='companion-bonus-choice' style={{ '--house': casaAlumno.color, '--metal': casaAlumno.metal }} onClick={() => onSelectCompanionBonus?.(alumno.id)}>
+                    {alumno.nombre} - {casaAlumno.nombre} - {alumno.puntos} pts
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        {esperaReplicaPuntos && (
+          <div className='point-swap-options' aria-label='Replica de puntos'>
+            <small>Elige un alumno disponible. Puede ser de tu casa, pero no de una casa protegida.</small>
+            {alumnosParaReplica.length === 0 && <span>No hay alumnos disponibles para replicar.</span>}
+            <div>
+              {alumnosParaReplica.map((alumno) => {
+                const casaAlumno = obtenerCasa(alumno.casaId);
+                return (
+                  <button key={alumno.id} type='button' className='point-swap-choice' style={{ '--house': casaAlumno.color, '--metal': casaAlumno.metal }} onClick={() => onSelectReplica?.(alumno.id)}>
                     {alumno.nombre} - {casaAlumno.nombre} - {alumno.puntos} pts
                   </button>
                 );

@@ -191,6 +191,19 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       setMensaje('Amortentia: elige un companero para sumar puntos a ambos.');
       return null;
     }
+    if (efecto.tipo === 'replicaPuntos') {
+      const hayObjetivoDisponible = estado.alumnos.some((item) => item.id !== alumno.id && item.casaId !== estado.casaProtegida);
+      if (!hayObjetivoDisponible) {
+        const data = await registrarCarta({ numero, efecto });
+        if (!data) return null;
+        setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id });
+        setMensaje('Multijugos no encontro un alumno disponible para replicar.');
+        return data;
+      }
+      setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteReplicaPuntos: true });
+      setMensaje('Multijugos: elige el alumno cuyos puntos quieres replicar.');
+      return null;
+    }
     if (efecto.tipo === 'intercambio') {
       const hayRivalDisponible = estado.alumnos.some((item) => item.casaId !== alumno.casaId && item.casaId !== estado.casaProtegida);
       if (alumno.casaId === estado.casaProtegida || !hayRivalDisponible) {
@@ -288,6 +301,26 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     setEstado(data);
     setCartaAbierta({ ...cartaAbierta, pendienteCompaneroBonus: false, puntos });
     setMensaje('Amortentia sumo +' + puntos + ' a ti y a ' + (companero?.nombre || 'otro companero') + '.');
+  };
+
+  const seleccionarReplicaPuntos = async (objetivoId) => {
+    if (!cartaAbierta || cartaAbierta.tipo !== 'replicaPuntos' || !cartaAbierta.pendienteReplicaPuntos) return;
+    if (!objetivoId || objetivoId === sesion.alumnoId) return setMensaje('Elige otro alumno para replicar sus puntos.');
+    const { data, error } = await db.rpc('replicar_puntos_alumno', {
+      p_token: sesion.token,
+      p_alumno_id: sesion.alumnoId,
+      p_password: sesion.password,
+      p_numero: cartaAbierta.numero,
+      p_titulo: cartaAbierta.titulo,
+      p_descripcion: cartaAbierta.descripcion,
+      p_objetivo_id: objetivoId
+    });
+    if (error) return setMensaje(error.message);
+    const objetivo = estado.alumnos.find((alumno) => alumno.id === objetivoId);
+    const puntos = data?.historial?.[0]?.puntos ?? objetivo?.puntos ?? 0;
+    setEstado(data);
+    setCartaAbierta({ ...cartaAbierta, pendienteReplicaPuntos: false, puntos });
+    setMensaje('Multijugos replico +' + puntos + ' puntos de ' + (objetivo?.nombre || 'otro alumno') + '.');
   };
 
   const usarCartaGuardada = async (carta) => {
@@ -613,15 +646,18 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         alumnosIntercambio={estado.alumnos.filter((alumno) => alumno.casaId !== estado.casaProtegida)}
         alumnosPuntos={estado.alumnos}
         alumnosCompanero={estado.alumnos}
+        alumnosReplica={estado.alumnos.filter((alumno) => alumno.casaId !== estado.casaProtegida)}
         onSelectRival={seleccionarCasaRival}
         onSelectExchange={seleccionarIntercambio}
         onSelectPointSwap={seleccionarIntercambioPuntos}
         onSelectCompanionBonus={seleccionarCompaneroBonus}
+        onSelectReplica={seleccionarReplicaPuntos}
         onClose={() => {
           if (cartaAbierta?.pendienteRival) return setMensaje('Primero elige la casa rival para aplicar la carta.');
           if (cartaAbierta?.pendienteIntercambio) return setMensaje('Primero completa el intercambio de Imperio.');
           if (cartaAbierta?.pendientePuntosIntercambio) return setMensaje('Primero completa el intercambio de puntos de Confundo.');
           if (cartaAbierta?.pendienteCompaneroBonus) return setMensaje('Primero elige el companero para Amortentia.');
+          if (cartaAbierta?.pendienteReplicaPuntos) return setMensaje('Primero elige el alumno para Multijugos.');
           return setCartaAbierta(null);
         }}
       />
