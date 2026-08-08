@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { FaArrowLeft, FaArrowRight, FaWandMagicSparkles } from 'react-icons/fa6';
-import { casas, TOTAL_CARTAS } from '../../data/gameData';
+import { casas, PLAYER_KEY, TOTAL_CARTAS } from '../../data/gameData';
 import { db } from '../../services/hechiApi';
-import { efectoCarta, obtenerCasa, randomEntero } from '../../utils/gameUtils';
+import { efectoCarta, guardarLocal, obtenerCasa, randomEntero } from '../../utils/gameUtils';
 import CardModal from './CardModal';
 
 function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setMensaje }) {
@@ -51,15 +51,36 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
 
   const cambiarPassword = async (alumno) => {
     if (sesion.tipo !== 'maestro') return;
-    const nueva = window.prompt('Nueva contrasena para ' + alumno.nombre + ' (minimo 3 caracteres)');
+    const nueva = window.prompt('Restablecer contrasena para ' + alumno.nombre + ' (minimo 3 caracteres)', '12345');
     const passwordNueva = (nueva || '').trim();
     if (!passwordNueva) return setMensaje('Cambio de contrasena cancelado.');
     if (passwordNueva.length < 3) return setMensaje('La nueva contrasena debe tener al menos 3 caracteres.');
-    setMensaje('Actualizando contrasena de ' + alumno.nombre + '...');
+    setMensaje('Restableciendo contrasena de ' + alumno.nombre + '...');
     const { data, error } = await db.rpc('cambiar_password_alumno', { p_token: sesion.token, p_alumno_id: alumno.id, p_password: passwordNueva });
     if (error) return setMensaje(error.message);
     setEstado(data);
-    setMensaje('Contrasena actualizada para ' + alumno.nombre + '.');
+    setMensaje('Contrasena restablecida para ' + alumno.nombre + '.');
+  };
+
+  const cambiarPasswordPropia = async () => {
+    if (sesion.tipo !== 'alumno') return;
+    const nueva = window.prompt('Nueva contrasena (minimo 3 caracteres)');
+    const passwordNueva = (nueva || '').trim();
+    if (!passwordNueva) return setMensaje('Cambio de contrasena cancelado.');
+    if (passwordNueva.length < 3) return setMensaje('La nueva contrasena debe tener al menos 3 caracteres.');
+    setMensaje('Actualizando tu contrasena...');
+    const { data, error } = await db.rpc('cambiar_password_propia', {
+      p_token: sesion.token,
+      p_alumno_id: sesion.alumnoId,
+      p_password_actual: sesion.password,
+      p_password_nueva: passwordNueva
+    });
+    if (error) return setMensaje(error.message);
+    const sesionActualizada = { ...sesion, password: passwordNueva };
+    setSesion(sesionActualizada);
+    guardarLocal(PLAYER_KEY, sesionActualizada);
+    setEstado(data);
+    setMensaje('Tu contrasena fue actualizada.');
   };
 
   const quitarPuntosAlumno = async (alumno) => {
@@ -346,6 +367,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         <div className='hero-actions'>
           {sesion.tipo === 'alumno' && <span className='player-badge' style={{ '--house': casaActual.color, '--metal': casaActual.metal }}>{alumnoActual?.nombre} - {casaActual.nombre} - {alumnoActual?.oportunidades || 0} oportunidades</span>}
           <button type='button' className='ghost' onClick={() => refrescar(estado.token)}>Actualizar</button>
+          {sesion.tipo === 'alumno' && <button type='button' className='ghost' onClick={cambiarPasswordPropia}>Cambiar contrasena</button>}
           {sesion.tipo === 'maestro' && <button type='button' className='ghost danger-soft' onClick={reiniciarClase}>Reiniciar clase</button>}
           {sesion.tipo === 'maestro' && <button type='button' className='ghost danger-soft' onClick={eliminarClase}>Eliminar clase</button>}
           <button type='button' className='ghost' onClick={salir}>Salir</button>
@@ -381,7 +403,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
                   <span className='rank'>{index + 1}</span>
                   <span><strong>{alumno.nombre}</strong><small>{casa.nombre} - {alumno.cartas.length} cartas - {alumno.oportunidades} oportunidades</small></span>
                   <b>{alumno.puntos} pts</b>
-                  {sesion.tipo === 'maestro' && <button type='button' className='authorize password' onClick={() => cambiarPassword(alumno)}>Contrasena</button>}
+                  {sesion.tipo === 'maestro' && <button type='button' className='authorize password' onClick={() => cambiarPassword(alumno)}>Cambiar contrasena</button>}
                   {sesion.tipo === 'maestro' && <button type='button' className='authorize remove-points' onClick={() => quitarPuntosAlumno(alumno)}>Quitar puntos</button>}
                   {sesion.tipo === 'maestro' && <button type='button' className='authorize delete-student' onClick={() => eliminarAlumno(alumno)}>Eliminar</button>}
                 </div>
