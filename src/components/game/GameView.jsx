@@ -13,7 +13,6 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const [indiceAlumno, setIndiceAlumno] = useState(0);
   const autoAbrirRef = useRef(false);
   const abrirCartaRef = useRef(null);
-  const arrastreAlumnoRef = useRef(null);
   const sobres = Array.from({ length: 7 }, (_, index) => index);
 
   const refrescar = async (token) => {
@@ -373,19 +372,6 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     setIndiceAlumno((actual) => (Math.min(actual, alumnosFiltrados.length - 1) + direccion + alumnosFiltrados.length) % alumnosFiltrados.length);
   };
 
-  const iniciarArrastreAlumno = (event) => {
-    arrastreAlumnoRef.current = { x: event.clientX, y: event.clientY };
-  };
-
-  const cerrarArrastreAlumno = (event) => {
-    if (!arrastreAlumnoRef.current) return;
-    const deltaX = event.clientX - arrastreAlumnoRef.current.x;
-    const deltaY = event.clientY - arrastreAlumnoRef.current.y;
-    arrastreAlumnoRef.current = null;
-    if (Math.abs(deltaX) < 42 || Math.abs(deltaX) < Math.abs(deltaY) * 1.25) return;
-    moverAlumno(deltaX < 0 ? 1 : -1);
-  };
-
   return (
     <main className='game-shell app-fixed mobile-scroll-page'>
       <header className='hero compact-hero house-cup-hero' style={heroStyle}>
@@ -441,12 +427,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
           </label>
           {alumnoCarrusel ? (
             <div className='student-carousel' style={{ '--house': casaCarrusel.color, '--metal': casaCarrusel.metal }}>
-              <div
-                className='student-carousel-card'
-                onPointerDown={iniciarArrastreAlumno}
-                onPointerUp={cerrarArrastreAlumno}
-                onPointerCancel={() => { arrastreAlumnoRef.current = null; }}
-              >
+              <div className='student-carousel-card'>
                 <span className='rank'>{rankingAlumno}</span>
                 <div>
                   <strong>{alumnoCarrusel.nombre}</strong>

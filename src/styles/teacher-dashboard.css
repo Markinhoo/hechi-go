@@ -1195,3 +1195,97 @@ button,
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
 }
+
+/* Definitive fix: narrow desktop still gets arrows; touch screens keep vertical page scroll. */
+@media (hover: hover) and (pointer: fine) {
+  .student-carousel-nav {
+    display: grid !important;
+    grid-template-columns: 42px auto 42px !important;
+    align-items: center !important;
+  }
+
+  .arrow-control {
+    display: grid !important;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  html,
+  body,
+  #root {
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100dvh !important;
+    overflow-x: hidden !important;
+    overflow-y: scroll !important;
+    overscroll-behavior-y: auto !important;
+    touch-action: pan-y !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  body {
+    overscroll-behavior: auto !important;
+  }
+
+  .magic-surface,
+  .game-shell,
+  .mobile-scroll-page {
+    position: static !important;
+    display: block !important;
+    height: auto !important;
+    min-height: 100dvh !important;
+    max-height: none !important;
+    overflow: visible !important;
+    touch-action: pan-y !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .app-fixed {
+    display: block !important;
+    height: auto !important;
+    min-height: 100dvh !important;
+    overflow: visible !important;
+  }
+
+  .pocket-layout,
+  .pocket-layout.no-scroll-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  .hall-panel,
+  .parchment-panel,
+  .panel,
+  .pack-stage,
+  .carousel-shell {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    touch-action: pan-y !important;
+  }
+
+  .pack-stage {
+    min-height: 430px !important;
+    align-content: start !important;
+  }
+
+  .pack-carousel {
+    height: 260px !important;
+    min-height: 260px !important;
+    overflow: hidden !important;
+    touch-action: pan-y pinch-zoom !important;
+  }
+
+  .student-carousel-card {
+    touch-action: pan-y !important;
+    user-select: text !important;
+  }
+
+  .student-carousel-nav {
+    display: none !important;
+  }
+}
