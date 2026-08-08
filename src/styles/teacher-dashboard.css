@@ -1115,6 +1115,20 @@ button,
   text-overflow: ellipsis !important;
 }
 
+.student-carousel-nav {
+  grid-template-columns: 42px auto 42px !important;
+  justify-content: center;
+}
+
+.arrow-control {
+  width: 42px !important;
+  min-height: 36px !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+}
+
 @media(max-width:760px){
   html,
   body,
@@ -1130,11 +1144,15 @@ button,
 
   .magic-surface,
   .app-fixed,
-  .game-shell {
+  .game-shell,
+  .mobile-scroll-page {
+    display: block !important;
+    position: static !important;
     height: auto !important;
     min-height: 100dvh !important;
+    max-height: none !important;
     overflow-x: hidden !important;
-    overflow-y: visible !important;
+    overflow-y: auto !important;
     touch-action: pan-y !important;
   }
 
@@ -1152,8 +1170,17 @@ button,
   .carousel-shell,
   .pack-carousel,
   .pack-card {
+    height: auto !important;
+    max-height: none !important;
     overflow-y: visible !important;
     touch-action: pan-y !important;
+  }
+
+  .house-board,
+  .hero,
+  .compact-hero {
+    height: auto !important;
+    max-height: none !important;
   }
 
   .student-carousel-card {

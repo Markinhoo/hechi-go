@@ -385,7 +385,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   };
 
   return (
-    <main className='game-shell app-fixed'>
+    <main className='game-shell app-fixed mobile-scroll-page'>
       <header className='hero compact-hero house-cup-hero' style={heroStyle}>
         <div>
           <span className='eyebrow'><FaWandMagicSparkles /> {sesion.tipo === 'maestro' ? 'Vista maestro' : 'Vista alumno'}</span>
@@ -460,9 +460,9 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
                 )}
               </div>
               <div className='student-carousel-nav'>
-                <button type='button' className='authorize carousel-control' onClick={() => moverAlumno(-1)}>Anterior</button>
+                <button type='button' className='authorize carousel-control arrow-control' onClick={() => moverAlumno(-1)} aria-label='Alumno anterior'><FaArrowLeft /></button>
                 <span>{indiceAlumnoSeguro + 1} de {alumnosFiltrados.length}</span>
-                <button type='button' className='authorize carousel-control' onClick={() => moverAlumno(1)}>Siguiente</button>
+                <button type='button' className='authorize carousel-control arrow-control' onClick={() => moverAlumno(1)} aria-label='Alumno siguiente'><FaArrowRight /></button>
               </div>
             </div>
           ) : (
