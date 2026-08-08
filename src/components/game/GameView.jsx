@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { FaArrowLeft, FaArrowRight, FaWandMagicSparkles } from 'react-icons/fa6';
+import { FaArrowLeft, FaArrowRight, FaBookOpen, FaHouse, FaScroll, FaTrophy, FaWandMagicSparkles } from 'react-icons/fa6';
 import { bestiario, precioBestia, RAREZAS_BESTIARIO } from '../../data/bestiaryData';
 import { CARTAS_ACTIVAS, casas, PLAYER_KEY } from '../../data/gameData';
 import { db } from '../../services/hechiApi';
@@ -17,6 +17,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const [busquedaAlumno, setBusquedaAlumno] = useState('');
   const [indiceAlumno, setIndiceAlumno] = useState(0);
   const [bestiaDetalleId, setBestiaDetalleId] = useState(null);
+  const [studentTab, setStudentTab] = useState('inicio');
   const autoAbrirRef = useRef(false);
   const abrirCartaRef = useRef(null);
   const sobres = Array.from({ length: 7 }, (_, index) => index);
@@ -520,39 +521,66 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
           ))}
         </div>
       </div>
-      <div className='bestiary-panel'>
-        <div className='bestiary-heading'>
-          <span>
-            <strong>Bestiario Magico</strong>
-            <small>{bestiasAlumno.length}/{bestiario.length} criaturas descubiertas</small>
-          </span>
-          <b>{alumnoActual?.galeones || 0} galeones</b>
-        </div>
-        <div className='bestiary-market'>
-          {bestiario.map((bestia) => {
-            const comprada = bestiasCompradas.has(bestia.id);
-            const precio = precioBestia(bestia);
-            const puedeComprar = !comprada && (alumnoActual?.galeones || 0) >= precio;
-            const rareza = RAREZAS_BESTIARIO[bestia.rareza];
-            return (
-              <article className={'beast-card ' + (comprada ? 'owned' : 'locked')} key={bestia.id}>
-                <button type='button' className='beast-preview' onClick={() => setBestiaDetalleId(bestia.id)}>
-                  <img src={bestia.imagen} alt={bestia.nombre} />
-                  <span>{comprada ? 'Descubierta' : rareza.nombre}</span>
-                </button>
-                <div>
-                  <strong>{bestia.nombre}</strong>
-                  <small>{rareza.nombre} - {precio} galeones</small>
-                </div>
-                <button type='button' disabled={comprada || !puedeComprar} onClick={() => comprarBestia(bestia)}>
-                  {comprada ? 'Tuya' : 'Comprar'}
-                </button>
-              </article>
-            );
-          })}
-        </div>
-      </div>
     </aside>
+  );
+  const bestiaryPanel = (
+    <section className='panel bestiary-panel student-tab-panel'>
+      <div className='bestiary-heading'>
+        <span>
+          <strong>Bestiario Magico</strong>
+          <small>{bestiasAlumno.length}/{bestiario.length} criaturas descubiertas</small>
+        </span>
+        <b>{alumnoActual?.galeones || 0} galeones</b>
+      </div>
+      <div className='bestiary-market'>
+        {bestiario.map((bestia) => {
+          const comprada = bestiasCompradas.has(bestia.id);
+          const precio = precioBestia(bestia);
+          const puedeComprar = !comprada && (alumnoActual?.galeones || 0) >= precio;
+          const rareza = RAREZAS_BESTIARIO[bestia.rareza];
+          return (
+            <article className={'beast-card ' + (comprada ? 'owned' : 'locked')} key={bestia.id}>
+              <button type='button' className='beast-preview' onClick={() => setBestiaDetalleId(bestia.id)}>
+                <img src={bestia.imagen} alt={bestia.nombre} />
+                <span>{comprada ? 'Descubierta' : rareza.nombre}</span>
+              </button>
+              <div>
+                <strong>{bestia.nombre}</strong>
+                <small>{rareza.nombre} - {precio} galeones</small>
+              </div>
+              <button type='button' disabled={comprada || !puedeComprar} onClick={() => comprarBestia(bestia)}>
+                {comprada ? 'Tuya' : 'Comprar'}
+              </button>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+  const studentTabs = [
+    { id: 'inicio', label: 'Inicio', icon: <FaHouse /> },
+    { id: 'puntaje', label: 'Puntaje', icon: <FaTrophy /> },
+    { id: 'bestiario', label: 'Bestiario', icon: <FaBookOpen /> },
+    { id: 'hechizos', label: 'Hechizos', icon: <FaScroll /> }
+  ];
+  const houseBoard = (
+    <section className='house-board student-score-view'>
+      {casas.map((casa) => (
+        <button key={casa.id} type='button' className='house-card' style={{ '--house': casa.color, '--metal': casa.metal }} onClick={() => setCasaDetalleId(casa.id)}>
+          <img className='house-crest' src={casa.escudo} alt='' />
+          <span>{estado.conteos[casa.id]}/{estado.objetivos[casa.id]} aprendices</span>
+          <h2>{casa.nombre}</h2>
+          <strong>{estado.puntajes[casa.id]} pts</strong>
+          <dl className='house-score-breakdown'>
+            <div><dt>+</dt><dd>{estado.puntajesPositivos?.[casa.id] ?? estado.puntajes[casa.id]}</dd></div>
+            <div><dt>-</dt><dd>{estado.puntajesNegativos?.[casa.id] ?? 0}</dd></div>
+            <div><dt>Total</dt><dd>{estado.puntajes[casa.id]}</dd></div>
+          </dl>
+          {estado.casaProtegida === casa.id && <em className='house-status protected'>Protegida</em>}
+          {estado.casaMultiplicador === casa.id && <em className='house-status multiplier'>x2 pendiente</em>}
+        </button>
+      ))}
+    </section>
   );
 
   return (
@@ -572,71 +600,121 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         </div>
       </header>
 
-      <section className='house-board'>
-        {casas.map((casa) => (
-          <button key={casa.id} type='button' className='house-card' style={{ '--house': casa.color, '--metal': casa.metal }} onClick={() => setCasaDetalleId(casa.id)}>
-            <img className='house-crest' src={casa.escudo} alt='' />
-            <span>{estado.conteos[casa.id]}/{estado.objetivos[casa.id]} aprendices</span>
-            <h2>{casa.nombre}</h2>
-            <strong>{estado.puntajes[casa.id]} pts</strong>
-            <dl className='house-score-breakdown'>
-              <div><dt>+</dt><dd>{estado.puntajesPositivos?.[casa.id] ?? estado.puntajes[casa.id]}</dd></div>
-              <div><dt>-</dt><dd>{estado.puntajesNegativos?.[casa.id] ?? 0}</dd></div>
-              <div><dt>Total</dt><dd>{estado.puntajes[casa.id]}</dd></div>
-            </dl>
-            {estado.casaProtegida === casa.id && <em className='house-status protected'>Protegida</em>}
-            {estado.casaMultiplicador === casa.id && <em className='house-status multiplier'>x2 pendiente</em>}
-          </button>
-        ))}
-      </section>
+      {sesion.tipo === 'maestro' && houseBoard}
 
-      <section className='pocket-layout no-scroll-grid'>
-        {sesion.tipo === 'alumno' ? panelAlumno : <aside className='panel roster hall-panel'>
-          <div className='roster-heading'>
-            <h2>Gran salon</h2>
-            <span>{alumnosFiltrados.length}/{estado.alumnos.length}</span>
+      {sesion.tipo === 'alumno' ? (
+        <section className='student-tabs-area'>
+          <div className='student-tab-switcher'>
+            {studentTabs.map((tab) => (
+              <button key={tab.id} type='button' className={studentTab === tab.id ? 'active' : ''} onClick={() => setStudentTab(tab.id)}>
+                {tab.icon}<span>{tab.label}</span>
+              </button>
+            ))}
           </div>
-          <label className='student-search'>
-            <span>Buscar alumno</span>
-            <input
-              value={busquedaAlumno}
-              onChange={(event) => {
-                setBusquedaAlumno(event.target.value);
-                setIndiceAlumno(0);
-              }}
-              placeholder='Nombre del alumno'
-            />
-          </label>
-          {alumnoCarrusel ? (
-            <div className='student-carousel' style={{ '--house': casaCarrusel.color, '--metal': casaCarrusel.metal }}>
-              <div className='student-carousel-card'>
-                <span className='rank'>{rankingAlumno}</span>
-                <div>
-                  <strong>{alumnoCarrusel.nombre}</strong>
-                  <small>{casaCarrusel.nombre} - {alumnoCarrusel.cartas.length} cartas - {alumnoCarrusel.oportunidades} oportunidades</small>
+
+          {studentTab === 'inicio' && (
+            <section className='student-home-tab'>
+              <section className='pack-stage'>
+                <div className='carousel-shell'>
+                  <button className='carousel-nav' type='button' onClick={(event) => moverSobre(-1, event)} aria-label='Carta anterior'><FaArrowLeft /></button>
+                  <div
+                    className={'pack-carousel ' + (arrastre.activo ? 'dragging' : '')}
+                    onPointerDown={iniciarArrastre}
+                    onPointerMove={moverArrastre}
+                    onPointerUp={cerrarArrastre}
+                    onPointerCancel={cerrarArrastre}
+                    onPointerLeave={cerrarArrastre}
+                  >
+                    {Array.from({ length: 13 }, (_, item) => item - 6).map((offset) => {
+                      const centro = Math.round(posicionCarrusel);
+                      const progreso = posicionCarrusel - centro;
+                      const visualOffset = offset - progreso;
+                      const cartaId = ((centro + offset) % sobres.length + sobres.length) % sobres.length;
+                      const distancia = Math.min(3.4, Math.abs(visualOffset));
+                      return (
+                        <button type='button' key={centro + '-' + offset} className={'pack-card ' + (Math.abs(visualOffset) < 0.45 ? 'active' : '')} style={{ '--offset': visualOffset, '--distance': distancia }} onClick={() => Math.abs(visualOffset) < 0.45 ? abrirCarta() : setPosicionCarrusel(centro + offset)}>
+                          <img src='/hechi/card-back.png' alt={'Carta ' + (cartaId + 1)} draggable='false' />
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button className='carousel-nav' type='button' onClick={(event) => moverSobre(1, event)} aria-label='Carta siguiente'><FaArrowRight /></button>
                 </div>
-                <b>{alumnoCarrusel.puntos} pts</b>
-                {sesion.tipo === 'maestro' && (
+                <p className='message'>{mensaje}</p>
+              </section>
+              {panelAlumno}
+            </section>
+          )}
+
+          {studentTab === 'bestiario' && bestiaryPanel}
+
+          {studentTab === 'puntaje' && houseBoard}
+
+          {studentTab === 'hechizos' && (
+            <aside className='panel history parchment-panel student-tab-panel'>
+              <h2>Ultimos hechizos</h2>
+              {estado.historial.length === 0 && <p className='empty'>Aun no se abre ninguna carta.</p>}
+              {estado.historial.map((item) => {
+                const casaHistorial = obtenerCasa(item.casaId);
+                const puntosHistorial = item.puntos > 0 ? '+' + item.puntos : String(item.puntos);
+                return <div className='history-row' key={item.id} style={{ '--house': casaHistorial.color, '--metal': casaHistorial.metal }}><strong>{item.alumno}</strong><span>{casaHistorial.nombre} {puntosHistorial}</span></div>;
+              })}
+            </aside>
+          )}
+
+          <nav className='student-bottom-nav' aria-label='Navegacion de alumno'>
+            {studentTabs.map((tab) => (
+              <button key={tab.id} type='button' className={studentTab === tab.id ? 'active' : ''} onClick={() => setStudentTab(tab.id)} aria-label={tab.label}>
+                {tab.icon}<span>{tab.label}</span>
+              </button>
+            ))}
+          </nav>
+        </section>
+      ) : (
+        <section className='pocket-layout no-scroll-grid'>
+          <aside className='panel roster hall-panel'>
+            <div className='roster-heading'>
+              <h2>Gran salon</h2>
+              <span>{alumnosFiltrados.length}/{estado.alumnos.length}</span>
+            </div>
+            <label className='student-search'>
+              <span>Buscar alumno</span>
+              <input
+                value={busquedaAlumno}
+                onChange={(event) => {
+                  setBusquedaAlumno(event.target.value);
+                  setIndiceAlumno(0);
+                }}
+                placeholder='Nombre del alumno'
+              />
+            </label>
+            {alumnoCarrusel ? (
+              <div className='student-carousel' style={{ '--house': casaCarrusel.color, '--metal': casaCarrusel.metal }}>
+                <div className='student-carousel-card'>
+                  <span className='rank'>{rankingAlumno}</span>
+                  <div>
+                    <strong>{alumnoCarrusel.nombre}</strong>
+                    <small>{casaCarrusel.nombre} - {alumnoCarrusel.cartas.length} cartas - {alumnoCarrusel.oportunidades} oportunidades</small>
+                  </div>
+                  <b>{alumnoCarrusel.puntos} pts</b>
                   <div className='student-actions'>
                     <button type='button' className='authorize password' onClick={() => cambiarPassword(alumnoCarrusel)}>Cambiar contrasena</button>
                     <button type='button' className='authorize remove-points' onClick={() => quitarPuntosAlumno(alumnoCarrusel)}>Quitar puntos</button>
                     <button type='button' className='authorize delete-student' onClick={() => eliminarAlumno(alumnoCarrusel)}>Eliminar</button>
                   </div>
-                )}
+                </div>
+                <div className='student-carousel-nav'>
+                  <button type='button' className='authorize carousel-control arrow-control' onClick={() => moverAlumno(-1)} aria-label='Alumno anterior'><FaArrowLeft /></button>
+                  <span>{indiceAlumnoSeguro + 1} de {alumnosFiltrados.length}</span>
+                  <button type='button' className='authorize carousel-control arrow-control' onClick={() => moverAlumno(1)} aria-label='Alumno siguiente'><FaArrowRight /></button>
+                </div>
               </div>
-              <div className='student-carousel-nav'>
-                <button type='button' className='authorize carousel-control arrow-control' onClick={() => moverAlumno(-1)} aria-label='Alumno anterior'><FaArrowLeft /></button>
-                <span>{indiceAlumnoSeguro + 1} de {alumnosFiltrados.length}</span>
-                <button type='button' className='authorize carousel-control arrow-control' onClick={() => moverAlumno(1)} aria-label='Alumno siguiente'><FaArrowRight /></button>
-              </div>
-            </div>
-          ) : (
-            <p className='empty'>No hay alumnos con esa busqueda.</p>
-          )}
-        </aside>}
+            ) : (
+              <p className='empty'>No hay alumnos con esa busqueda.</p>
+            )}
+          </aside>
 
-        <section className={'pack-stage ' + (sesion.tipo === 'maestro' ? 'teacher-requests-stage' : '')}>
-          {sesion.tipo === 'maestro' ? (
+          <section className='pack-stage teacher-requests-stage'>
             <div className='request-board'>
               <span className='eyebrow'><FaWandMagicSparkles /> Solicitudes de carta</span>
               <h2>Permisos pendientes</h2>
@@ -657,49 +735,20 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
                 })}
               </div>
             </div>
-          ) : (
-            <>
-              <div className='carousel-shell'>
-                <button className='carousel-nav' type='button' onClick={(event) => moverSobre(-1, event)} aria-label='Carta anterior'><FaArrowLeft /></button>
-                <div
-                  className={'pack-carousel ' + (arrastre.activo ? 'dragging' : '')}
-                  onPointerDown={iniciarArrastre}
-                  onPointerMove={moverArrastre}
-                  onPointerUp={cerrarArrastre}
-                  onPointerCancel={cerrarArrastre}
-                  onPointerLeave={cerrarArrastre}
-                >
-                  {Array.from({ length: 13 }, (_, item) => item - 6).map((offset) => {
-                    const centro = Math.round(posicionCarrusel);
-                    const progreso = posicionCarrusel - centro;
-                    const visualOffset = offset - progreso;
-                    const cartaId = ((centro + offset) % sobres.length + sobres.length) % sobres.length;
-                    const distancia = Math.min(3.4, Math.abs(visualOffset));
-                    return (
-                      <button type='button' key={centro + '-' + offset} className={'pack-card ' + (Math.abs(visualOffset) < 0.45 ? 'active' : '')} style={{ '--offset': visualOffset, '--distance': distancia }} onClick={() => Math.abs(visualOffset) < 0.45 ? abrirCarta() : setPosicionCarrusel(centro + offset)}>
-                        <img src='/hechi/card-back.png' alt={'Carta ' + (cartaId + 1)} draggable='false' />
-                      </button>
-                    );
-                  })}
-                </div>
-                <button className='carousel-nav' type='button' onClick={(event) => moverSobre(1, event)} aria-label='Carta siguiente'><FaArrowRight /></button>
-              </div>
-              <div className='student-mobile-help'>{panelAlumno}</div>
-            </>
-          )}
-          <p className='message'>{mensaje}</p>
-        </section>
+            <p className='message'>{mensaje}</p>
+          </section>
 
-        <aside className='panel history parchment-panel'>
-          <h2>Ultimos hechizos</h2>
-          {estado.historial.length === 0 && <p className='empty'>Aun no se abre ninguna carta.</p>}
-          {estado.historial.map((item) => {
-            const casaHistorial = obtenerCasa(item.casaId);
-            const puntosHistorial = item.puntos > 0 ? '+' + item.puntos : String(item.puntos);
-            return <div className='history-row' key={item.id} style={{ '--house': casaHistorial.color, '--metal': casaHistorial.metal }}><strong>{item.alumno}</strong><span>{casaHistorial.nombre} {puntosHistorial}</span></div>;
-          })}
-        </aside>
-      </section>
+          <aside className='panel history parchment-panel'>
+            <h2>Ultimos hechizos</h2>
+            {estado.historial.length === 0 && <p className='empty'>Aun no se abre ninguna carta.</p>}
+            {estado.historial.map((item) => {
+              const casaHistorial = obtenerCasa(item.casaId);
+              const puntosHistorial = item.puntos > 0 ? '+' + item.puntos : String(item.puntos);
+              return <div className='history-row' key={item.id} style={{ '--house': casaHistorial.color, '--metal': casaHistorial.metal }}><strong>{item.alumno}</strong><span>{casaHistorial.nombre} {puntosHistorial}</span></div>;
+            })}
+          </aside>
+        </section>
+      )}
 
       {casaDetalle && (
         <div className='house-detail-modal' role='dialog' aria-modal='true' aria-labelledby='house-detail-title'>

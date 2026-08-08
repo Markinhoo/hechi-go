@@ -247,6 +247,32 @@
 
 .beast-detail-card strong{color:#ffd66d}
 
+.student-tabs-area{display:grid;gap:14px}
+
+.student-tab-switcher{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+
+.student-tab-switcher button{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;color:#ffeeca;background:rgba(255,238,202,.08);border:1px solid rgba(255,214,109,.24);font-weight:1000}
+
+.student-tab-switcher button.active{color:#21130d;background:linear-gradient(180deg,#ffd66d,#d99624);box-shadow:0 10px 24px rgba(0,0,0,.2)}
+
+.student-home-tab{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(280px,.7fr);gap:14px;align-items:start}
+
+.student-tab-panel{width:100%}
+
+.student-bottom-nav{display:none}
+
+.student-view .student-tabs-area>.house-board{margin-top:0}
+
+.student-view .student-tabs-area .history{width:min(100%,760px);justify-self:center}
+
+.student-view .student-tabs-area .bestiary-panel{width:100%;max-width:1120px;justify-self:center}
+
+.student-view .student-tabs-area .bestiary-market{max-height:none;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+
+.student-view .student-home-tab>.pack-stage{min-height:500px}
+
+.student-view .student-home-tab>.student-help-panel{min-height:0}
+
 
 .companion-bonus-options{display:grid;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,238,202,.22);max-height:32vh;overflow:auto}
 
@@ -1708,5 +1734,130 @@ button,
 
   .student-view .carousel-nav {
     display: none !important;
+  }
+}
+
+/* Student tab navigation */
+.student-view {
+  padding-bottom: 18px;
+}
+
+.student-view .student-tabs-area {
+  width: 100%;
+}
+
+.student-view .student-home-tab {
+  width: 100%;
+}
+
+.student-view .student-home-tab .pack-stage {
+  overflow: visible !important;
+}
+
+.student-view .student-home-tab .student-help-panel {
+  width: 100%;
+}
+
+@media(min-width: 761px) {
+  .student-view .student-tabs-area {
+    max-width: 1240px;
+    margin-inline: auto;
+  }
+
+  .student-view .student-tab-switcher {
+    position: sticky;
+    top: 8px;
+    z-index: 8;
+    padding: 6px;
+    border-radius: 999px;
+    background: rgba(23, 11, 26, .62);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,214,109,.16);
+  }
+}
+
+@media(max-width:760px) {
+  .student-view {
+    padding-bottom: 86px !important;
+  }
+
+  .student-tab-switcher {
+    display: none !important;
+  }
+
+  .student-view .student-tabs-area {
+    gap: 10px;
+  }
+
+  .student-home-tab {
+    grid-template-columns: 1fr !important;
+  }
+
+  .student-view .student-home-tab .pack-stage {
+    min-height: 390px !important;
+    padding: 14px 8px !important;
+    overflow: hidden !important;
+  }
+
+  .student-view .student-home-tab .pack-carousel {
+    height: 300px !important;
+    min-height: 300px !important;
+  }
+
+  .student-view .student-home-tab .student-help-panel {
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .student-view .student-tabs-area .bestiary-market {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-height: none;
+  }
+
+  .student-view .student-tabs-area .house-board {
+    grid-template-columns: 1fr !important;
+  }
+
+  .student-bottom-nav {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    z-index: 80;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    padding: 8px;
+    border-radius: 18px;
+    background: rgba(20, 9, 23, .92);
+    border: 1px solid rgba(255,214,109,.24);
+    box-shadow: 0 18px 42px rgba(0,0,0,.42);
+    backdrop-filter: blur(10px);
+  }
+
+  .student-bottom-nav button {
+    display: grid;
+    justify-items: center;
+    gap: 3px;
+    min-height: 52px;
+    padding: 6px 4px;
+    border-radius: 12px;
+    color: rgba(255,238,202,.76);
+    background: transparent;
+    border: 0;
+    font-size: 11px;
+    font-weight: 1000;
+  }
+
+  .student-bottom-nav svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .student-bottom-nav button.active {
+    color: #21130d;
+    background: linear-gradient(180deg,#ffd66d,#d99624);
   }
 }
