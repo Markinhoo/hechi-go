@@ -9,6 +9,8 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const [arrastre, setArrastre] = useState({ activo: false, inicio: 0, startPos: 0, lastX: 0, lastTime: 0, velocity: 0 });
   const [posicionCarrusel, setPosicionCarrusel] = useState(estado.sobreActivo || 0);
   const [cartaAbierta, setCartaAbierta] = useState(null);
+  const [busquedaAlumno, setBusquedaAlumno] = useState('');
+  const [indiceAlumno, setIndiceAlumno] = useState(0);
   const autoAbrirRef = useRef(false);
   const abrirCartaRef = useRef(null);
   const sobres = Array.from({ length: 7 }, (_, index) => index);
@@ -355,6 +357,18 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const casaGanadora = maxPuntos > 0 && ganadoras.length === 1 ? ganadoras[0] : null;
   const heroStyle = { '--winner-house': casaGanadora?.color || '#2f4f3d', '--winner-metal': casaGanadora?.metal || '#ffd66d' };
   const tituloClase = 'Copa de las Casas - ' + (estado.nombre || 'Clase');
+  const alumnosOrdenados = [...estado.alumnos].sort((a, b) => b.puntos - a.puntos);
+  const busquedaNormalizada = busquedaAlumno.trim().toLowerCase();
+  const alumnosFiltrados = busquedaNormalizada ? alumnosOrdenados.filter((alumno) => alumno.nombre.toLowerCase().includes(busquedaNormalizada)) : alumnosOrdenados;
+  const indiceAlumnoSeguro = alumnosFiltrados.length ? Math.min(indiceAlumno, alumnosFiltrados.length - 1) : 0;
+  const alumnoCarrusel = alumnosFiltrados[indiceAlumnoSeguro] || null;
+  const casaCarrusel = obtenerCasa(alumnoCarrusel?.casaId);
+  const rankingAlumno = alumnoCarrusel ? alumnosOrdenados.findIndex((alumno) => alumno.id === alumnoCarrusel.id) + 1 : 0;
+
+  const moverAlumno = (direccion) => {
+    if (!alumnosFiltrados.length) return;
+    setIndiceAlumno((actual) => (Math.min(actual, alumnosFiltrados.length - 1) + direccion + alumnosFiltrados.length) % alumnosFiltrados.length);
+  };
 
   return (
     <main className='game-shell app-fixed'>
@@ -394,22 +408,47 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
 
       <section className='pocket-layout no-scroll-grid'>
         <aside className='panel roster hall-panel'>
-          <h2>Gran salon</h2>
-          <div className='students'>
-            {[...estado.alumnos].sort((a, b) => b.puntos - a.puntos).map((alumno, index) => {
-              const casa = obtenerCasa(alumno.casaId);
-              return (
-                <div className='student-row' key={alumno.id} style={{ '--house': casa.color, '--metal': casa.metal }}>
-                  <span className='rank'>{index + 1}</span>
-                  <span><strong>{alumno.nombre}</strong><small>{casa.nombre} - {alumno.cartas.length} cartas - {alumno.oportunidades} oportunidades</small></span>
-                  <b>{alumno.puntos} pts</b>
-                  {sesion.tipo === 'maestro' && <button type='button' className='authorize password' onClick={() => cambiarPassword(alumno)}>Cambiar contrasena</button>}
-                  {sesion.tipo === 'maestro' && <button type='button' className='authorize remove-points' onClick={() => quitarPuntosAlumno(alumno)}>Quitar puntos</button>}
-                  {sesion.tipo === 'maestro' && <button type='button' className='authorize delete-student' onClick={() => eliminarAlumno(alumno)}>Eliminar</button>}
-                </div>
-              );
-            })}
+          <div className='roster-heading'>
+            <h2>Gran salon</h2>
+            <span>{alumnosFiltrados.length}/{estado.alumnos.length}</span>
           </div>
+          <label className='student-search'>
+            <span>Buscar alumno</span>
+            <input
+              value={busquedaAlumno}
+              onChange={(event) => {
+                setBusquedaAlumno(event.target.value);
+                setIndiceAlumno(0);
+              }}
+              placeholder='Nombre del alumno'
+            />
+          </label>
+          {alumnoCarrusel ? (
+            <div className='student-carousel' style={{ '--house': casaCarrusel.color, '--metal': casaCarrusel.metal }}>
+              <div className='student-carousel-card'>
+                <span className='rank'>{rankingAlumno}</span>
+                <div>
+                  <strong>{alumnoCarrusel.nombre}</strong>
+                  <small>{casaCarrusel.nombre} - {alumnoCarrusel.cartas.length} cartas - {alumnoCarrusel.oportunidades} oportunidades</small>
+                </div>
+                <b>{alumnoCarrusel.puntos} pts</b>
+              </div>
+              <div className='student-carousel-nav'>
+                <button type='button' className='authorize carousel-control' onClick={() => moverAlumno(-1)}>Anterior</button>
+                <span>{indiceAlumnoSeguro + 1} de {alumnosFiltrados.length}</span>
+                <button type='button' className='authorize carousel-control' onClick={() => moverAlumno(1)}>Siguiente</button>
+              </div>
+              {sesion.tipo === 'maestro' && (
+                <div className='student-actions'>
+                  <button type='button' className='authorize password' onClick={() => cambiarPassword(alumnoCarrusel)}>Cambiar contrasena</button>
+                  <button type='button' className='authorize remove-points' onClick={() => quitarPuntosAlumno(alumnoCarrusel)}>Quitar puntos</button>
+                  <button type='button' className='authorize delete-student' onClick={() => eliminarAlumno(alumnoCarrusel)}>Eliminar</button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className='empty'>No hay alumnos con esa busqueda.</p>
+          )}
         </aside>
 
         <section className={'pack-stage ' + (sesion.tipo === 'maestro' ? 'teacher-requests-stage' : '')}>

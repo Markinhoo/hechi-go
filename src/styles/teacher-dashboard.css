@@ -647,6 +647,144 @@ body { overscroll-behavior: none; }
   }
 }
 
+/* Roster carousel: prevents horizontal overflow and keeps actions below the selected student */
+.hall-panel {
+  overflow: hidden;
+}
+
+.roster {
+  gap: 12px;
+}
+
+.roster-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.roster-heading h2 {
+  margin: 0;
+}
+
+.roster-heading span {
+  min-width: max-content;
+  padding: 5px 9px;
+  border-radius: 999px;
+  color: #ffeeca;
+  background: linear-gradient(100deg, #4b1220, #1b101d);
+  border: 1px solid rgba(255,214,109,.35);
+  font-weight: 1000;
+}
+
+.student-search {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.student-search span {
+  color: #4b1220;
+  font-weight: 1000;
+}
+
+.student-search input {
+  width: 100%;
+  min-width: 0;
+  padding: 9px 10px;
+}
+
+.student-carousel {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.student-carousel-card {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+  border-radius: 10px;
+  color: var(--ink);
+  background: linear-gradient(120deg, rgba(255,250,224,.9), color-mix(in srgb, var(--house) 14%, #fff7df));
+  border: 1px solid color-mix(in srgb, var(--house) 38%, transparent);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.35), 0 12px 24px rgba(88,49,12,.12);
+}
+
+.student-carousel-card > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.student-carousel-card strong {
+  color: #4b1220;
+  font-size: clamp(18px, 1.25vw, 23px);
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.student-carousel-card small {
+  color: #72511d;
+  font-size: clamp(14px, 1vw, 17px);
+  line-height: 1.25;
+}
+
+.student-carousel-card b {
+  color: #4b1220;
+  white-space: nowrap;
+}
+
+.student-carousel-nav {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.student-carousel-nav span {
+  color: #4b1220;
+  font-weight: 1000;
+  white-space: nowrap;
+}
+
+.student-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.student-actions .authorize,
+.student-carousel-nav .authorize {
+  width: 100%;
+  min-width: 0;
+  white-space: normal;
+  text-align: center;
+}
+
+@media(max-width:760px){
+  .student-carousel-card {
+    grid-template-columns: 34px minmax(0, 1fr);
+  }
+
+  .student-carousel-card b {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .student-carousel-nav {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Teacher controls, stronger readability, and reliable card reveal */
 .student-row {
   grid-template-columns: 34px minmax(180px, 1fr) auto auto auto auto;
