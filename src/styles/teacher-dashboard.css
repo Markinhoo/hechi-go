@@ -647,6 +647,99 @@ body { overscroll-behavior: none; }
   }
 }
 
+/* Desktop/mobile roster refinements */
+@media(min-width:1101px){
+  .pocket-layout {
+    grid-template-columns: minmax(360px, 1.08fr) minmax(430px, 1.12fr) minmax(360px, 1.08fr);
+    gap: 16px;
+  }
+
+  .student-carousel-card {
+    grid-template-columns: 38px minmax(0, 1fr) 58px;
+    min-height: 88px;
+    padding: 12px;
+  }
+
+  .student-carousel-card strong,
+  .student-carousel-card small,
+  .history-row strong,
+  .history-row span {
+    display: block;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .student-carousel-card strong {
+    font-size: clamp(17px, 1.05vw, 21px);
+  }
+
+  .student-carousel-card small {
+    font-size: clamp(13px, .92vw, 16px);
+  }
+
+  .student-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .student-actions .authorize,
+  .student-carousel-nav .authorize {
+    min-height: 38px;
+    padding: 8px 9px;
+    font-size: clamp(14px, .92vw, 17px);
+    line-height: 1.1;
+  }
+
+  .parchment-panel {
+    overflow: hidden;
+  }
+}
+
+@media(max-width:760px){
+  html,
+  body,
+  #root {
+    height: auto !important;
+    min-height: 100%;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
+
+  .magic-surface,
+  .app-fixed,
+  .game-shell {
+    height: auto !important;
+    min-height: 100dvh;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+    touch-action: pan-y;
+  }
+
+  .pocket-layout {
+    display: block;
+  }
+
+  .panel,
+  .pack-stage {
+    margin-bottom: 12px;
+  }
+
+  .student-carousel-card {
+    touch-action: pan-y;
+    user-select: none;
+  }
+
+  .student-carousel-nav {
+    display: none;
+  }
+
+  .student-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Roster carousel: prevents horizontal overflow and keeps actions below the selected student */
 .hall-panel {
   overflow: hidden;
