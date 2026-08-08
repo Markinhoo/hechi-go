@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { FaArrowLeft, FaArrowRight, FaWandMagicSparkles } from 'react-icons/fa6';
-import { casas, PLAYER_KEY, TOTAL_CARTAS } from '../../data/gameData';
+import { CARTAS_ACTIVAS, casas, PLAYER_KEY } from '../../data/gameData';
 import { db } from '../../services/hechiApi';
 import { efectoCarta, guardarLocal, obtenerCasa, randomEntero } from '../../utils/gameUtils';
 import CardModal from './CardModal';
@@ -158,7 +158,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     if (sesion.tipo !== 'alumno') return setMensaje('Solo el alumno puede abrir su carta.');
     const alumno = estado.alumnos.find((item) => item.id === sesion.alumnoId);
     if (!alumno || alumno.oportunidades <= 0) return solicitarCarta(true);
-    const numero = randomEntero(TOTAL_CARTAS) + 1;
+    const numero = CARTAS_ACTIVAS[randomEntero(CARTAS_ACTIVAS.length)];
     const efecto = efectoCarta(numero);
     if (efecto.tipo === 'rival') {
       setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteRival: true });

@@ -1,4 +1,6 @@
-export const TOTAL_CARTAS = 28;
+export const CARTAS_ACTIVAS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 13, 16, 17, 18, 19, 22];
+export const TOTAL_CARTAS = CARTAS_ACTIVAS.length;
+const MAX_CARTA = 28;
 export const PLAYER_KEY = 'hechi-pocket-player-v3';
 export const TEACHER_KEY = 'hechi-pocket-teacher-v4';
 
@@ -9,7 +11,7 @@ export const casas = [
   { id: 'hufflepuff', nombre: 'Hufflepuff', color: '#e0ad25', metal: '#1f1a18', escudo: '/houses/hufflepuff.png' }
 ];
 
-export const efectosCartas = Array.from({ length: TOTAL_CARTAS }, (_, index) => {
+export const efectosCartas = Array.from({ length: MAX_CARTA }, (_, index) => {
   const numero = index + 1;
   if (numero === 1) return { puntos: 1, titulo: 'Alohomora', descripcion: 'SUMA +1 A LA CASA' };
   if (numero === 2) return { puntos: 0, titulo: 'Expecto Patronus', descripcion: 'PROTEGE A TU CASA Y DUPLICA LA SIGUIENTE PARTICIPACION', tipo: 'proteccion' };

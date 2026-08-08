@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabaseClient';
+import { CARTAS_ACTIVAS, TOTAL_CARTAS } from '../data/gameData';
 
-export const TOTAL_CARTAS = 28;
 const LOCAL_KEY = 'hechi-go-local-state';
 const db = supabase.schema('hechi');
 
@@ -76,14 +76,13 @@ export async function crearAlumno(claseId, nombre) {
 }
 
 export function elegirCarta(cartas) {
-  const disponibles = Array.from({ length: TOTAL_CARTAS }, (_, index) => index + 1)
-    .filter((numero) => !cartas.includes(numero));
+  const disponibles = CARTAS_ACTIVAS.filter((numero) => !cartas.includes(numero));
 
   if (disponibles.length > 0) {
     return disponibles[Math.floor(Math.random() * disponibles.length)];
   }
 
-  return Math.floor(Math.random() * TOTAL_CARTAS) + 1;
+  return CARTAS_ACTIVAS[Math.floor(Math.random() * TOTAL_CARTAS)];
 }
 
 export async function registrarParticipacion({ claseId, alumno, puntos, carta, esNueva }) {
