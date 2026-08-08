@@ -1563,3 +1563,86 @@ button,
     width: 66px;
   }
 }
+
+/* Final carousel polish */
+.student-view .pack-stage {
+  overflow: visible !important;
+}
+
+.student-view .carousel-shell {
+  overflow: visible !important;
+}
+
+.student-view .pack-carousel {
+  height: clamp(330px, 42vh, 430px) !important;
+  min-height: 330px !important;
+  overflow: visible !important;
+  touch-action: pan-y !important;
+}
+
+.student-view .pack-card {
+  top: 18px !important;
+  width: clamp(150px, 18vw, 220px) !important;
+}
+
+.student-view .tap-card-hint {
+  margin-top: 6px;
+  padding-inline: 8px;
+}
+
+.teacher-view .student-carousel {
+  position: relative;
+  padding-inline: 46px;
+}
+
+.teacher-view .student-carousel-card {
+  min-height: 118px;
+}
+
+.teacher-view .student-carousel-nav {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid !important;
+  grid-template-columns: 42px 1fr 42px !important;
+  align-items: center;
+  pointer-events: none;
+}
+
+.teacher-view .student-carousel-nav .arrow-control {
+  pointer-events: auto;
+  box-shadow: 0 10px 24px rgba(0,0,0,.24);
+}
+
+.teacher-view .student-carousel-nav span {
+  align-self: end;
+  justify-self: center;
+  margin-bottom: -28px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255,247,223,.78);
+  box-shadow: 0 8px 18px rgba(87,45,8,.12);
+}
+
+@media(max-width:760px) {
+  .student-view .pack-stage {
+    min-height: 500px !important;
+    overflow: hidden !important;
+  }
+
+  .student-view .pack-carousel {
+    height: 320px !important;
+    min-height: 320px !important;
+    overflow: visible !important;
+  }
+
+  .student-view .pack-card {
+    top: 18px !important;
+    width: 155px !important;
+    transform: translateX(calc(-50% + (var(--offset) * 68px))) translateY(calc(var(--distance) * 8px)) rotateY(calc(var(--offset) * -15deg)) scale(calc(1 - (var(--distance) * .07))) !important;
+  }
+
+  .student-view .carousel-nav {
+    display: none !important;
+  }
+}

@@ -309,7 +309,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   });
 
   const iniciarArrastre = (event) => {
-    if (event.pointerType !== 'mouse' || event.button !== 0) return;
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
     event.currentTarget.setPointerCapture?.(event.pointerId);
     const ahora = performance.now();
     setArrastre({ activo: true, inicio: event.clientX, inicioY: event.clientY, startPos: posicionCarrusel, lastX: event.clientX, lastTime: ahora, velocity: 0 });
@@ -320,7 +320,8 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     const ahora = performance.now();
     const delta = event.clientX - arrastre.inicio;
     const deltaY = event.clientY - arrastre.inicioY;
-    if (event.pointerType !== 'mouse' && Math.abs(delta) < Math.abs(deltaY) * 0.65) return;
+    if (event.pointerType !== 'mouse' && Math.abs(delta) < Math.abs(deltaY) * 0.75) return;
+    event.preventDefault?.();
     const siguiente = arrastre.startPos - delta / 118;
     const dt = Math.max(1, ahora - arrastre.lastTime);
     const velocity = (event.clientX - arrastre.lastX) / dt;
