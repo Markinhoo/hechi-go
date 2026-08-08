@@ -6,7 +6,7 @@ import { efectoCarta, guardarLocal, obtenerCasa, randomEntero } from '../../util
 import CardModal from './CardModal';
 
 function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setMensaje }) {
-  const [arrastre, setArrastre] = useState({ activo: false, inicio: 0, startPos: 0, lastX: 0, lastTime: 0, velocity: 0 });
+  const [arrastre, setArrastre] = useState({ activo: false, inicio: 0, inicioY: 0, startPos: 0, lastX: 0, lastTime: 0, velocity: 0 });
   const [posicionCarrusel, setPosicionCarrusel] = useState(estado.sobreActivo || 0);
   const [cartaAbierta, setCartaAbierta] = useState(null);
   const [busquedaAlumno, setBusquedaAlumno] = useState('');
@@ -309,15 +309,17 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
 
   const iniciarArrastre = (event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
-    event.currentTarget.setPointerCapture?.(event.pointerId);
+    if (event.pointerType === 'mouse') event.currentTarget.setPointerCapture?.(event.pointerId);
     const ahora = performance.now();
-    setArrastre({ activo: true, inicio: event.clientX, startPos: posicionCarrusel, lastX: event.clientX, lastTime: ahora, velocity: 0 });
+    setArrastre({ activo: true, inicio: event.clientX, inicioY: event.clientY, startPos: posicionCarrusel, lastX: event.clientX, lastTime: ahora, velocity: 0 });
   };
 
   const moverArrastre = (event) => {
     if (!arrastre.activo) return;
     const ahora = performance.now();
     const delta = event.clientX - arrastre.inicio;
+    const deltaY = event.clientY - arrastre.inicioY;
+    if (event.pointerType !== 'mouse' && Math.abs(delta) < Math.abs(deltaY) * 0.65) return;
     const siguiente = arrastre.startPos - delta / 118;
     const dt = Math.max(1, ahora - arrastre.lastTime);
     const velocity = (event.clientX - arrastre.lastX) / dt;
@@ -329,7 +331,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     if (!arrastre.activo) return;
     const impulso = -arrastre.velocity * 1.65;
     setPosicionCarrusel((actual) => Math.round(actual + impulso));
-    setArrastre({ activo: false, inicio: 0, startPos: 0, lastX: 0, lastTime: 0, velocity: 0 });
+    setArrastre({ activo: false, inicio: 0, inicioY: 0, startPos: 0, lastX: 0, lastTime: 0, velocity: 0 });
   };
 
   useEffect(() => {
