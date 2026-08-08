@@ -183,6 +183,8 @@
 
 .point-swap-choice:hover{transform:translateY(-2px);filter:brightness(1.08)}
 
+.point-swap-choice.selected{outline:2px solid #fff7df;box-shadow:0 0 0 3px color-mix(in srgb,var(--metal) 45%,transparent),0 14px 30px rgba(0,0,0,.28)}
+
 
 .companion-bonus-options{display:grid;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,238,202,.22);max-height:32vh;overflow:auto}
 

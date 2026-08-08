@@ -204,6 +204,19 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       setMensaje('Multijugos: elige el alumno cuyos puntos quieres replicar.');
       return null;
     }
+    if (efecto.tipo === 'roboMultiple') {
+      const objetivosDisponibles = estado.alumnos.filter((item) => item.id !== alumno.id && item.casaId !== estado.casaProtegida);
+      if (objetivosDisponibles.length < 5) {
+        const data = await registrarCarta({ numero, efecto });
+        if (!data) return null;
+        setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id });
+        setMensaje('Morsmordre no encontro 5 alumnos disponibles.');
+        return data;
+      }
+      setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteRoboMultiple: true });
+      setMensaje('Morsmordre: elige 5 alumnos para quitarles 1 punto.');
+      return null;
+    }
     if (efecto.tipo === 'otrasCasas') {
       const { data, error } = await db.rpc('restar_puntos_otras_casas', {
         p_token: sesion.token,
@@ -337,6 +350,24 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     setEstado(data);
     setCartaAbierta({ ...cartaAbierta, pendienteReplicaPuntos: false, puntos });
     setMensaje('Multijugos replico +' + puntos + ' puntos de ' + (objetivo?.nombre || 'otro alumno') + '.');
+  };
+
+  const seleccionarRoboMultiple = async (objetivoIds) => {
+    if (!cartaAbierta || cartaAbierta.tipo !== 'roboMultiple' || !cartaAbierta.pendienteRoboMultiple) return;
+    if (!Array.isArray(objetivoIds) || objetivoIds.length !== 5) return setMensaje('Elige exactamente 5 alumnos.');
+    const { data, error } = await db.rpc('morsmordre_robar_puntos', {
+      p_token: sesion.token,
+      p_alumno_id: sesion.alumnoId,
+      p_password: sesion.password,
+      p_numero: cartaAbierta.numero,
+      p_titulo: cartaAbierta.titulo,
+      p_descripcion: cartaAbierta.descripcion,
+      p_objetivo_ids: objetivoIds
+    });
+    if (error) return setMensaje(error.message);
+    setEstado(data);
+    setCartaAbierta({ ...cartaAbierta, pendienteRoboMultiple: false, puntos: 5 });
+    setMensaje('Morsmordre quito 1 punto a 5 alumnos y sumo +5 a tu casa.');
   };
 
   const usarCartaGuardada = async (carta) => {
@@ -663,17 +694,20 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         alumnosPuntos={estado.alumnos}
         alumnosCompanero={estado.alumnos}
         alumnosReplica={estado.alumnos.filter((alumno) => alumno.casaId !== estado.casaProtegida)}
+        alumnosRobo={estado.alumnos.filter((alumno) => alumno.casaId !== estado.casaProtegida)}
         onSelectRival={seleccionarCasaRival}
         onSelectExchange={seleccionarIntercambio}
         onSelectPointSwap={seleccionarIntercambioPuntos}
         onSelectCompanionBonus={seleccionarCompaneroBonus}
         onSelectReplica={seleccionarReplicaPuntos}
+        onSelectRobbery={seleccionarRoboMultiple}
         onClose={() => {
           if (cartaAbierta?.pendienteRival) return setMensaje('Primero elige la casa rival para aplicar la carta.');
           if (cartaAbierta?.pendienteIntercambio) return setMensaje('Primero completa el intercambio de Imperio.');
           if (cartaAbierta?.pendientePuntosIntercambio) return setMensaje('Primero completa el intercambio de puntos de Confundo.');
           if (cartaAbierta?.pendienteCompaneroBonus) return setMensaje('Primero elige el companero para Amortentia.');
           if (cartaAbierta?.pendienteReplicaPuntos) return setMensaje('Primero elige el alumno para Multijugos.');
+          if (cartaAbierta?.pendienteRoboMultiple) return setMensaje('Primero elige 5 alumnos para Morsmordre.');
           return setCartaAbierta(null);
         }}
       />

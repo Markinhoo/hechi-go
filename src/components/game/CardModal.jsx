@@ -2,17 +2,19 @@ import { useMemo, useState } from 'react';
 import { FaXmark } from 'react-icons/fa6';
 import { obtenerCasa } from '../../utils/gameUtils';
 
-function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [], alumnosPuntos = [], alumnosCompanero = [], alumnosReplica = [], onSelectRival, onSelectExchange, onSelectPointSwap, onSelectCompanionBonus, onSelectReplica }) {
+function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [], alumnosPuntos = [], alumnosCompanero = [], alumnosReplica = [], alumnosRobo = [], onSelectRival, onSelectExchange, onSelectPointSwap, onSelectCompanionBonus, onSelectReplica, onSelectRobbery }) {
   const [companeroId, setCompaneroId] = useState('');
   const [rivalId, setRivalId] = useState('');
+  const [roboIds, setRoboIds] = useState([]);
   const cartaActiva = carta || { casaId: 'gryffindor', tipo: '', puntos: 0, alumnoId: '' };
   const casa = obtenerCasa(cartaActiva.casaId);
-  const puntosTexto = cartaActiva.tipo === 'proteccion' ? 'Proteccion activa' : (cartaActiva.tipo === 'intercambio' ? 'Intercambio magico' : (cartaActiva.tipo === 'puntosIntercambio' ? 'Intercambio de puntos' : (cartaActiva.tipo === 'companeroBonus' ? 'Bonificacion compartida' : (cartaActiva.tipo === 'replicaPuntos' ? 'Replica de puntos' : (cartaActiva.puntos > 0 ? '+' + cartaActiva.puntos + ' puntos' : String(cartaActiva.puntos) + ' puntos')))));
+  const puntosTexto = cartaActiva.tipo === 'proteccion' ? 'Proteccion activa' : (cartaActiva.tipo === 'intercambio' ? 'Intercambio magico' : (cartaActiva.tipo === 'puntosIntercambio' ? 'Intercambio de puntos' : (cartaActiva.tipo === 'companeroBonus' ? 'Bonificacion compartida' : (cartaActiva.tipo === 'replicaPuntos' ? 'Replica de puntos' : (cartaActiva.tipo === 'roboMultiple' ? 'Robo de puntos' : (cartaActiva.puntos > 0 ? '+' + cartaActiva.puntos + ' puntos' : String(cartaActiva.puntos) + ' puntos'))))));
   const esperaRival = cartaActiva.tipo === 'rival' && cartaActiva.pendienteRival;
   const esperaIntercambio = cartaActiva.tipo === 'intercambio' && cartaActiva.pendienteIntercambio;
   const esperaPuntosIntercambio = cartaActiva.tipo === 'puntosIntercambio' && cartaActiva.pendientePuntosIntercambio;
   const esperaCompaneroBonus = cartaActiva.tipo === 'companeroBonus' && cartaActiva.pendienteCompaneroBonus;
   const esperaReplicaPuntos = cartaActiva.tipo === 'replicaPuntos' && cartaActiva.pendienteReplicaPuntos;
+  const esperaRoboMultiple = cartaActiva.tipo === 'roboMultiple' && cartaActiva.pendienteRoboMultiple;
   const miCasa = cartaActiva.casaId;
   const alumnosMiCasa = useMemo(() => alumnosIntercambio.filter((alumno) => alumno.casaId === miCasa && alumno.id !== cartaActiva.alumnoId), [alumnosIntercambio, cartaActiva.alumnoId, miCasa]);
   const alumnosRivales = useMemo(() => alumnosIntercambio.filter((alumno) => alumno.casaId !== miCasa), [alumnosIntercambio, miCasa]);
@@ -20,6 +22,14 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
   const alumnosParaPuntos = useMemo(() => alumnosPuntos.filter((alumno) => alumno.id !== cartaActiva.alumnoId), [alumnosPuntos, cartaActiva.alumnoId]);
   const alumnosParaCompanero = useMemo(() => alumnosCompanero.filter((alumno) => alumno.id !== cartaActiva.alumnoId), [alumnosCompanero, cartaActiva.alumnoId]);
   const alumnosParaReplica = useMemo(() => alumnosReplica.filter((alumno) => alumno.id !== cartaActiva.alumnoId), [alumnosReplica, cartaActiva.alumnoId]);
+  const alumnosParaRobo = useMemo(() => alumnosRobo.filter((alumno) => alumno.id !== cartaActiva.alumnoId), [alumnosRobo, cartaActiva.alumnoId]);
+  const alternarRobo = (alumnoId) => {
+    setRoboIds((actuales) => {
+      if (actuales.includes(alumnoId)) return actuales.filter((id) => id !== alumnoId);
+      if (actuales.length >= 5) return actuales;
+      return [...actuales, alumnoId];
+    });
+  };
 
   if (!carta) return null;
 
@@ -130,6 +140,24 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
                 );
               })}
             </div>
+          </div>
+        )}
+        {esperaRoboMultiple && (
+          <div className='point-swap-options' aria-label='Robo de puntos'>
+            <small>Elige exactamente 5 alumnos. Cada uno pierde 1 punto y tu casa gana +5.</small>
+            {alumnosParaRobo.length < 5 && <span>No hay 5 alumnos disponibles.</span>}
+            <div>
+              {alumnosParaRobo.map((alumno) => {
+                const casaAlumno = obtenerCasa(alumno.casaId);
+                const seleccionado = roboIds.includes(alumno.id);
+                return (
+                  <button key={alumno.id} type='button' className={'point-swap-choice ' + (seleccionado ? 'selected' : '')} style={{ '--house': casaAlumno.color, '--metal': casaAlumno.metal }} onClick={() => alternarRobo(alumno.id)}>
+                    {seleccionado ? '[x] ' : ''}{alumno.nombre} - {casaAlumno.nombre} - {alumno.puntos} pts
+                  </button>
+                );
+              })}
+            </div>
+            <button type='button' className='exchange-apply' disabled={roboIds.length !== 5} onClick={() => onSelectRobbery?.(roboIds)}>Aplicar {roboIds.length}/5</button>
           </div>
         )}
       </article>
