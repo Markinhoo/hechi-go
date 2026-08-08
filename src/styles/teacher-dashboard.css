@@ -1096,3 +1096,75 @@ button,
     font-size: 18px;
   }
 }
+
+/* Final mobile/desktop interaction overrides */
+.student-actions {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+}
+
+.student-actions .authorize {
+  min-width: 0 !important;
+  min-height: 34px !important;
+  padding: 6px 5px !important;
+  font-size: clamp(11px, 2.6vw, 14px) !important;
+  line-height: 1.05 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+@media(max-width:760px){
+  html,
+  body,
+  #root {
+    position: static !important;
+    height: auto !important;
+    min-height: 100% !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    touch-action: pan-y !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .magic-surface,
+  .app-fixed,
+  .game-shell {
+    height: auto !important;
+    min-height: 100dvh !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+    touch-action: pan-y !important;
+  }
+
+  .pocket-layout {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+    touch-action: pan-y !important;
+  }
+
+  .panel,
+  .hall-panel,
+  .parchment-panel,
+  .pack-stage,
+  .carousel-shell,
+  .pack-carousel,
+  .pack-card {
+    overflow-y: visible !important;
+    touch-action: pan-y !important;
+  }
+
+  .student-carousel-card {
+    touch-action: pan-y !important;
+  }
+
+  .student-carousel-nav {
+    display: none !important;
+  }
+
+  .student-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
