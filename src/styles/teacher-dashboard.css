@@ -1289,3 +1289,196 @@ button,
     display: none !important;
   }
 }
+
+/* House detail popup and student mobile flow */
+.house-card {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.house-card:focus-visible {
+  outline: 3px solid var(--metal);
+  outline-offset: 3px;
+}
+
+.house-detail-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(12, 6, 14, .74);
+  backdrop-filter: blur(8px);
+}
+
+.house-detail-card {
+  width: min(96vw, 820px);
+  max-height: min(86vh, 720px);
+  position: relative;
+  display: grid;
+  gap: 12px;
+  overflow: hidden;
+  color: #fff7df;
+  border: 2px solid var(--metal);
+  border-radius: 10px;
+  background: linear-gradient(140deg, color-mix(in srgb, var(--house) 82%, #180712), #150b18);
+  box-shadow: 0 30px 90px rgba(0,0,0,.48), 0 0 42px color-mix(in srgb, var(--metal) 28%, transparent);
+}
+
+.house-detail-card header {
+  display: grid;
+  grid-template-columns: 74px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 54px 12px 18px;
+  border-bottom: 1px solid color-mix(in srgb, var(--metal) 48%, transparent);
+}
+
+.house-detail-card header img {
+  width: 74px;
+  aspect-ratio: 1;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 20px rgba(0,0,0,.38));
+}
+
+.house-detail-card header span {
+  color: var(--metal);
+  font-size: 13px;
+  font-weight: 1000;
+  text-transform: uppercase;
+}
+
+.house-detail-card header h2 {
+  margin: 0;
+  color: #ffd66d;
+  font-size: clamp(32px, 5vw, 54px);
+  line-height: .9;
+}
+
+.house-detail-card header p {
+  margin: 4px 0 0;
+  color: #ffeeca;
+  font-weight: 900;
+}
+
+.house-detail-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 999px;
+  color: #ffeeca;
+  background: rgba(20, 8, 18, .82);
+  border: 1px solid rgba(255,214,109,.55);
+}
+
+.house-detail-table-wrap {
+  overflow: auto;
+  padding: 0 14px 14px;
+}
+
+.house-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgba(255, 32, 32, .92);
+}
+
+.house-detail-table th,
+.house-detail-table td {
+  padding: 8px 10px;
+  border: 1px solid rgba(32, 0, 0, .72);
+  color: #fff;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 15px;
+  line-height: 1.15;
+}
+
+.house-detail-table th {
+  color: #fff7df;
+  background: #050505;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.house-detail-table th:first-child,
+.house-detail-table td:first-child {
+  text-align: left;
+}
+
+.house-detail-table th:not(:first-child),
+.house-detail-table td:not(:first-child) {
+  width: 112px;
+  text-align: right;
+  font-weight: 900;
+}
+
+.house-detail-total td {
+  font-weight: 1000;
+  text-transform: uppercase;
+  background: rgba(210, 0, 0, .96);
+}
+
+@media(max-width:760px) {
+  .student-view .hall-panel {
+    display: none !important;
+  }
+
+  .student-view .pocket-layout,
+  .student-view .pocket-layout.no-scroll-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  .student-view .pack-stage {
+    order: 1 !important;
+    min-height: 470px !important;
+    padding: 14px 8px !important;
+  }
+
+  .student-view .parchment-panel {
+    order: 2 !important;
+  }
+
+  .student-view .pack-carousel {
+    height: 280px !important;
+    min-height: 280px !important;
+  }
+
+  .student-view .stored-cards-list {
+    max-height: none !important;
+  }
+
+  .house-detail-card {
+    max-height: 88dvh;
+  }
+
+  .house-detail-card header {
+    grid-template-columns: 56px 1fr;
+    padding: 14px 48px 10px 12px;
+  }
+
+  .house-detail-card header img {
+    width: 56px;
+  }
+
+  .house-detail-table th,
+  .house-detail-table td {
+    padding: 7px 6px;
+    font-size: 12px;
+  }
+
+  .house-detail-table th:not(:first-child),
+  .house-detail-table td:not(:first-child) {
+    width: 66px;
+  }
+}

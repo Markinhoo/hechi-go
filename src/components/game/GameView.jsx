@@ -9,6 +9,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const [arrastre, setArrastre] = useState({ activo: false, inicio: 0, inicioY: 0, startPos: 0, lastX: 0, lastTime: 0, velocity: 0 });
   const [posicionCarrusel, setPosicionCarrusel] = useState(estado.sobreActivo || 0);
   const [cartaAbierta, setCartaAbierta] = useState(null);
+  const [casaDetalleId, setCasaDetalleId] = useState(null);
   const [busquedaAlumno, setBusquedaAlumno] = useState('');
   const [indiceAlumno, setIndiceAlumno] = useState(0);
   const autoAbrirRef = useRef(false);
@@ -307,8 +308,8 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   });
 
   const iniciarArrastre = (event) => {
-    if (event.pointerType === 'mouse' && event.button !== 0) return;
-    if (event.pointerType === 'mouse') event.currentTarget.setPointerCapture?.(event.pointerId);
+    if (event.pointerType !== 'mouse' || event.button !== 0) return;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
     const ahora = performance.now();
     setArrastre({ activo: true, inicio: event.clientX, inicioY: event.clientY, startPos: posicionCarrusel, lastX: event.clientX, lastTime: ahora, velocity: 0 });
   };
@@ -359,6 +360,12 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const casaGanadora = maxPuntos > 0 && ganadoras.length === 1 ? ganadoras[0] : null;
   const heroStyle = { '--winner-house': casaGanadora?.color || '#2f4f3d', '--winner-metal': casaGanadora?.metal || '#ffd66d' };
   const tituloClase = 'Copa de las Casas - ' + (estado.nombre || 'Clase');
+  const casaDetalle = casas.find((casa) => casa.id === casaDetalleId);
+  const alumnosCasaDetalle = casaDetalle ? estado.alumnos.filter((alumno) => alumno.casaId === casaDetalle.id) : [];
+  const resumenCasaDetalle = alumnosCasaDetalle.reduce((resumen, alumno) => ({
+    positivos: resumen.positivos + (alumno.puntosPositivos ?? Math.max(alumno.puntos, 0)),
+    negativos: resumen.negativos + (alumno.puntosNegativos ?? 0)
+  }), { positivos: 0, negativos: 0 });
   const alumnosOrdenados = [...estado.alumnos].sort((a, b) => b.puntos - a.puntos);
   const busquedaNormalizada = busquedaAlumno.trim().toLowerCase();
   const alumnosFiltrados = busquedaNormalizada ? alumnosOrdenados.filter((alumno) => alumno.nombre.toLowerCase().includes(busquedaNormalizada)) : alumnosOrdenados;
@@ -373,7 +380,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   };
 
   return (
-    <main className='game-shell app-fixed mobile-scroll-page'>
+    <main className={'game-shell app-fixed mobile-scroll-page ' + (sesion.tipo === 'alumno' ? 'student-view' : 'teacher-view')}>
       <header className='hero compact-hero house-cup-hero' style={heroStyle}>
         <div>
           <span className='eyebrow'><FaWandMagicSparkles /> {sesion.tipo === 'maestro' ? 'Vista maestro' : 'Vista alumno'}</span>
@@ -392,7 +399,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
 
       <section className='house-board'>
         {casas.map((casa) => (
-          <article key={casa.id} className='house-card' style={{ '--house': casa.color, '--metal': casa.metal }}>
+          <button key={casa.id} type='button' className='house-card' style={{ '--house': casa.color, '--metal': casa.metal }} onClick={() => setCasaDetalleId(casa.id)}>
             <img className='house-crest' src={casa.escudo} alt='' />
             <span>{estado.conteos[casa.id]}/{estado.objetivos[casa.id]} aprendices</span>
             <h2>{casa.nombre}</h2>
@@ -404,7 +411,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
             </dl>
             {estado.casaProtegida === casa.id && <em className='house-status protected'>Protegida</em>}
             {estado.casaMultiplicador === casa.id && <em className='house-status multiplier'>x2 pendiente</em>}
-          </article>
+          </button>
         ))}
       </section>
 
@@ -534,6 +541,47 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
           })}
         </aside>
       </section>
+
+      {casaDetalle && (
+        <div className='house-detail-modal' role='dialog' aria-modal='true' aria-labelledby='house-detail-title'>
+          <div className='house-detail-card' style={{ '--house': casaDetalle.color, '--metal': casaDetalle.metal }}>
+            <button type='button' className='house-detail-close' onClick={() => setCasaDetalleId(null)} aria-label='Cerrar detalle'>x</button>
+            <header>
+              <img src={casaDetalle.escudo} alt='' />
+              <div>
+                <span>Casa</span>
+                <h2 id='house-detail-title'>{casaDetalle.nombre}</h2>
+                <p>{alumnosCasaDetalle.length} alumnos - {estado.puntajes[casaDetalle.id] ?? 0} pts</p>
+              </div>
+            </header>
+            <div className='house-detail-table-wrap'>
+              <table className='house-detail-table'>
+                <thead>
+                  <tr>
+                    <th>Nombres</th>
+                    <th>Positivos</th>
+                    <th>Negativos</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {alumnosCasaDetalle.map((alumno) => (
+                    <tr key={alumno.id}>
+                      <td>{alumno.nombre}</td>
+                      <td>{alumno.puntosPositivos ?? Math.max(alumno.puntos, 0)}</td>
+                      <td>{alumno.puntosNegativos ?? 0}</td>
+                    </tr>
+                  ))}
+                  <tr className='house-detail-total'>
+                    <td>Total</td>
+                    <td>{resumenCasaDetalle.positivos}</td>
+                    <td>{resumenCasaDetalle.negativos}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
 
       <CardModal
         carta={cartaAbierta}
