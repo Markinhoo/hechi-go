@@ -1389,13 +1389,13 @@ button,
   border-collapse: collapse;
   overflow: hidden;
   border-radius: 8px;
-  background: rgba(255, 32, 32, .92);
+  background: color-mix(in srgb, var(--house) 86%, #1b101d);
 }
 
 .house-detail-table th,
 .house-detail-table td {
   padding: 8px 10px;
-  border: 1px solid rgba(32, 0, 0, .72);
+  border: 1px solid color-mix(in srgb, var(--house) 44%, #050505);
   color: #fff;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 15px;
@@ -1404,7 +1404,7 @@ button,
 
 .house-detail-table th {
   color: #fff7df;
-  background: #050505;
+  background: linear-gradient(100deg, #050505, color-mix(in srgb, var(--house) 58%, #050505));
   text-transform: uppercase;
   letter-spacing: 0;
 }
@@ -1424,12 +1424,78 @@ button,
 .house-detail-total td {
   font-weight: 1000;
   text-transform: uppercase;
-  background: rgba(210, 0, 0, .96);
+  background: color-mix(in srgb, var(--house) 72%, #050505);
+}
+
+.student-view .student-help-panel {
+  align-content: start;
+  justify-items: stretch;
+  gap: 14px;
+  color: #ffeeca;
+  background: linear-gradient(145deg, rgba(32,18,42,.92), rgba(14,25,32,.9));
+  border-color: rgba(255,214,109,.32);
+}
+
+.student-view .student-help-panel .tap-card-hint {
+  width: 100%;
+  padding: 14px;
+  border-radius: 8px;
+  background: rgba(255,238,202,.08);
+  border: 1px solid rgba(255,214,109,.22);
+}
+
+.student-mobile-help {
+  display: none;
+}
+
+.password-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 75;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(12, 6, 14, .76);
+  backdrop-filter: blur(8px);
+}
+
+.password-card {
+  position: relative;
+  width: min(92vw, 440px);
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+  border-radius: 10px;
+  color: #4b1220;
+  background: linear-gradient(130deg, #fff7df, #ecd088);
+  border: 2px solid rgba(93,57,20,.35);
+  box-shadow: 0 26px 80px rgba(0,0,0,.42);
+}
+
+.password-card h2 {
+  margin: 0 38px 4px 0;
+  color: #4b1220;
+  font-size: 34px;
+}
+
+.password-card label {
+  display: grid;
+  gap: 5px;
+  font-weight: 1000;
+}
+
+.password-card input {
+  width: 100%;
 }
 
 @media(max-width:760px) {
-  .student-view .hall-panel {
+  .student-view > .pocket-layout > .student-help-panel {
     display: none !important;
+  }
+
+  .student-mobile-help {
+    display: block;
+    width: 100%;
   }
 
   .student-view .pocket-layout,
@@ -1456,6 +1522,21 @@ button,
 
   .student-view .stored-cards-list {
     max-height: none !important;
+  }
+
+  .student-mobile-help .student-help-panel {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .student-mobile-help .tap-card-hint {
+    margin-top: 2px;
+  }
+
+  .change-own-password {
+    min-width: min(100%, 190px);
   }
 
   .house-detail-card {

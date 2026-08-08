@@ -10,18 +10,14 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const [posicionCarrusel, setPosicionCarrusel] = useState(estado.sobreActivo || 0);
   const [cartaAbierta, setCartaAbierta] = useState(null);
   const [casaDetalleId, setCasaDetalleId] = useState(null);
+  const [mostrarCambioPassword, setMostrarCambioPassword] = useState(false);
+  const [passwordNuevaAlumno, setPasswordNuevaAlumno] = useState('');
+  const [passwordConfirmacionAlumno, setPasswordConfirmacionAlumno] = useState('');
   const [busquedaAlumno, setBusquedaAlumno] = useState('');
   const [indiceAlumno, setIndiceAlumno] = useState(0);
   const autoAbrirRef = useRef(false);
   const abrirCartaRef = useRef(null);
   const sobres = Array.from({ length: 7 }, (_, index) => index);
-
-  const refrescar = async (token) => {
-    const { data, error } = await db.rpc('cargar_clase', { p_token: token });
-    if (error) return setMensaje(error.message);
-    setEstado(data);
-    return data;
-  };
 
   const autorizar = async (alumnoId) => {
     const { data, error } = await db.rpc('autorizar_participacion', { p_token: sesion.token, p_alumno_id: alumnoId });
@@ -65,12 +61,14 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     setMensaje('Contrasena restablecida para ' + alumno.nombre + '.');
   };
 
-  const cambiarPasswordPropia = async () => {
+  const cambiarPasswordPropia = async (event) => {
+    event?.preventDefault?.();
     if (sesion.tipo !== 'alumno') return;
-    const nueva = window.prompt('Nueva contrasena (minimo 3 caracteres)');
-    const passwordNueva = (nueva || '').trim();
-    if (!passwordNueva) return setMensaje('Cambio de contrasena cancelado.');
+    const passwordNueva = passwordNuevaAlumno.trim();
+    const passwordConfirmacion = passwordConfirmacionAlumno.trim();
+    if (!passwordNueva) return setMensaje('Escribe tu nueva contrasena.');
     if (passwordNueva.length < 3) return setMensaje('La nueva contrasena debe tener al menos 3 caracteres.');
+    if (passwordNueva !== passwordConfirmacion) return setMensaje('La confirmacion no coincide.');
     setMensaje('Actualizando tu contrasena...');
     const { data, error } = await db.rpc('cambiar_password_propia', {
       p_token: sesion.token,
@@ -83,6 +81,9 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     setSesion(sesionActualizada);
     guardarLocal(PLAYER_KEY, sesionActualizada);
     setEstado(data);
+    setMostrarCambioPassword(false);
+    setPasswordNuevaAlumno('');
+    setPasswordConfirmacionAlumno('');
     setMensaje('Tu contrasena fue actualizada.');
   };
 
@@ -378,6 +379,27 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     if (!alumnosFiltrados.length) return;
     setIndiceAlumno((actual) => (Math.min(actual, alumnosFiltrados.length - 1) + direccion + alumnosFiltrados.length) % alumnosFiltrados.length);
   };
+  const panelAlumno = (
+    <aside className='panel student-help-panel'>
+      <p className='tap-card-hint'>Toca la carta central para pedir autorizacion. Cuando el maestro autorice, se abrira automaticamente.</p>
+      <div className='stored-cards-panel'>
+        <div>
+          <strong>Cartas guardadas</strong>
+          <small>Presentalas al maestro cuando quieras usarlas.</small>
+        </div>
+        {(!alumnoActual?.cartasGuardadas || alumnoActual.cartasGuardadas.length === 0) && <p>No tienes cartas guardadas todavia.</p>}
+        <div className='stored-cards-list'>
+          {(alumnoActual?.cartasGuardadas || []).map((carta) => (
+            <article className='stored-card' key={carta.id}>
+              <img src={'/hechi/card-' + carta.numero + '.png'} alt={carta.titulo} />
+              <span><b>{carta.titulo}</b><small>{carta.descripcion}</small></span>
+              <button type='button' onClick={() => usarCartaGuardada(carta)}>Usar</button>
+            </article>
+          ))}
+        </div>
+      </div>
+    </aside>
+  );
 
   return (
     <main className={'game-shell app-fixed mobile-scroll-page ' + (sesion.tipo === 'alumno' ? 'student-view' : 'teacher-view')}>
@@ -389,8 +411,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         </div>
         <div className='hero-actions'>
           {sesion.tipo === 'alumno' && <span className='player-badge' style={{ '--house': casaActual.color, '--metal': casaActual.metal }}>{alumnoActual?.nombre} - {casaActual.nombre} - {alumnoActual?.oportunidades || 0} oportunidades</span>}
-          <button type='button' className='ghost' onClick={() => refrescar(estado.token)}>Actualizar</button>
-          {sesion.tipo === 'alumno' && <button type='button' className='ghost' onClick={cambiarPasswordPropia}>Cambiar contrasena</button>}
+          {sesion.tipo === 'alumno' && <button type='button' className='ghost change-own-password' onClick={() => setMostrarCambioPassword(true)}>Cambiar contrasena</button>}
           {sesion.tipo === 'maestro' && <button type='button' className='ghost danger-soft' onClick={reiniciarClase}>Reiniciar clase</button>}
           {sesion.tipo === 'maestro' && <button type='button' className='ghost danger-soft' onClick={eliminarClase}>Eliminar clase</button>}
           <button type='button' className='ghost' onClick={salir}>Salir</button>
@@ -416,7 +437,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       </section>
 
       <section className='pocket-layout no-scroll-grid'>
-        <aside className='panel roster hall-panel'>
+        {sesion.tipo === 'alumno' ? panelAlumno : <aside className='panel roster hall-panel'>
           <div className='roster-heading'>
             <h2>Gran salon</h2>
             <span>{alumnosFiltrados.length}/{estado.alumnos.length}</span>
@@ -458,7 +479,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
           ) : (
             <p className='empty'>No hay alumnos con esa busqueda.</p>
           )}
-        </aside>
+        </aside>}
 
         <section className={'pack-stage ' + (sesion.tipo === 'maestro' ? 'teacher-requests-stage' : '')}>
           {sesion.tipo === 'maestro' ? (
@@ -509,23 +530,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
                 </div>
                 <button className='carousel-nav' type='button' onClick={(event) => moverSobre(1, event)} aria-label='Carta siguiente'><FaArrowRight /></button>
               </div>
-              <p className='tap-card-hint'>Toca la carta central para pedir autorizacion. Cuando el maestro autorice, se abrira automaticamente.</p>
-              <div className='stored-cards-panel'>
-                <div>
-                  <strong>Cartas guardadas</strong>
-                  <small>Presentalas al maestro cuando quieras usarlas.</small>
-                </div>
-                {(!alumnoActual?.cartasGuardadas || alumnoActual.cartasGuardadas.length === 0) && <p>No tienes cartas guardadas todavia.</p>}
-                <div className='stored-cards-list'>
-                  {(alumnoActual?.cartasGuardadas || []).map((carta) => (
-                    <article className='stored-card' key={carta.id}>
-                      <img src={'/hechi/card-' + carta.numero + '.png'} alt={carta.titulo} />
-                      <span><b>{carta.titulo}</b><small>{carta.descripcion}</small></span>
-                      <button type='button' onClick={() => usarCartaGuardada(carta)}>Usar</button>
-                    </article>
-                  ))}
-                </div>
-              </div>
+              <div className='student-mobile-help'>{panelAlumno}</div>
             </>
           )}
           <p className='message'>{mensaje}</p>
@@ -580,6 +585,24 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
               </table>
             </div>
           </div>
+        </div>
+      )}
+
+      {mostrarCambioPassword && (
+        <div className='password-modal' role='dialog' aria-modal='true' aria-labelledby='password-modal-title'>
+          <form className='password-card' onSubmit={cambiarPasswordPropia}>
+            <button type='button' className='house-detail-close' onClick={() => setMostrarCambioPassword(false)} aria-label='Cerrar cambio de contrasena'>x</button>
+            <h2 id='password-modal-title'>Cambiar contrasena</h2>
+            <label>
+              <span>Nueva contrasena</span>
+              <input type='password' value={passwordNuevaAlumno} onChange={(event) => setPasswordNuevaAlumno(event.target.value)} minLength='3' autoComplete='new-password' />
+            </label>
+            <label>
+              <span>Confirmar contrasena</span>
+              <input type='password' value={passwordConfirmacionAlumno} onChange={(event) => setPasswordConfirmacionAlumno(event.target.value)} minLength='3' autoComplete='new-password' />
+            </label>
+            <button type='submit' className='authorize password'>Guardar contrasena</button>
+          </form>
         </div>
       )}
 
