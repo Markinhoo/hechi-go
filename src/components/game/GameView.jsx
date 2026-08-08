@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { FaArrowLeft, FaArrowRight, FaWandMagicSparkles } from 'react-icons/fa6';
+import { bestiario, precioBestia, RAREZAS_BESTIARIO } from '../../data/bestiaryData';
 import { CARTAS_ACTIVAS, casas, PLAYER_KEY } from '../../data/gameData';
 import { db } from '../../services/hechiApi';
 import { efectoCarta, guardarLocal, obtenerCasa, randomEntero } from '../../utils/gameUtils';
@@ -15,6 +16,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const [passwordConfirmacionAlumno, setPasswordConfirmacionAlumno] = useState('');
   const [busquedaAlumno, setBusquedaAlumno] = useState('');
   const [indiceAlumno, setIndiceAlumno] = useState(0);
+  const [bestiaDetalleId, setBestiaDetalleId] = useState(null);
   const autoAbrirRef = useRef(false);
   const abrirCartaRef = useRef(null);
   const sobres = Array.from({ length: 7 }, (_, index) => index);
@@ -407,6 +409,19 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     setMensaje(carta.titulo + ' usada como justificante.');
   };
 
+  const comprarBestia = async (bestia) => {
+    if (sesion.tipo !== 'alumno') return;
+    const { data, error } = await db.rpc('comprar_bestia', {
+      p_token: sesion.token,
+      p_alumno_id: sesion.alumnoId,
+      p_password: sesion.password,
+      p_bestia_id: bestia.id
+    });
+    if (error) return setMensaje(error.message);
+    setEstado(data);
+    setMensaje('Compraste ' + bestia.nombre + ' para tu Bestiario Magico.');
+  };
+
   useEffect(() => {
     abrirCartaRef.current = abrirCarta;
   });
@@ -478,6 +493,9 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const alumnoCarrusel = alumnosFiltrados[indiceAlumnoSeguro] || null;
   const casaCarrusel = obtenerCasa(alumnoCarrusel?.casaId);
   const rankingAlumno = alumnoCarrusel ? alumnosOrdenados.findIndex((alumno) => alumno.id === alumnoCarrusel.id) + 1 : 0;
+  const bestiasAlumno = alumnoActual?.bestiario || [];
+  const bestiasCompradas = new Set(bestiasAlumno);
+  const bestiaDetalle = bestiario.find((bestia) => bestia.id === bestiaDetalleId);
 
   const moverAlumno = (direccion) => {
     if (!alumnosFiltrados.length) return;
@@ -500,6 +518,38 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
               <button type='button' onClick={() => usarCartaGuardada(carta)}>Usar</button>
             </article>
           ))}
+        </div>
+      </div>
+      <div className='bestiary-panel'>
+        <div className='bestiary-heading'>
+          <span>
+            <strong>Bestiario Magico</strong>
+            <small>{bestiasAlumno.length}/{bestiario.length} criaturas descubiertas</small>
+          </span>
+          <b>{alumnoActual?.galeones || 0} galeones</b>
+        </div>
+        <div className='bestiary-market'>
+          {bestiario.map((bestia) => {
+            const comprada = bestiasCompradas.has(bestia.id);
+            const precio = precioBestia(bestia);
+            const puedeComprar = !comprada && (alumnoActual?.galeones || 0) >= precio;
+            const rareza = RAREZAS_BESTIARIO[bestia.rareza];
+            return (
+              <article className={'beast-card ' + (comprada ? 'owned' : 'locked')} key={bestia.id}>
+                <button type='button' className='beast-preview' onClick={() => setBestiaDetalleId(bestia.id)}>
+                  <img src={bestia.imagen} alt={bestia.nombre} />
+                  <span>{comprada ? 'Descubierta' : rareza.nombre}</span>
+                </button>
+                <div>
+                  <strong>{bestia.nombre}</strong>
+                  <small>{rareza.nombre} - {precio} galeones</small>
+                </div>
+                <button type='button' disabled={comprada || !puedeComprar} onClick={() => comprarBestia(bestia)}>
+                  {comprada ? 'Tuya' : 'Comprar'}
+                </button>
+              </article>
+            );
+          })}
         </div>
       </div>
     </aside>
@@ -707,6 +757,19 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
             </label>
             <button type='submit' className='authorize password'>Guardar contrasena</button>
           </form>
+        </div>
+      )}
+
+      {bestiaDetalle && (
+        <div className='beast-detail-modal' role='dialog' aria-modal='true' aria-labelledby='beast-detail-title'>
+          <article className='beast-detail-card'>
+            <button type='button' className='house-detail-close' onClick={() => setBestiaDetalleId(null)} aria-label='Cerrar detalle'>x</button>
+            <img src={bestiaDetalle.imagen} alt={bestiaDetalle.nombre} />
+            <span>{RAREZAS_BESTIARIO[bestiaDetalle.rareza].nombre} - {precioBestia(bestiaDetalle)} galeones</span>
+            <h2 id='beast-detail-title'>{bestiaDetalle.nombre}</h2>
+            <p>{bestiaDetalle.descripcion}</p>
+            <strong>{bestiasCompradas.has(bestiaDetalle.id) ? 'Ya vive en tu Bestiario Magico.' : 'Aun no la has comprado.'}</strong>
+          </article>
         </div>
       )}
 
