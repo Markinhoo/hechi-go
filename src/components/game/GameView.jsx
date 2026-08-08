@@ -451,19 +451,19 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
                   <small>{casaCarrusel.nombre} - {alumnoCarrusel.cartas.length} cartas - {alumnoCarrusel.oportunidades} oportunidades</small>
                 </div>
                 <b>{alumnoCarrusel.puntos} pts</b>
+                {sesion.tipo === 'maestro' && (
+                  <div className='student-actions'>
+                    <button type='button' className='authorize password' onClick={() => cambiarPassword(alumnoCarrusel)}>Cambiar contrasena</button>
+                    <button type='button' className='authorize remove-points' onClick={() => quitarPuntosAlumno(alumnoCarrusel)}>Quitar puntos</button>
+                    <button type='button' className='authorize delete-student' onClick={() => eliminarAlumno(alumnoCarrusel)}>Eliminar</button>
+                  </div>
+                )}
               </div>
               <div className='student-carousel-nav'>
                 <button type='button' className='authorize carousel-control' onClick={() => moverAlumno(-1)}>Anterior</button>
                 <span>{indiceAlumnoSeguro + 1} de {alumnosFiltrados.length}</span>
                 <button type='button' className='authorize carousel-control' onClick={() => moverAlumno(1)}>Siguiente</button>
               </div>
-              {sesion.tipo === 'maestro' && (
-                <div className='student-actions'>
-                  <button type='button' className='authorize password' onClick={() => cambiarPassword(alumnoCarrusel)}>Cambiar contrasena</button>
-                  <button type='button' className='authorize remove-points' onClick={() => quitarPuntosAlumno(alumnoCarrusel)}>Quitar puntos</button>
-                  <button type='button' className='authorize delete-student' onClick={() => eliminarAlumno(alumnoCarrusel)}>Eliminar</button>
-                </div>
-              )}
             </div>
           ) : (
             <p className='empty'>No hay alumnos con esa busqueda.</p>

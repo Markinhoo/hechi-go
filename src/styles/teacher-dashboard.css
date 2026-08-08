@@ -647,6 +647,76 @@ body { overscroll-behavior: none; }
   }
 }
 
+/* Final roster fit: keep teacher actions visible inside the selected student card */
+.hall-panel {
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+}
+
+.roster {
+  min-height: 0;
+}
+
+.student-carousel {
+  overflow: visible !important;
+}
+
+.student-carousel-card {
+  grid-template-columns: 42px minmax(0, 1fr) auto !important;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 10px 12px;
+}
+
+.student-carousel-card > .student-actions {
+  grid-column: 1 / -1;
+}
+
+.student-carousel-card strong,
+.student-carousel-card small {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.student-actions {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.student-actions .authorize {
+  min-height: 36px;
+  padding: 7px 8px;
+  font-size: clamp(14px, .95vw, 17px);
+  line-height: 1.1;
+}
+
+@media(max-width:760px){
+  .student-carousel-card {
+    grid-template-columns: 34px minmax(0, 1fr) auto !important;
+    touch-action: pan-y;
+  }
+
+  .student-carousel-card b {
+    grid-column: auto;
+  }
+
+  .student-carousel-nav {
+    display: none !important;
+  }
+
+  .student-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .hall-panel,
+  .parchment-panel,
+  .panel {
+    overflow: visible !important;
+  }
+}
+
 /* Desktop/mobile roster refinements */
 @media(min-width:1101px){
   .pocket-layout {
