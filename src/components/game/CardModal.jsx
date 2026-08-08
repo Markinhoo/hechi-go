@@ -2,19 +2,20 @@ import { useMemo, useState } from 'react';
 import { FaXmark } from 'react-icons/fa6';
 import { obtenerCasa } from '../../utils/gameUtils';
 
-function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [], alumnosPuntos = [], alumnosCompanero = [], alumnosReplica = [], alumnosRobo = [], onSelectRival, onSelectExchange, onSelectPointSwap, onSelectCompanionBonus, onSelectReplica, onSelectRobbery }) {
+function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [], alumnosPuntos = [], alumnosCompanero = [], alumnosReplica = [], alumnosRobo = [], onSelectRival, onSelectExchange, onSelectPointSwap, onSelectCompanionBonus, onSelectReplica, onSelectRobbery, onSelectJokeDecision }) {
   const [companeroId, setCompaneroId] = useState('');
   const [rivalId, setRivalId] = useState('');
   const [roboIds, setRoboIds] = useState([]);
   const cartaActiva = carta || { casaId: 'gryffindor', tipo: '', puntos: 0, alumnoId: '' };
   const casa = obtenerCasa(cartaActiva.casaId);
-  const puntosTexto = cartaActiva.tipo === 'proteccion' ? 'Proteccion activa' : (cartaActiva.tipo === 'intercambio' ? 'Intercambio magico' : (cartaActiva.tipo === 'puntosIntercambio' ? 'Intercambio de puntos' : (cartaActiva.tipo === 'companeroBonus' ? 'Bonificacion compartida' : (cartaActiva.tipo === 'replicaPuntos' ? 'Replica de puntos' : (cartaActiva.tipo === 'roboMultiple' ? 'Robo de puntos' : (cartaActiva.puntos > 0 ? '+' + cartaActiva.puntos + ' puntos' : String(cartaActiva.puntos) + ' puntos'))))));
+  const puntosTexto = cartaActiva.tipo === 'proteccion' ? 'Proteccion activa' : (cartaActiva.tipo === 'intercambio' ? 'Intercambio magico' : (cartaActiva.tipo === 'puntosIntercambio' ? 'Intercambio de puntos' : (cartaActiva.tipo === 'companeroBonus' ? 'Bonificacion compartida' : (cartaActiva.tipo === 'replicaPuntos' ? 'Replica de puntos' : (cartaActiva.tipo === 'roboMultiple' ? 'Robo de puntos' : (cartaActiva.tipo === 'decisionChiste' ? 'Decision de chiste' : (cartaActiva.puntos > 0 ? '+' + cartaActiva.puntos + ' puntos' : String(cartaActiva.puntos) + ' puntos')))))));
   const esperaRival = cartaActiva.tipo === 'rival' && cartaActiva.pendienteRival;
   const esperaIntercambio = cartaActiva.tipo === 'intercambio' && cartaActiva.pendienteIntercambio;
   const esperaPuntosIntercambio = cartaActiva.tipo === 'puntosIntercambio' && cartaActiva.pendientePuntosIntercambio;
   const esperaCompaneroBonus = cartaActiva.tipo === 'companeroBonus' && cartaActiva.pendienteCompaneroBonus;
   const esperaReplicaPuntos = cartaActiva.tipo === 'replicaPuntos' && cartaActiva.pendienteReplicaPuntos;
   const esperaRoboMultiple = cartaActiva.tipo === 'roboMultiple' && cartaActiva.pendienteRoboMultiple;
+  const esperaDecisionChiste = cartaActiva.tipo === 'decisionChiste' && cartaActiva.pendienteDecisionChiste;
   const miCasa = cartaActiva.casaId;
   const alumnosMiCasa = useMemo(() => alumnosIntercambio.filter((alumno) => alumno.casaId === miCasa && alumno.id !== cartaActiva.alumnoId), [alumnosIntercambio, cartaActiva.alumnoId, miCasa]);
   const alumnosRivales = useMemo(() => alumnosIntercambio.filter((alumno) => alumno.casaId !== miCasa), [alumnosIntercambio, miCasa]);
@@ -158,6 +159,15 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
               })}
             </div>
             <button type='button' className='exchange-apply' disabled={roboIds.length !== 5} onClick={() => onSelectRobbery?.(roboIds)}>Aplicar {roboIds.length}/5</button>
+          </div>
+        )}
+        {esperaDecisionChiste && (
+          <div className='joke-decision-options' aria-label='Decision de Riddikulus'>
+            <small>Pasa al frente a contar un chiste frente al salon.</small>
+            <div>
+              <button type='button' className='joke-choice accept' onClick={() => onSelectJokeDecision?.(true)}>Si, contar chiste (+2)</button>
+              <button type='button' className='joke-choice reject' onClick={() => onSelectJokeDecision?.(false)}>No, me niego (-2)</button>
+            </div>
           </div>
         )}
       </article>

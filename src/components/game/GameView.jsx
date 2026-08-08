@@ -217,6 +217,11 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       setMensaje('Morsmordre: elige 5 alumnos para quitarles 1 punto.');
       return null;
     }
+    if (efecto.tipo === 'decisionChiste') {
+      setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteDecisionChiste: true });
+      setMensaje('Riddikulus: pasa al frente a contar un chiste.');
+      return null;
+    }
     if (efecto.tipo === 'otrasCasas') {
       const { data, error } = await db.rpc('restar_puntos_otras_casas', {
         p_token: sesion.token,
@@ -368,6 +373,24 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     setEstado(data);
     setCartaAbierta({ ...cartaAbierta, pendienteRoboMultiple: false, puntos: 5 });
     setMensaje('Morsmordre quito 1 punto a 5 alumnos y sumo +5 a tu casa.');
+  };
+
+  const seleccionarDecisionChiste = async (acepta) => {
+    if (!cartaAbierta || cartaAbierta.tipo !== 'decisionChiste' || !cartaAbierta.pendienteDecisionChiste) return;
+    const { data, error } = await db.rpc('riddikulus_decision_chiste', {
+      p_token: sesion.token,
+      p_alumno_id: sesion.alumnoId,
+      p_password: sesion.password,
+      p_numero: cartaAbierta.numero,
+      p_titulo: cartaAbierta.titulo,
+      p_descripcion: cartaAbierta.descripcion,
+      p_acepta: acepta
+    });
+    if (error) return setMensaje(error.message);
+    const puntos = acepta ? 2 : -2;
+    setEstado(data);
+    setCartaAbierta({ ...cartaAbierta, pendienteDecisionChiste: false, puntos });
+    setMensaje(acepta ? 'Riddikulus sumo +2 por contar el chiste.' : 'Riddikulus resto -2 por negarse a contar el chiste.');
   };
 
   const usarCartaGuardada = async (carta) => {
@@ -701,6 +724,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         onSelectCompanionBonus={seleccionarCompaneroBonus}
         onSelectReplica={seleccionarReplicaPuntos}
         onSelectRobbery={seleccionarRoboMultiple}
+        onSelectJokeDecision={seleccionarDecisionChiste}
         onClose={() => {
           if (cartaAbierta?.pendienteRival) return setMensaje('Primero elige la casa rival para aplicar la carta.');
           if (cartaAbierta?.pendienteIntercambio) return setMensaje('Primero completa el intercambio de Imperio.');
@@ -708,6 +732,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
           if (cartaAbierta?.pendienteCompaneroBonus) return setMensaje('Primero elige el companero para Amortentia.');
           if (cartaAbierta?.pendienteReplicaPuntos) return setMensaje('Primero elige el alumno para Multijugos.');
           if (cartaAbierta?.pendienteRoboMultiple) return setMensaje('Primero elige 5 alumnos para Morsmordre.');
+          if (cartaAbierta?.pendienteDecisionChiste) return setMensaje('Primero elige si contaras el chiste de Riddikulus.');
           return setCartaAbierta(null);
         }}
       />

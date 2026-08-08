@@ -1,4 +1,4 @@
-export const CARTAS_ACTIVAS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18, 19, 22, 26];
+export const CARTAS_ACTIVAS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 22, 26];
 export const TOTAL_CARTAS = CARTAS_ACTIVAS.length;
 const MAX_CARTA = 28;
 export const PLAYER_KEY = 'hechi-pocket-player-v3';
@@ -26,6 +26,7 @@ export const efectosCartas = Array.from({ length: MAX_CARTA }, (_, index) => {
   if (numero === 11) return { puntos: 3, titulo: 'Engorgio', descripcion: 'SUMA +3 A LA CASA' };
   if (numero === 12) return { puntos: -2, titulo: 'Sectumsempra', descripcion: 'QUITA -2 A LAS OTRAS CASAS, EXCEPTO A LA CASA PROTEGIDA', tipo: 'otrasCasas' };
   if (numero === 13) return { puntos: 0, titulo: 'Muertos en Vida', descripcion: 'RESCATA A ALGUIEN DE REPROBAR', tipo: 'guardable' };
+  if (numero === 15) return { puntos: 2, titulo: 'Riddikulus', descripcion: 'CUENTA UN CHISTE FRENTE AL SALON: SI ACEPTAS +2, SI TE NIEGAS -2', tipo: 'decisionChiste' };
   if (numero === 16) return { puntos: 0, titulo: 'Amortentia', descripcion: 'SUMA +2 A TI Y OTRO COMPANERO', tipo: 'companeroBonus' };
   if (numero === 17) return { puntos: 0, titulo: 'Elixir de Vida', descripcion: 'QUITA LA MITAD DE LOS PUNTOS NEGATIVOS A SU CASA', tipo: 'limpiaNegativos' };
   if (numero === 18) return { puntos: 1, titulo: 'Crecehuesos', descripcion: 'SUMA +1 O JUSTIFICA UNA FALTA', tipo: 'guardable' };
@@ -34,7 +35,7 @@ export const efectosCartas = Array.from({ length: MAX_CARTA }, (_, index) => {
   if (numero === 22) return { puntos: 0, titulo: 'Vigorizante', descripcion: 'JUSTIFICA TODAS SUS FALTAS', tipo: 'guardable' };
   if (numero === 26) return { puntos: 0, titulo: 'Multijugos', descripcion: 'REPLICA LOS PUNTOS DE OTRO ALUMNO DISPONIBLE', tipo: 'replicaPuntos' };
   if ([14, 23].includes(numero)) return { puntos: 30, titulo: 'Reliquia poderosa', descripcion: 'La casa sube con fuerza en el marcador.' };
-  if ([15, 20, 25].includes(numero)) return { puntos: 20, titulo: 'Encantamiento mayor', descripcion: 'La participacion suma una ventaja importante.' };
+  if ([20, 25].includes(numero)) return { puntos: 20, titulo: 'Encantamiento mayor', descripcion: 'La participacion suma una ventaja importante.' };
   if (numero % 2 === 0) return { puntos: 15, titulo: 'Carta especial', descripcion: 'Buen aporte para la casa.' };
   return { puntos: 10, titulo: 'Carta comun', descripcion: 'Suma base por participacion autorizada.' };
 });

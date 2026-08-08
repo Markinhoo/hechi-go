@@ -185,6 +185,18 @@
 
 .point-swap-choice.selected{outline:2px solid #fff7df;box-shadow:0 0 0 3px color-mix(in srgb,var(--metal) 45%,transparent),0 14px 30px rgba(0,0,0,.28)}
 
+.joke-decision-options{display:grid;gap:10px}
+
+.joke-decision-options>div{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+.joke-choice{padding:12px;border-radius:10px;color:#fff7df;border:1px solid rgba(255,214,109,.56);box-shadow:0 10px 24px rgba(0,0,0,.24);font-weight:1000}
+
+.joke-choice.accept{background:linear-gradient(120deg,#0d5c45,#1b101d)}
+
+.joke-choice.reject{background:linear-gradient(120deg,#8f1628,#1b101d)}
+
+@media(max-width:560px){.joke-decision-options>div{grid-template-columns:1fr}}
+
 
 .companion-bonus-options{display:grid;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,238,202,.22);max-height:32vh;overflow:auto}
 
