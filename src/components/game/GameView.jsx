@@ -204,6 +204,22 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       setMensaje('Multijugos: elige el alumno cuyos puntos quieres replicar.');
       return null;
     }
+    if (efecto.tipo === 'otrasCasas') {
+      const { data, error } = await db.rpc('restar_puntos_otras_casas', {
+        p_token: sesion.token,
+        p_alumno_id: sesion.alumnoId,
+        p_password: sesion.password,
+        p_numero: numero,
+        p_puntos: Math.abs(efecto.puntos),
+        p_titulo: efecto.titulo,
+        p_descripcion: efecto.descripcion
+      });
+      if (error) return setMensaje(error.message);
+      setEstado(data);
+      setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id });
+      setMensaje('Sectumsempra quito 2 puntos a las otras casas disponibles.');
+      return data;
+    }
     if (efecto.tipo === 'intercambio') {
       const hayRivalDisponible = estado.alumnos.some((item) => item.casaId !== alumno.casaId && item.casaId !== estado.casaProtegida);
       if (alumno.casaId === estado.casaProtegida || !hayRivalDisponible) {
