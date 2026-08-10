@@ -550,11 +550,18 @@ body { overscroll-behavior: none; }
 
 .class-row span { display: block; margin-top: 3px; color: #6b3d18; font-size: 13px; font-weight: 800; }
 
+.class-row-actions { display: grid; gap: 8px; min-width: 160px; }
+
+.class-row-actions button { width: 100%; }
+
+.class-row-actions .new-period-button { color: #21130d; background: linear-gradient(180deg,#ffd66d,#d99624); border-color: rgba(95,57,20,.28); }
+
 .danger-soft { border-color: rgba(255,122,95,.48); color: #ffeeca; background: linear-gradient(100deg,#6b1d22,#1b101d); }
 
 @media(max-width:860px){
   .class-management-grid { grid-template-columns: 1fr; }
   .class-row { grid-template-columns: 1fr; }
+  .class-row-actions { grid-template-columns: 1fr 1fr; min-width: 0; }
 }
 
 /* Center teacher request panel inside the middle block */

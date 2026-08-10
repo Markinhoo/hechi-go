@@ -88,6 +88,16 @@ function MaestroAcceso({ onEntrar, onSalir, mensaje, setMensaje }) {
     onEntrar(data);
   };
 
+  const iniciarNuevoParcial = async (clase) => {
+    if (!authUser) return setMensaje('Primero inicia sesion como maestro.');
+    if (!window.confirm('Iniciar nuevo parcial en ' + clase.nombre + '? Se borraran puntos, cartas del parcial, solicitudes e historial. Se conservan alumnos, casas, galeones y bestiario.')) return;
+    setMensaje('Preparando nuevo parcial para ' + clase.nombre + '...');
+    const { error } = await db.rpc('reiniciar_clase', { p_token: clase.token });
+    if (error) return setMensaje(error.message);
+    await cargarClases();
+    setMensaje('Nuevo parcial listo para ' + clase.nombre + '.');
+  };
+
   return (
     <main className='auth-shell teacher-auth-shell'>
       <section className='auth-card setup-card teacher-card multi-class-card'>
@@ -135,7 +145,10 @@ function MaestroAcceso({ onEntrar, onSalir, mensaje, setMensaje }) {
                     <strong>{clase.nombre}</strong>
                     <span>Token {clase.token} - {clase.alumnos}/{clase.total} alumnos - {clase.puntos} pts</span>
                   </div>
-                  <button type='button' onClick={() => abrirClase(clase)}>Abrir</button>
+                  <div className='class-row-actions'>
+                    <button type='button' onClick={() => abrirClase(clase)}>Abrir</button>
+                    <button type='button' className='new-period-button' onClick={() => iniciarNuevoParcial(clase)}>Nuevo parcial</button>
+                  </div>
                 </article>
               ))}
             </div>

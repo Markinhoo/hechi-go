@@ -112,13 +112,13 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     setMensaje(alumno.nombre + ' fue eliminado de la clase.');
   };
 
-  const reiniciarClase = async () => {
+  const iniciarNuevoParcial = async () => {
     if (sesion.tipo !== 'maestro') return;
-    if (!window.confirm('Reiniciar esta clase borrara alumnos, puntos, cartas, solicitudes e historial. El token se conserva.')) return;
+    if (!window.confirm('Iniciar un nuevo parcial borrara puntos, cartas del parcial, solicitudes e historial. Se conservan alumnos, casas, galeones y bestiario.')) return;
     const { data, error } = await db.rpc('reiniciar_clase', { p_token: sesion.token });
     if (error) return setMensaje(error.message);
     setEstado(data);
-    setMensaje('Clase reiniciada desde cero. El token sigue siendo ' + data.token + '.');
+    setMensaje('Nuevo parcial listo. Se conservaron casas, galeones y bestiario.');
   };
 
   const eliminarClase = async () => {
@@ -594,7 +594,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         <div className='hero-actions'>
           {sesion.tipo === 'alumno' && <span className='player-badge' style={{ '--house': casaActual.color, '--metal': casaActual.metal }}>{alumnoActual?.nombre} - {casaActual.nombre} - {alumnoActual?.oportunidades || 0} oportunidades</span>}
           {sesion.tipo === 'alumno' && <button type='button' className='ghost change-own-password' onClick={() => setMostrarCambioPassword(true)}>Cambiar contrasena</button>}
-          {sesion.tipo === 'maestro' && <button type='button' className='ghost danger-soft' onClick={reiniciarClase}>Reiniciar clase</button>}
+          {sesion.tipo === 'maestro' && <button type='button' className='ghost' onClick={iniciarNuevoParcial}>Nuevo parcial</button>}
           {sesion.tipo === 'maestro' && <button type='button' className='ghost danger-soft' onClick={eliminarClase}>Eliminar clase</button>}
           <button type='button' className='ghost' onClick={salir}>Salir</button>
         </div>
