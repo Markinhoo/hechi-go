@@ -197,6 +197,8 @@
 
 @media(max-width:560px){.joke-decision-options>div{grid-template-columns:1fr}}
 
+@media(max-width:560px){.action-modal{padding:12px}.action-card{width:100%;padding:16px}.action-buttons{grid-template-columns:1fr}.action-close{right:10px;top:10px}}
+
 .bestiary-panel{width:min(100%,620px);display:grid;gap:10px;padding:12px;border-radius:12px;color:#ffeeca;background:rgba(7,18,28,.42);border:1px solid rgba(255,214,109,.24);box-shadow:inset 0 1px rgba(255,255,255,.08)}
 
 .bestiary-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -246,6 +248,36 @@
 .beast-detail-card p{margin:0;color:rgba(255,238,202,.82)}
 
 .beast-detail-card strong{color:#ffd66d}
+
+.action-modal{position:fixed;inset:0;z-index:70;display:grid;place-items:center;padding:20px;background:radial-gradient(circle at 50% 38%,rgba(255,214,109,.18),transparent 28%),rgba(6,4,10,.82);backdrop-filter:blur(9px)}
+
+.action-card{position:relative;width:min(92vw,500px);display:grid;gap:13px;padding:18px;border-radius:12px;color:#ffeeca;background:linear-gradient(145deg,rgba(40,18,36,.97),rgba(14,28,34,.95));border:1px solid rgba(255,214,109,.48);box-shadow:0 30px 90px rgba(0,0,0,.56),0 0 54px rgba(255,214,109,.16)}
+
+.action-card.warning{background:linear-gradient(145deg,rgba(74,46,14,.97),rgba(29,18,30,.95));border-color:rgba(255,214,109,.62)}
+
+.action-card.danger{background:linear-gradient(145deg,rgba(96,18,34,.97),rgba(18,9,22,.96));border-color:rgba(255,122,95,.68)}
+
+.action-close{position:absolute;right:12px;top:12px;width:38px;height:38px;display:grid;place-items:center;border-radius:50%;color:#ffeeca;background:rgba(20,10,20,.74);border:1px solid rgba(255,214,109,.45)}
+
+.action-card h2{margin:0;color:#ffd66d;font-size:clamp(34px,4vw,50px);line-height:.94;text-shadow:0 3px 0 rgba(60,21,8,.55),0 0 24px rgba(255,214,109,.18)}
+
+.action-card p{margin:0;color:rgba(255,238,202,.86);font-weight:800;line-height:1.42}
+
+.action-fields{display:grid;gap:10px}
+
+.action-fields label{display:grid;gap:6px;color:#ffeeca;font-weight:1000}
+
+.action-fields input{width:100%;color:#21130d;background:#fff4d5;border:1px solid rgba(255,214,109,.55)}
+
+.action-error{padding:9px 10px;border-radius:8px;color:#ffeeca;background:rgba(117,18,34,.62);border:1px solid rgba(255,122,95,.58)}
+
+.action-buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:2px}
+
+.action-buttons .action-cancel,.action-buttons .action-confirm{justify-content:center;width:100%;min-height:44px}
+
+.action-card.danger .action-confirm{background:linear-gradient(100deg,#8d1f2a,#1b101d)}
+
+.action-card.warning .action-confirm{color:#21130d;background:linear-gradient(180deg,#ffd66d,#d99624)}
 
 .student-tabs-area{display:grid;gap:14px}
 
@@ -1828,29 +1860,27 @@ button,
   }
 
   .student-bottom-nav {
-    position: fixed;
-    left: 10px;
-    right: 10px;
-    bottom: 10px;
+    position: static;
     z-index: 80;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 4px;
-    padding: 8px;
-    border-radius: 18px;
+    margin-top: 10px;
+    padding: 6px;
+    border-radius: 14px;
     background: rgba(20, 9, 23, .92);
     border: 1px solid rgba(255,214,109,.24);
-    box-shadow: 0 18px 42px rgba(0,0,0,.42);
+    box-shadow: 0 10px 24px rgba(0,0,0,.28);
     backdrop-filter: blur(10px);
   }
 
   .student-bottom-nav button {
     display: grid;
     justify-items: center;
-    gap: 3px;
-    min-height: 52px;
-    padding: 6px 4px;
-    border-radius: 12px;
+    gap: 2px;
+    min-height: 44px;
+    padding: 5px 4px;
+    border-radius: 10px;
     color: rgba(255,238,202,.76);
     background: transparent;
     border: 0;
@@ -1859,12 +1889,823 @@ button,
   }
 
   .student-bottom-nav svg {
-    width: 19px;
-    height: 19px;
+    width: 18px;
+    height: 18px;
   }
 
   .student-bottom-nav button.active {
     color: #21130d;
     background: linear-gradient(180deg,#ffd66d,#d99624);
+  }
+}
+
+/* Desktop student fit: keep login, hero, home cards, and bestiary inside the viewport. */
+@media (min-width: 761px) {
+  .galaxy-auth-shell.auth-shell {
+    min-height: 100dvh !important;
+    height: 100dvh !important;
+    place-items: start center !important;
+    align-items: start !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    padding: 18px !important;
+  }
+
+  .galaxy-auth-shell .unified-login-card {
+    width: min(100%, 690px) !important;
+    margin: 0 auto 24px !important;
+    padding: 22px 28px !important;
+  }
+
+  .galaxy-auth-shell .unified-login-card h1 {
+    font-size: clamp(38px, 5.8vw, 64px) !important;
+    line-height: .86 !important;
+    margin: 6px auto 8px !important;
+  }
+
+  .galaxy-auth-shell .unified-login-card p {
+    margin: 6px 0 10px !important;
+  }
+
+  .galaxy-auth-shell .unified-login-card form {
+    display: grid !important;
+    gap: 8px !important;
+  }
+
+  .galaxy-auth-shell .unified-login-card .field-label {
+    margin: 3px 0 0 !important;
+  }
+
+  .galaxy-auth-shell .unified-login-card input,
+  .galaxy-auth-shell .unified-login-card button {
+    min-height: 42px !important;
+    padding-block: 8px !important;
+  }
+
+  .student-view.game-shell,
+  .student-view.app-fixed,
+  .student-view.mobile-scroll-page {
+    display: block !important;
+    height: auto !important;
+    min-height: 100dvh !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    padding: 10px 18px 22px !important;
+  }
+
+  .student-view .house-cup-hero {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    min-height: 74px !important;
+    padding: 10px 14px !important;
+    overflow: visible !important;
+  }
+
+  .student-view .house-cup-hero h1 {
+    max-width: none !important;
+    font-size: clamp(30px, 4vw, 52px) !important;
+    line-height: .92 !important;
+    margin: 2px 0 !important;
+    white-space: normal !important;
+  }
+
+  .student-view .house-cup-hero p,
+  .student-view .house-cup-hero .eyebrow {
+    font-size: clamp(13px, .95vw, 16px) !important;
+    line-height: 1.2 !important;
+  }
+
+  .student-view .hero-actions {
+    max-width: 45vw !important;
+    justify-content: flex-end !important;
+    gap: 6px !important;
+  }
+
+  .student-view .hero-actions .ghost,
+  .student-view .hero-actions .player-badge {
+    min-height: 34px !important;
+    padding: 7px 10px !important;
+    font-size: clamp(12px, .9vw, 15px) !important;
+    line-height: 1.05 !important;
+  }
+
+  .student-view .student-tabs-area {
+    max-width: 1240px !important;
+    gap: 10px !important;
+  }
+
+  .student-view .student-tab-switcher {
+    position: static !important;
+    margin: 0 auto 4px !important;
+    padding: 5px !important;
+  }
+
+  .student-view .student-tab-switcher button {
+    min-height: 38px !important;
+    padding: 8px 13px !important;
+    font-size: clamp(16px, 1.05vw, 19px) !important;
+  }
+
+  .student-view .student-home-tab {
+    grid-template-columns: minmax(0, 1fr) minmax(330px, 430px) !important;
+    gap: 14px !important;
+    align-items: stretch !important;
+  }
+
+  .student-view .student-home-tab .pack-stage {
+    min-width: 0 !important;
+    min-height: 430px !important;
+    max-height: none !important;
+    align-content: start !important;
+    overflow: hidden !important;
+    padding: 12px 14px 18px !important;
+  }
+
+  .student-view .student-home-tab .carousel-shell {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    grid-template-columns: 48px minmax(0, 1fr) 48px !important;
+  }
+
+  .student-view .student-home-tab .pack-carousel {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 286px !important;
+    min-height: 286px !important;
+    overflow: hidden !important;
+    perspective: 1050px !important;
+  }
+
+  .student-view .student-home-tab .pack-card {
+    top: 10px !important;
+    width: clamp(136px, 13vw, 170px) !important;
+    transform: translateX(calc(-50% + (var(--offset) * clamp(48px, 6.1vw, 78px)))) translateY(calc(var(--distance) * 10px)) rotateY(calc(var(--offset) * -16deg)) scale(calc(1 - (var(--distance) * .075))) !important;
+  }
+
+  .student-view .student-home-tab .student-help-panel {
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: hidden !important;
+  }
+
+  .student-view .student-home-tab .stored-cards-list {
+    max-height: 150px !important;
+  }
+
+  .student-view .student-home-tab .message {
+    width: min(100%, 720px) !important;
+    margin: 8px auto 0 !important;
+    padding: 0 10px !important;
+    font-size: clamp(19px, 1.35vw, 24px) !important;
+    line-height: 1.32 !important;
+  }
+
+  .student-view .stored-cards-panel strong,
+  .student-view .stored-card b {
+    font-size: clamp(18px, 1.15vw, 21px) !important;
+  }
+
+  .student-view .stored-cards-panel small,
+  .student-view .stored-cards-panel p,
+  .student-view .stored-card small {
+    font-size: clamp(16px, 1.05vw, 19px) !important;
+    line-height: 1.28 !important;
+  }
+
+  .student-view .hero-actions .ghost,
+  .student-view .hero-actions .player-badge {
+    font-size: clamp(14px, .98vw, 17px) !important;
+  }
+
+  .student-view .student-tabs-area .bestiary-panel {
+    max-width: 1180px !important;
+    max-height: calc(100dvh - 170px) !important;
+    overflow: hidden !important;
+  }
+
+  .student-view .student-tabs-area .bestiary-market {
+    max-height: calc(100dvh - 250px) !important;
+    overflow: auto !important;
+    grid-template-columns: repeat(auto-fit, minmax(138px, 1fr)) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .student-view .student-token-hint {
+    display: none !important;
+  }
+
+  .student-view .student-home-tab {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .student-view .student-home-tab .pack-stage {
+    min-height: 400px !important;
+    padding-bottom: 18px !important;
+  }
+
+  .student-view .student-home-tab .message {
+    width: 100% !important;
+    margin-top: 2px !important;
+    padding: 0 8px !important;
+    font-size: 19px !important;
+    line-height: 1.35 !important;
+  }
+
+  .student-view .student-home-tab .student-help-panel {
+    order: 2 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .student-view .student-home-tab .stored-cards-panel {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 360px) {
+  body {
+    min-width: 0 !important;
+  }
+
+  .galaxy-auth-shell.auth-shell {
+    padding-inline: 8px !important;
+  }
+
+  .galaxy-auth-shell .unified-login-card {
+    width: 100% !important;
+    padding-inline: 14px !important;
+  }
+}
+
+/* Student navigation readability */
+.student-view .student-tab-switcher button,
+.student-view .student-bottom-nav button {
+  font-size: clamp(19px, 1.35vw, 24px) !important;
+  line-height: 1.05 !important;
+}
+
+.student-view .student-tab-switcher svg,
+.student-view .student-bottom-nav svg {
+  width: 22px !important;
+  height: 22px !important;
+}
+
+.beast-detail-card span {
+  font-size: clamp(17px, 1.18vw, 21px) !important;
+  line-height: 1.2 !important;
+}
+
+.beast-detail-card h2 {
+  font-size: clamp(42px, 4.4vw, 62px) !important;
+  line-height: .9 !important;
+}
+
+.beast-detail-card p,
+.beast-detail-card strong {
+  font-size: clamp(18px, 1.25vw, 22px) !important;
+  line-height: 1.35 !important;
+}
+
+.teacher-mobile-tabs-area {
+  display: none;
+}
+
+.teacher-home-mobile-app {
+  display: none;
+}
+
+@media (min-width: 761px) {
+  .teacher-auth-shell {
+    overflow: hidden !important;
+    padding: 12px !important;
+  }
+
+  .teacher-auth-shell .multi-class-card {
+    max-height: calc(100dvh - 24px) !important;
+    margin: 0 auto !important;
+    padding: 16px !important;
+  }
+
+  .teacher-auth-shell .teacher-card h1 {
+    margin: 4px 0 8px !important;
+    font-size: clamp(42px, 5.2vw, 60px) !important;
+  }
+
+  .teacher-auth-shell .teacher-session {
+    margin: 8px 0 10px !important;
+    padding: 8px 10px !important;
+  }
+
+  .teacher-auth-shell .class-management-grid {
+    grid-template-columns: minmax(300px, .86fr) minmax(420px, 1.14fr) !important;
+    gap: 12px !important;
+  }
+
+  .teacher-auth-shell .create-class-panel,
+  .teacher-auth-shell .saved-classes-panel {
+    padding: 12px !important;
+  }
+
+  .teacher-auth-shell .create-class-panel h2,
+  .teacher-auth-shell .saved-classes-panel h2 {
+    margin: 4px 0 6px !important;
+    font-size: clamp(24px, 2.2vw, 34px) !important;
+  }
+
+  .teacher-auth-shell .field-label {
+    margin: 6px 0 4px !important;
+  }
+
+  .teacher-auth-shell input,
+  .teacher-auth-shell .create-class-panel > button,
+  .teacher-auth-shell .class-row button {
+    min-height: 36px !important;
+    padding: 7px 9px !important;
+    font-size: clamp(15px, 1vw, 18px) !important;
+  }
+
+  .teacher-auth-shell .house-preview.compact {
+    gap: 7px !important;
+    margin: 8px 0 !important;
+  }
+
+  .teacher-auth-shell .house-preview.compact span {
+    min-height: 72px !important;
+    padding: 8px 58px 8px 8px !important;
+  }
+
+  .teacher-auth-shell .house-preview.compact img {
+    width: 82px !important;
+  }
+
+  .teacher-auth-shell .class-list {
+    max-height: none !important;
+    overflow: visible !important;
+    gap: 8px !important;
+  }
+
+  .teacher-auth-shell .class-row {
+    padding: 9px !important;
+    gap: 10px !important;
+  }
+
+  .teacher-auth-shell .class-row strong {
+    font-size: clamp(20px, 1.7vw, 28px) !important;
+  }
+
+  .teacher-auth-shell .class-row span {
+    font-size: clamp(14px, .95vw, 17px) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .teacher-auth-shell {
+    position: fixed !important;
+    inset: 0 !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    overflow: hidden !important;
+    padding: 8px !important;
+  }
+
+  .teacher-auth-shell .multi-class-card {
+    display: grid !important;
+    grid-template-rows: auto auto minmax(0, 1fr) auto !important;
+    height: calc(100dvh - 16px) !important;
+    min-height: 0 !important;
+    margin: 0 auto !important;
+    padding: 12px !important;
+    overflow: hidden !important;
+  }
+
+  .teacher-auth-shell .multi-class-card > .eyebrow,
+  .teacher-auth-shell .multi-class-card > h1,
+  .teacher-auth-shell .teacher-session,
+  .teacher-auth-shell .teacher-auth-form,
+  .teacher-auth-shell .form-message {
+    flex-shrink: 0 !important;
+  }
+
+  .teacher-auth-shell .teacher-card h1 {
+    margin: 4px 0 8px !important;
+    font-size: clamp(34px, 13vw, 48px) !important;
+    line-height: .9 !important;
+  }
+
+  .teacher-auth-shell .teacher-session {
+    display: none !important;
+  }
+
+  .teacher-auth-shell .teacher-desktop-home {
+    display: none !important;
+  }
+
+  .teacher-home-mobile-app {
+    display: grid !important;
+    grid-template-rows: minmax(0, 1fr) auto !important;
+    gap: 8px !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .teacher-home-mobile-content {
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .teacher-home-mobile-content > .create-class-panel,
+  .teacher-home-mobile-content > .saved-classes-panel,
+  .teacher-home-mobile-content > .teacher-session-panel {
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .teacher-home-mobile-content .create-class-panel {
+    display: grid !important;
+    align-content: start !important;
+  }
+
+  .teacher-home-mobile-content .house-preview.compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    margin: 8px 0 !important;
+  }
+
+  .teacher-home-mobile-content .house-preview.compact span {
+    min-height: 58px !important;
+    padding: 6px 46px 6px 7px !important;
+  }
+
+  .teacher-home-mobile-content .house-preview.compact img {
+    width: 68px !important;
+  }
+
+  .teacher-home-mobile-content .create-class-panel h2,
+  .teacher-home-mobile-content .saved-classes-panel h2,
+  .teacher-session-panel h2 {
+    margin: 2px 0 6px !important;
+    font-size: 28px !important;
+  }
+
+  .teacher-home-mobile-content .field-label,
+  .teacher-home-mobile-content .student-search span {
+    margin: 6px 0 4px !important;
+    font-size: 15px !important;
+  }
+
+  .teacher-home-mobile-content input,
+  .teacher-home-mobile-content button {
+    min-height: 36px !important;
+    padding: 7px 9px !important;
+    font-size: 16px !important;
+  }
+
+  .teacher-home-mobile-content .class-list {
+    display: none !important;
+  }
+
+  .mobile-classes-panel {
+    display: grid !important;
+    grid-template-rows: auto auto minmax(0, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .mobile-class-carousel {
+    display: grid !important;
+    grid-template-rows: minmax(0, 1fr) auto !important;
+    gap: 8px !important;
+    min-height: 0 !important;
+  }
+
+  .mobile-class-card {
+    align-self: stretch !important;
+    align-content: center !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .mobile-class-card strong {
+    font-size: 28px !important;
+  }
+
+  .mobile-class-card span {
+    font-size: 15px !important;
+  }
+
+  .mobile-class-nav {
+    display: grid !important;
+    grid-template-columns: 42px auto 42px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 10px !important;
+  }
+
+  .mobile-class-nav button {
+    width: 42px !important;
+    height: 38px !important;
+    display: grid !important;
+    place-items: center !important;
+    padding: 0 !important;
+    border-radius: 999px !important;
+  }
+
+  .mobile-class-nav span {
+    color: #4b1220 !important;
+    font-weight: 1000 !important;
+  }
+
+  .teacher-session-panel {
+    display: grid !important;
+    align-content: center !important;
+    justify-items: stretch !important;
+    gap: 12px !important;
+    padding: 14px !important;
+    border: 1px solid rgba(95,57,20,.18) !important;
+    border-radius: 10px !important;
+    background: rgba(255,247,223,.42) !important;
+  }
+
+  .teacher-session-panel p {
+    margin: 0 !important;
+    color: #4b1220 !important;
+    font-size: 18px !important;
+    font-weight: 900 !important;
+    overflow-wrap: anywhere !important;
+    text-align: center !important;
+  }
+
+  .teacher-home-bottom-nav {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 4px !important;
+    padding: 6px !important;
+    border-radius: 14px !important;
+    background: rgba(20, 9, 23, .92) !important;
+    border: 1px solid rgba(255,214,109,.24) !important;
+    box-shadow: 0 10px 24px rgba(0,0,0,.28) !important;
+    backdrop-filter: blur(10px) !important;
+  }
+
+  .teacher-home-bottom-nav button {
+    display: grid !important;
+    justify-items: center !important;
+    gap: 2px !important;
+    min-height: 42px !important;
+    padding: 4px 3px !important;
+    border: 0 !important;
+    border-radius: 10px !important;
+    color: rgba(255,238,202,.76) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    font-size: 13px !important;
+    line-height: 1 !important;
+  }
+
+  .teacher-home-bottom-nav button.active {
+    color: #21130d !important;
+    background: linear-gradient(180deg,#ffd66d,#d99624) !important;
+    box-shadow: inset 0 1px rgba(255,255,255,.45), 0 8px 18px rgba(0,0,0,.2) !important;
+  }
+
+  .teacher-home-bottom-nav svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .student-view .student-bottom-nav button {
+    font-size: 14px !important;
+    min-height: 44px !important;
+  }
+
+  .student-view .student-bottom-nav svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .teacher-desktop-class-layout {
+    display: none !important;
+  }
+
+  .teacher-mobile-tabs-area {
+    display: grid !important;
+    grid-template-rows: minmax(0, 1fr) auto !important;
+    gap: 8px !important;
+    min-height: 0 !important;
+    height: calc(100dvh - 132px) !important;
+    padding-bottom: 0 !important;
+  }
+
+  .teacher-view.game-shell,
+  .teacher-view.app-fixed,
+  .teacher-view.mobile-scroll-page {
+    display: block !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    overflow: hidden !important;
+    padding: 8px !important;
+  }
+
+  .teacher-view .house-cup-hero {
+    min-height: 0 !important;
+    padding: 10px !important;
+  }
+
+  .teacher-view .house-cup-hero h1 {
+    font-size: clamp(30px, 11vw, 46px) !important;
+    line-height: .88 !important;
+  }
+
+  .teacher-view .hero-actions {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .teacher-view .hero-actions .ghost {
+    min-height: 36px !important;
+    padding: 7px 9px !important;
+    font-size: 15px !important;
+  }
+
+  .teacher-view .teacher-tab-switcher {
+    position: static !important;
+    z-index: 80 !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 4px !important;
+    order: 2 !important;
+    margin-top: 0 !important;
+    padding: 6px !important;
+    border-radius: 14px !important;
+    background: rgba(20, 9, 23, .92) !important;
+    border: 1px solid rgba(255,214,109,.24) !important;
+    box-shadow: 0 10px 24px rgba(0,0,0,.28) !important;
+    backdrop-filter: blur(10px) !important;
+  }
+
+  .teacher-view .teacher-tab-switcher button {
+    min-height: 44px !important;
+    padding: 5px 4px !important;
+    display: grid !important;
+    justify-items: center !important;
+    gap: 3px !important;
+    border: 0 !important;
+    border-radius: 12px !important;
+    color: rgba(255,238,202,.76) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    font-size: 13px !important;
+    line-height: 1 !important;
+  }
+
+  .teacher-view .teacher-tab-switcher button.active {
+    color: #21130d !important;
+    background: linear-gradient(180deg,#ffd66d,#d99624) !important;
+    box-shadow: inset 0 1px rgba(255,255,255,.45), 0 8px 18px rgba(0,0,0,.2) !important;
+  }
+
+  .teacher-view .teacher-tab-switcher svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .teacher-view .teacher-mobile-tabs-area > .pack-stage,
+  .teacher-view .teacher-mobile-tabs-area > .panel,
+  .teacher-view .teacher-mobile-tabs-area > .house-board {
+    order: 1 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin-top: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .teacher-view .teacher-mobile-tabs-area > .house-board {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    overflow: auto !important;
+  }
+
+  .teacher-view .teacher-mobile-tabs-area .request-board,
+  .teacher-view .teacher-mobile-tabs-area .request-list,
+  .teacher-view .teacher-mobile-tabs-area .history,
+  .teacher-view .teacher-mobile-tabs-area .student-carousel {
+    min-height: 0 !important;
+  }
+
+  .teacher-view .teacher-mobile-tabs-area .request-board {
+    width: 100% !important;
+    height: 100% !important;
+    justify-content: start !important;
+  }
+
+  .teacher-view .teacher-mobile-tabs-area .request-list,
+  .teacher-view .teacher-mobile-tabs-area.history,
+  .teacher-view .teacher-mobile-tabs-area .parchment-panel {
+    overflow: auto !important;
+  }
+
+  .teacher-view .teacher-mobile-tabs-area .hall-panel {
+    overflow: hidden !important;
+  }
+
+  .teacher-view .teacher-mobile-tabs-area .student-carousel-card {
+    min-height: 0 !important;
+  }
+
+  .student-view .student-tabs-area {
+    min-height: 0 !important;
+    display: grid !important;
+    grid-template-rows: minmax(0, 1fr) auto !important;
+  }
+
+  .student-view .student-home-tab {
+    min-height: 0 !important;
+  }
+
+  .student-view .student-bottom-nav {
+    align-self: end !important;
+    margin-top: 8px !important;
+  }
+}
+
+/* Definitive mobile app frame: content row + bottom menu row, with no overlay. */
+@media (max-width: 760px) {
+  .student-view.game-shell,
+  .teacher-view.game-shell {
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+    padding: 8px !important;
+  }
+
+  .student-view .student-tabs-area,
+  .teacher-view .teacher-mobile-tabs-area {
+    display: grid !important;
+    grid-template-rows: minmax(0, 1fr) auto !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    gap: 8px !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+  }
+
+  .student-view .student-bottom-nav,
+  .teacher-view .teacher-tab-switcher {
+    position: static !important;
+    order: 2 !important;
+    align-self: end !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 5px !important;
+    min-height: 50px !important;
+    max-height: 58px !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 4px !important;
+    border-radius: 14px !important;
+    overflow: hidden !important;
+  }
+
+  .student-view .student-bottom-nav button,
+  .teacher-view .teacher-tab-switcher button {
+    min-height: 40px !important;
+    padding: 4px 3px !important;
+    gap: 1px !important;
+    font-size: 12px !important;
+    line-height: 1 !important;
+    overflow: hidden !important;
+  }
+
+  .student-view .student-bottom-nav svg,
+  .teacher-view .teacher-tab-switcher svg {
+    width: 17px !important;
+    height: 17px !important;
+  }
+
+  .student-view .student-home-tab,
+  .student-view .student-tab-panel,
+  .student-view .student-tabs-area > .house-board,
+  .teacher-view .teacher-mobile-tabs-area > .pack-stage,
+  .teacher-view .teacher-mobile-tabs-area > .panel,
+  .teacher-view .teacher-mobile-tabs-area > .house-board {
+    order: 1 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow: auto !important;
+    margin: 0 !important;
   }
 }

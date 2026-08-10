@@ -61,6 +61,7 @@ input{width:100%;border:1px solid #9b7437;border-radius:7px;padding:12px 13px;co
   content: '';
   position: absolute;
   inset: 14px;
+  height: auto;
   z-index: 0;
   pointer-events: none;
   border-radius: 10px;

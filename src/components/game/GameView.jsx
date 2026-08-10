@@ -4,6 +4,7 @@ import { bestiario, precioBestia, RAREZAS_BESTIARIO } from '../../data/bestiaryD
 import { CARTAS_ACTIVAS, casas, PLAYER_KEY } from '../../data/gameData';
 import { db } from '../../services/hechiApi';
 import { efectoCarta, guardarLocal, obtenerCasa, randomEntero } from '../../utils/gameUtils';
+import ActionModal from '../ui/ActionModal';
 import CardModal from './CardModal';
 
 function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setMensaje }) {
@@ -18,6 +19,10 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const [indiceAlumno, setIndiceAlumno] = useState(0);
   const [bestiaDetalleId, setBestiaDetalleId] = useState(null);
   const [studentTab, setStudentTab] = useState('inicio');
+  const [teacherTab, setTeacherTab] = useState('inicio');
+  const [accionMaestro, setAccionMaestro] = useState(null);
+  const [accionError, setAccionError] = useState('');
+  const [accionProcesando, setAccionProcesando] = useState(false);
   const autoAbrirRef = useRef(false);
   const abrirCartaRef = useRef(null);
   const sobres = Array.from({ length: 7 }, (_, index) => index);
@@ -51,17 +56,92 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     setMensaje('Solicitud enviada al maestro. La carta se abrira cuando autorice.');
   };
 
-  const cambiarPassword = async (alumno) => {
+  const abrirAccionMaestro = (accion) => {
     if (sesion.tipo !== 'maestro') return;
-    const nueva = window.prompt('Restablecer contrasena para ' + alumno.nombre + ' (minimo 3 caracteres)', '12345');
-    const passwordNueva = (nueva || '').trim();
-    if (!passwordNueva) return setMensaje('Cambio de contrasena cancelado.');
-    if (passwordNueva.length < 3) return setMensaje('La nueva contrasena debe tener al menos 3 caracteres.');
-    setMensaje('Restableciendo contrasena de ' + alumno.nombre + '...');
-    const { data, error } = await db.rpc('cambiar_password_alumno', { p_token: sesion.token, p_alumno_id: alumno.id, p_password: passwordNueva });
-    if (error) return setMensaje(error.message);
-    setEstado(data);
-    setMensaje('Contrasena restablecida para ' + alumno.nombre + '.');
+    setAccionError('');
+    setAccionMaestro(accion);
+  };
+
+  const cerrarAccionMaestro = () => {
+    if (accionProcesando) return;
+    setAccionMaestro(null);
+    setAccionError('');
+  };
+
+  const confirmarAccionMaestro = async (valores = {}) => {
+    if (!accionMaestro || accionProcesando) return;
+    setAccionError('');
+    setAccionProcesando(true);
+
+    try {
+      if (accionMaestro.tipo === 'password') {
+        const passwordNueva = (valores.password || '').trim();
+        if (passwordNueva.length < 3) {
+          setAccionError('La nueva contrasena debe tener al menos 3 caracteres.');
+          return;
+        }
+        setMensaje('Restableciendo contrasena de ' + accionMaestro.alumno.nombre + '...');
+        const { data, error } = await db.rpc('cambiar_password_alumno', { p_token: sesion.token, p_alumno_id: accionMaestro.alumno.id, p_password: passwordNueva });
+        if (error) {
+          setAccionError(error.message);
+          return;
+        }
+        setEstado(data);
+        setMensaje('Contrasena restablecida para ' + accionMaestro.alumno.nombre + '.');
+      }
+
+      if (accionMaestro.tipo === 'quitar-puntos') {
+        const puntos = Math.floor(Number(valores.puntos));
+        if (!Number.isFinite(puntos) || puntos <= 0) {
+          setAccionError('Escribe una cantidad valida mayor a 0.');
+          return;
+        }
+        setMensaje('Quitando ' + puntos + ' puntos a ' + accionMaestro.alumno.nombre + '...');
+        const { data, error } = await db.rpc('quitar_puntos_alumno', { p_token: sesion.token, p_alumno_id: accionMaestro.alumno.id, p_puntos: puntos });
+        if (error) {
+          setAccionError(error.message);
+          return;
+        }
+        setEstado(data);
+        setMensaje('Se quitaron puntos a ' + accionMaestro.alumno.nombre + '.');
+      }
+
+      if (accionMaestro.tipo === 'eliminar-alumno') {
+        const { data, error } = await db.rpc('eliminar_alumno', { p_token: sesion.token, p_alumno_id: accionMaestro.alumno.id });
+        if (error) {
+          setAccionError(error.message);
+          return;
+        }
+        setEstado(data);
+        setMensaje(accionMaestro.alumno.nombre + ' fue eliminado de la clase.');
+      }
+
+      if (accionMaestro.tipo === 'nuevo-parcial') {
+        const { data, error } = await db.rpc('reiniciar_clase', { p_token: sesion.token });
+        if (error) {
+          setAccionError(error.message);
+          return;
+        }
+        setEstado(data);
+        setMensaje('Nuevo parcial listo. Se conservaron casas, galeones y bestiario.');
+      }
+
+      if (accionMaestro.tipo === 'eliminar-clase') {
+        const { error } = await db.rpc('eliminar_clase', { p_token: sesion.token });
+        if (error) {
+          setAccionError(error.message);
+          return;
+        }
+        setSesion(null);
+        setEstado(null);
+        setModo('maestro');
+        setMensaje('Clase eliminada.');
+      }
+
+      setAccionMaestro(null);
+    } finally {
+      setAccionProcesando(false);
+    }
   };
 
   const cambiarPasswordPropia = async (event) => {
@@ -90,47 +170,6 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     setMensaje('Tu contrasena fue actualizada.');
   };
 
-  const quitarPuntosAlumno = async (alumno) => {
-    if (sesion.tipo !== 'maestro') return;
-    const entrada = window.prompt('Cuantos puntos quieres quitarle a ' + alumno.nombre + '?', '1');
-    if (entrada === null) return setMensaje('Quitar puntos cancelado.');
-    const puntos = Math.floor(Number(entrada));
-    if (!Number.isFinite(puntos) || puntos <= 0) return setMensaje('Escribe una cantidad valida mayor a 0.');
-    setMensaje('Quitando ' + puntos + ' puntos a ' + alumno.nombre + '...');
-    const { data, error } = await db.rpc('quitar_puntos_alumno', { p_token: sesion.token, p_alumno_id: alumno.id, p_puntos: puntos });
-    if (error) return setMensaje(error.message);
-    setEstado(data);
-    setMensaje('Se quitaron puntos a ' + alumno.nombre + '.');
-  };
-
-  const eliminarAlumno = async (alumno) => {
-    if (sesion.tipo !== 'maestro') return;
-    if (!window.confirm('Eliminar a ' + alumno.nombre + ' de esta clase? Se borraran sus cartas, puntos y solicitudes.')) return;
-    const { data, error } = await db.rpc('eliminar_alumno', { p_token: sesion.token, p_alumno_id: alumno.id });
-    if (error) return setMensaje(error.message);
-    setEstado(data);
-    setMensaje(alumno.nombre + ' fue eliminado de la clase.');
-  };
-
-  const iniciarNuevoParcial = async () => {
-    if (sesion.tipo !== 'maestro') return;
-    if (!window.confirm('Iniciar un nuevo parcial borrara puntos, cartas del parcial, solicitudes e historial. Se conservan alumnos, casas, galeones y bestiario.')) return;
-    const { data, error } = await db.rpc('reiniciar_clase', { p_token: sesion.token });
-    if (error) return setMensaje(error.message);
-    setEstado(data);
-    setMensaje('Nuevo parcial listo. Se conservaron casas, galeones y bestiario.');
-  };
-
-  const eliminarClase = async () => {
-    if (sesion.tipo !== 'maestro') return;
-    if (!window.confirm('Eliminar esta clase borrara definitivamente grupo, alumnos, puntos y token.')) return;
-    const { error } = await db.rpc('eliminar_clase', { p_token: sesion.token });
-    if (error) return setMensaje(error.message);
-    setSesion(null);
-    setEstado(null);
-    setModo('maestro');
-    setMensaje('Clase eliminada.');
-  };
 
   const moverSobre = (direccion, event) => {
     event?.preventDefault?.();
@@ -472,7 +511,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     abrirCartaRef.current?.();
   }, [estado.alumnos, sesion.alumnoId, sesion.tipo]);
 
-  const salir = () => { setSesion(null); setEstado(null); setModo('inicio'); setCartaAbierta(null); };
+  const salir = () => { setSesion(null); setEstado(null); setModo('inicio'); setCartaAbierta(null); setMensaje(''); };
   const alumnoActual = sesion.tipo === 'alumno' ? estado.alumnos.find((alumno) => alumno.id === sesion.alumnoId) : null;
   const casaActual = obtenerCasa(alumnoActual?.casaId);
   const puntajesCasas = casas.map((casa) => ({ ...casa, puntos: estado.puntajes?.[casa.id] ?? 0 }));
@@ -502,10 +541,9 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     if (!alumnosFiltrados.length) return;
     setIndiceAlumno((actual) => (Math.min(actual, alumnosFiltrados.length - 1) + direccion + alumnosFiltrados.length) % alumnosFiltrados.length);
   };
-  const panelAlumno = (
-    <aside className='panel student-help-panel'>
-      <p className='tap-card-hint'>Toca la carta central para pedir autorizacion. Cuando el maestro autorice, se abrira automaticamente.</p>
-      <div className='stored-cards-panel'>
+  const textoInicioAlumno = 'Bienvenido al gran salon. Espera autorizacion para abrir carta; toca la carta central y, cuando el maestro autorice, se abrira automaticamente.';
+  const cartasGuardadasAlumno = (
+    <div className='stored-cards-panel'>
         <div>
           <strong>Cartas guardadas</strong>
           <small>Presentalas al maestro cuando quieras usarlas.</small>
@@ -521,6 +559,10 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
           ))}
         </div>
       </div>
+  );
+  const panelAlumno = (
+    <aside className='panel student-help-panel'>
+      {cartasGuardadasAlumno}
     </aside>
   );
   const bestiaryPanel = (
@@ -563,6 +605,12 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     { id: 'bestiario', label: 'Bestiario', icon: <FaBookOpen /> },
     { id: 'hechizos', label: 'Hechizos', icon: <FaScroll /> }
   ];
+  const teacherTabs = [
+    { id: 'inicio', label: 'Inicio', icon: <FaWandMagicSparkles /> },
+    { id: 'salon', label: 'Gran salon', icon: <FaHouse /> },
+    { id: 'puntajes', label: 'Puntajes', icon: <FaTrophy /> },
+    { id: 'hechizos', label: 'Hechizos', icon: <FaScroll /> }
+  ];
   const houseBoard = (
     <section className='house-board student-score-view'>
       {casas.map((casa) => (
@@ -582,6 +630,135 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       ))}
     </section>
   );
+  const rosterPanel = (
+    <aside className='panel roster hall-panel'>
+      <div className='roster-heading'>
+        <h2>Gran salon</h2>
+        <span>{alumnosFiltrados.length}/{estado.alumnos.length}</span>
+      </div>
+      <label className='student-search'>
+        <span>Buscar alumno</span>
+        <input
+          value={busquedaAlumno}
+          onChange={(event) => {
+            setBusquedaAlumno(event.target.value);
+            setIndiceAlumno(0);
+          }}
+          placeholder='Nombre del alumno'
+        />
+      </label>
+      {alumnoCarrusel ? (
+        <div className='student-carousel' style={{ '--house': casaCarrusel.color, '--metal': casaCarrusel.metal }}>
+          <div className='student-carousel-card'>
+            <span className='rank'>{rankingAlumno}</span>
+            <div>
+              <strong>{alumnoCarrusel.nombre}</strong>
+              <small>{casaCarrusel.nombre} - {alumnoCarrusel.cartas.length} cartas - {alumnoCarrusel.oportunidades} oportunidades</small>
+            </div>
+            <b>{alumnoCarrusel.puntos} pts</b>
+            <div className='student-actions'>
+              <button type='button' className='authorize password' onClick={() => abrirAccionMaestro({ tipo: 'password', alumno: alumnoCarrusel })}>Cambiar contrasena</button>
+              <button type='button' className='authorize remove-points' onClick={() => abrirAccionMaestro({ tipo: 'quitar-puntos', alumno: alumnoCarrusel })}>Quitar puntos</button>
+              <button type='button' className='authorize delete-student' onClick={() => abrirAccionMaestro({ tipo: 'eliminar-alumno', alumno: alumnoCarrusel })}>Eliminar</button>
+            </div>
+          </div>
+          <div className='student-carousel-nav'>
+            <button type='button' className='authorize carousel-control arrow-control' onClick={() => moverAlumno(-1)} aria-label='Alumno anterior'><FaArrowLeft /></button>
+            <span>{indiceAlumnoSeguro + 1} de {alumnosFiltrados.length}</span>
+            <button type='button' className='authorize carousel-control arrow-control' onClick={() => moverAlumno(1)} aria-label='Alumno siguiente'><FaArrowRight /></button>
+          </div>
+        </div>
+      ) : (
+        <p className='empty'>No hay alumnos con esa busqueda.</p>
+      )}
+    </aside>
+  );
+  const requestsPanel = (
+    <section className='pack-stage teacher-requests-stage'>
+      <div className='request-board'>
+        <span className='eyebrow'><FaWandMagicSparkles /> Solicitudes de carta</span>
+        <h2>Permisos pendientes</h2>
+        {(!estado.solicitudes || estado.solicitudes.length === 0) && <p className='empty light'>Cuando un alumno participe y pida carta, aparecera aqui para autorizarlo.</p>}
+        <div className='request-list'>
+          {(estado.solicitudes || []).map((solicitud) => {
+            const casa = obtenerCasa(solicitud.casaId);
+            return (
+              <article className='request-row' key={solicitud.id} style={{ '--house': casa.color, '--metal': casa.metal }}>
+                <img src={casa.escudo} alt='' />
+                <div><strong>{solicitud.alumno}</strong><span>{casa.nombre} solicita abrir carta</span></div>
+                <div className='request-actions'>
+                  <button type='button' onClick={() => autorizar(solicitud.alumnoId)}>Autorizar</button>
+                  <button type='button' className='reject-request' onClick={() => rechazar(solicitud.alumnoId)}>No autorizar</button>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </div>
+      <p className='message'>{mensaje}</p>
+    </section>
+  );
+  const historyPanel = (
+    <aside className='panel history parchment-panel'>
+      <h2>Ultimos hechizos</h2>
+      {estado.historial.length === 0 && <p className='empty'>Aun no se abre ninguna carta.</p>}
+      {estado.historial.map((item) => {
+        const casaHistorial = obtenerCasa(item.casaId);
+        const puntosHistorial = item.puntos > 0 ? '+' + item.puntos : String(item.puntos);
+        return <div className='history-row' key={item.id} style={{ '--house': casaHistorial.color, '--metal': casaHistorial.metal }}><strong>{item.alumno}</strong><span>{casaHistorial.nombre} {puntosHistorial}</span></div>;
+      })}
+    </aside>
+  );
+  const accionMaestroModal = (() => {
+    if (!accionMaestro) return null;
+    if (accionMaestro.tipo === 'password') {
+      return {
+        title: 'Cambiar contrasena',
+        eyebrow: accionMaestro.alumno.nombre,
+        description: 'Restablece la contrasena de acceso de este alumno.',
+        confirmText: 'Guardar contrasena',
+        fields: [{ name: 'password', label: 'Nueva contrasena', type: 'password', defaultValue: '12345', minLength: '3', autoFocus: true, autoComplete: 'new-password' }]
+      };
+    }
+    if (accionMaestro.tipo === 'quitar-puntos') {
+      return {
+        title: 'Quitar puntos',
+        eyebrow: accionMaestro.alumno.nombre,
+        description: 'La cantidad se restara del puntaje del alumno y de su casa.',
+        confirmText: 'Quitar puntos',
+        variant: 'warning',
+        fields: [{ name: 'puntos', label: 'Puntos a quitar', type: 'number', defaultValue: '1', min: '1', autoFocus: true }]
+      };
+    }
+    if (accionMaestro.tipo === 'eliminar-alumno') {
+      return {
+        title: 'Eliminar alumno',
+        eyebrow: accionMaestro.alumno.nombre,
+        description: 'Se borraran sus cartas, puntos y solicitudes de esta clase.',
+        confirmText: 'Eliminar alumno',
+        variant: 'danger'
+      };
+    }
+    if (accionMaestro.tipo === 'nuevo-parcial') {
+      return {
+        title: 'Nuevo parcial',
+        eyebrow: estado.nombre || 'Clase',
+        description: 'Se borraran puntos, cartas del parcial, solicitudes e historial. Se conservan alumnos, casas, galeones y bestiario.',
+        confirmText: 'Iniciar parcial',
+        variant: 'warning'
+      };
+    }
+    if (accionMaestro.tipo === 'eliminar-clase') {
+      return {
+        title: 'Eliminar clase',
+        eyebrow: estado.nombre || 'Clase',
+        description: 'Esta accion borrara definitivamente grupo, alumnos, bestiarios, puntos y token.',
+        confirmText: 'Eliminar clase',
+        variant: 'danger'
+      };
+    }
+    return null;
+  })();
 
   return (
     <main className={'game-shell app-fixed mobile-scroll-page ' + (sesion.tipo === 'alumno' ? 'student-view' : 'teacher-view')}>
@@ -589,18 +766,16 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         <div>
           <span className='eyebrow'><FaWandMagicSparkles /> {sesion.tipo === 'maestro' ? 'Vista maestro' : 'Vista alumno'}</span>
           <h1>{tituloClase}</h1>
-          <p>{sesion.tipo === 'maestro' ? ('Token de clase: ' + estado.token + (casaGanadora ? ' - Va ganando ' + casaGanadora.nombre : '')) : ('Token ' + estado.token + ' - espera autorizacion para abrir carta.')}</p>
+          <p className={sesion.tipo === 'alumno' ? 'student-token-hint' : ''}>{sesion.tipo === 'maestro' ? ('Token de clase: ' + estado.token + (casaGanadora ? ' - Va ganando ' + casaGanadora.nombre : '')) : ('Token ' + estado.token + ' - espera autorizacion para abrir carta.')}</p>
         </div>
         <div className='hero-actions'>
           {sesion.tipo === 'alumno' && <span className='player-badge' style={{ '--house': casaActual.color, '--metal': casaActual.metal }}>{alumnoActual?.nombre} - {casaActual.nombre} - {alumnoActual?.oportunidades || 0} oportunidades</span>}
           {sesion.tipo === 'alumno' && <button type='button' className='ghost change-own-password' onClick={() => setMostrarCambioPassword(true)}>Cambiar contrasena</button>}
-          {sesion.tipo === 'maestro' && <button type='button' className='ghost' onClick={iniciarNuevoParcial}>Nuevo parcial</button>}
-          {sesion.tipo === 'maestro' && <button type='button' className='ghost danger-soft' onClick={eliminarClase}>Eliminar clase</button>}
+          {sesion.tipo === 'maestro' && <button type='button' className='ghost' onClick={() => abrirAccionMaestro({ tipo: 'nuevo-parcial' })}>Nuevo parcial</button>}
+          {sesion.tipo === 'maestro' && <button type='button' className='ghost danger-soft' onClick={() => abrirAccionMaestro({ tipo: 'eliminar-clase' })}>Eliminar clase</button>}
           <button type='button' className='ghost' onClick={salir}>Salir</button>
         </div>
       </header>
-
-      {sesion.tipo === 'maestro' && houseBoard}
 
       {sesion.tipo === 'alumno' ? (
         <section className='student-tabs-area'>
@@ -640,7 +815,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
                   </div>
                   <button className='carousel-nav' type='button' onClick={(event) => moverSobre(1, event)} aria-label='Carta siguiente'><FaArrowRight /></button>
                 </div>
-                <p className='message'>{mensaje}</p>
+                <p className='message'>{mensaje || textoInicioAlumno}</p>
               </section>
               {panelAlumno}
             </section>
@@ -671,83 +846,30 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
           </nav>
         </section>
       ) : (
-        <section className='pocket-layout no-scroll-grid'>
-          <aside className='panel roster hall-panel'>
-            <div className='roster-heading'>
-              <h2>Gran salon</h2>
-              <span>{alumnosFiltrados.length}/{estado.alumnos.length}</span>
-            </div>
-            <label className='student-search'>
-              <span>Buscar alumno</span>
-              <input
-                value={busquedaAlumno}
-                onChange={(event) => {
-                  setBusquedaAlumno(event.target.value);
-                  setIndiceAlumno(0);
-                }}
-                placeholder='Nombre del alumno'
-              />
-            </label>
-            {alumnoCarrusel ? (
-              <div className='student-carousel' style={{ '--house': casaCarrusel.color, '--metal': casaCarrusel.metal }}>
-                <div className='student-carousel-card'>
-                  <span className='rank'>{rankingAlumno}</span>
-                  <div>
-                    <strong>{alumnoCarrusel.nombre}</strong>
-                    <small>{casaCarrusel.nombre} - {alumnoCarrusel.cartas.length} cartas - {alumnoCarrusel.oportunidades} oportunidades</small>
-                  </div>
-                  <b>{alumnoCarrusel.puntos} pts</b>
-                  <div className='student-actions'>
-                    <button type='button' className='authorize password' onClick={() => cambiarPassword(alumnoCarrusel)}>Cambiar contrasena</button>
-                    <button type='button' className='authorize remove-points' onClick={() => quitarPuntosAlumno(alumnoCarrusel)}>Quitar puntos</button>
-                    <button type='button' className='authorize delete-student' onClick={() => eliminarAlumno(alumnoCarrusel)}>Eliminar</button>
-                  </div>
-                </div>
-                <div className='student-carousel-nav'>
-                  <button type='button' className='authorize carousel-control arrow-control' onClick={() => moverAlumno(-1)} aria-label='Alumno anterior'><FaArrowLeft /></button>
-                  <span>{indiceAlumnoSeguro + 1} de {alumnosFiltrados.length}</span>
-                  <button type='button' className='authorize carousel-control arrow-control' onClick={() => moverAlumno(1)} aria-label='Alumno siguiente'><FaArrowRight /></button>
-                </div>
-              </div>
-            ) : (
-              <p className='empty'>No hay alumnos con esa busqueda.</p>
-            )}
-          </aside>
-
-          <section className='pack-stage teacher-requests-stage'>
-            <div className='request-board'>
-              <span className='eyebrow'><FaWandMagicSparkles /> Solicitudes de carta</span>
-              <h2>Permisos pendientes</h2>
-              {(!estado.solicitudes || estado.solicitudes.length === 0) && <p className='empty light'>Cuando un alumno participe y pida carta, aparecera aqui para autorizarlo.</p>}
-              <div className='request-list'>
-                {(estado.solicitudes || []).map((solicitud) => {
-                  const casa = obtenerCasa(solicitud.casaId);
-                  return (
-                    <article className='request-row' key={solicitud.id} style={{ '--house': casa.color, '--metal': casa.metal }}>
-                      <img src={casa.escudo} alt='' />
-                      <div><strong>{solicitud.alumno}</strong><span>{casa.nombre} solicita abrir carta</span></div>
-                      <div className='request-actions'>
-                        <button type='button' onClick={() => autorizar(solicitud.alumnoId)}>Autorizar</button>
-                        <button type='button' className='reject-request' onClick={() => rechazar(solicitud.alumnoId)}>No autorizar</button>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            </div>
-            <p className='message'>{mensaje}</p>
+        <>
+          <section className='teacher-desktop-class-layout'>
+            {houseBoard}
+            <section className='pocket-layout no-scroll-grid'>
+              {rosterPanel}
+              {requestsPanel}
+              {historyPanel}
+            </section>
           </section>
 
-          <aside className='panel history parchment-panel'>
-            <h2>Ultimos hechizos</h2>
-            {estado.historial.length === 0 && <p className='empty'>Aun no se abre ninguna carta.</p>}
-            {estado.historial.map((item) => {
-              const casaHistorial = obtenerCasa(item.casaId);
-              const puntosHistorial = item.puntos > 0 ? '+' + item.puntos : String(item.puntos);
-              return <div className='history-row' key={item.id} style={{ '--house': casaHistorial.color, '--metal': casaHistorial.metal }}><strong>{item.alumno}</strong><span>{casaHistorial.nombre} {puntosHistorial}</span></div>;
-            })}
-          </aside>
-        </section>
+          <section className='teacher-mobile-tabs-area'>
+            <div className='student-tab-switcher teacher-tab-switcher'>
+              {teacherTabs.map((tab) => (
+                <button key={tab.id} type='button' className={teacherTab === tab.id ? 'active' : ''} onClick={() => setTeacherTab(tab.id)}>
+                  {tab.icon}<span>{tab.label}</span>
+                </button>
+              ))}
+            </div>
+            {teacherTab === 'inicio' && requestsPanel}
+            {teacherTab === 'salon' && rosterPanel}
+            {teacherTab === 'puntajes' && houseBoard}
+            {teacherTab === 'hechizos' && historyPanel}
+          </section>
+        </>
       )}
 
       {casaDetalle && (
@@ -821,6 +943,15 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
           </article>
         </div>
       )}
+
+      <ActionModal
+        open={Boolean(accionMaestroModal)}
+        {...(accionMaestroModal || {})}
+        loading={accionProcesando}
+        error={accionError}
+        onClose={cerrarAccionMaestro}
+        onConfirm={confirmarAccionMaestro}
+      />
 
       <CardModal
         carta={cartaAbierta}
