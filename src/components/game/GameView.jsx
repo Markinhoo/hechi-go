@@ -23,6 +23,8 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const [accionMaestro, setAccionMaestro] = useState(null);
   const [accionError, setAccionError] = useState('');
   const [accionProcesando, setAccionProcesando] = useState(false);
+  const [kahootForm, setKahootForm] = useState({ pregunta: '', opcionA: '', opcionB: '', opcionC: '', opcionD: '', correcta: 'a' });
+  const [kahootNow, setKahootNow] = useState(() => Date.now());
   const autoAbrirRef = useRef(false);
   const abrirCartaRef = useRef(null);
   const sobres = Array.from({ length: 7 }, (_, index) => index);
@@ -472,6 +474,79 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     setMensaje('Compraste ' + bestia.nombre + ' para tu Bestiario Mágico.');
   };
 
+  const actualizarKahootForm = (campo, valor) => {
+    setKahootForm((actual) => ({ ...actual, [campo]: valor }));
+  };
+
+  const crearPreguntaKahoot = async (event) => {
+    event?.preventDefault?.();
+    const campos = ['pregunta', 'opcionA', 'opcionB', 'opcionC', 'opcionD'];
+    if (campos.some((campo) => !kahootForm[campo].trim())) return setMensaje('Completa la pregunta y sus cuatro respuestas.');
+    const { data, error } = await db.rpc('kahoot_crear_pregunta', {
+      p_token: sesion.token,
+      p_alumno_id: sesion.tipo === 'alumno' ? sesion.alumnoId : null,
+      p_password: sesion.tipo === 'alumno' ? sesion.password : null,
+      p_pregunta: kahootForm.pregunta,
+      p_opcion_a: kahootForm.opcionA,
+      p_opcion_b: kahootForm.opcionB,
+      p_opcion_c: kahootForm.opcionC,
+      p_opcion_d: kahootForm.opcionD,
+      p_correcta: kahootForm.correcta
+    });
+    if (error) return setMensaje(error.message);
+    setEstado(data);
+    setKahootForm({ pregunta: '', opcionA: '', opcionB: '', opcionC: '', opcionD: '', correcta: 'a' });
+    setMensaje('Pregunta agregada al Kahoot.');
+  };
+
+  const iniciarKahoot = async () => {
+    if (sesion.tipo !== 'maestro') return;
+    const { data, error } = await db.rpc('kahoot_iniciar', { p_token: sesion.token });
+    if (error) return setMensaje(error.message);
+    setEstado(data);
+    setKahootNow(Date.now());
+    setMensaje('Kahoot iniciado. Los alumnos ya pueden responder.');
+  };
+
+  const responderKahoot = async (preguntaId, opcion) => {
+    if (sesion.tipo !== 'alumno') return;
+    const { data, error } = await db.rpc('kahoot_responder', {
+      p_token: sesion.token,
+      p_alumno_id: sesion.alumnoId,
+      p_password: sesion.password,
+      p_pregunta_id: preguntaId,
+      p_opcion: opcion
+    });
+    if (error) return setMensaje(error.message);
+    setEstado(data);
+    setMensaje('Respuesta enviada.');
+  };
+
+  const siguientePreguntaKahoot = async () => {
+    if (sesion.tipo !== 'maestro') return;
+    const { data, error } = await db.rpc('kahoot_siguiente_pregunta', { p_token: sesion.token });
+    if (error) return setMensaje(error.message);
+    setEstado(data);
+    setKahootNow(Date.now());
+    setMensaje('Siguiente pregunta.');
+  };
+
+  const finalizarKahoot = async () => {
+    if (sesion.tipo !== 'maestro') return;
+    const { data, error } = await db.rpc('kahoot_finalizar', { p_token: sesion.token });
+    if (error) return setMensaje(error.message);
+    setEstado(data);
+    setMensaje('Kahoot finalizado. Se repartieron oportunidades: 3, 2 y 1 carta.');
+  };
+
+  const nuevaActividadKahoot = async () => {
+    if (sesion.tipo !== 'maestro') return;
+    const { data, error } = await db.rpc('kahoot_nueva_actividad', { p_token: sesion.token });
+    if (error) return setMensaje(error.message);
+    setEstado(data);
+    setMensaje('Nueva actividad Kahoot lista para preguntas.');
+  };
+
   useEffect(() => {
     abrirCartaRef.current = abrirCarta;
   });
@@ -514,6 +589,11 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   }, [sesion?.token, estado?.token, setEstado]);
 
   useEffect(() => {
+    const id = window.setInterval(() => setKahootNow(Date.now()), 500);
+    return () => window.clearInterval(id);
+  }, []);
+
+  useEffect(() => {
     if (sesion.tipo !== 'alumno' || !autoAbrirRef.current) return;
     const alumno = estado.alumnos.find((item) => item.id === sesion.alumnoId);
     if (!alumno || alumno.oportunidades <= 0) return;
@@ -552,6 +632,29 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const bestiasAlumno = alumnoActual?.bestiario || [];
   const bestiasCompradas = new Set(bestiasAlumno);
   const bestiaDetalle = bestiario.find((bestia) => bestia.id === bestiaDetalleId);
+  const kahoot = estado.kahoot;
+  const kahootPreguntas = kahoot?.preguntas || [];
+  const kahootPreguntaActiva = kahoot?.estado === 'activa' ? kahootPreguntas[kahoot.preguntaActual] : null;
+  const kahootRespuestas = kahootPreguntaActiva?.respuestas || [];
+  const kahootInicio = kahoot?.iniciadaAt ? new Date(kahoot.iniciadaAt).getTime() : kahootNow;
+  const kahootSegundos = kahootPreguntaActiva ? Math.max(0, 20 - Math.floor((kahootNow - kahootInicio) / 1000)) : 0;
+  const kahootMiRespuesta = sesion.tipo === 'alumno' && kahootPreguntaActiva ? kahootRespuestas.find((respuesta) => respuesta.alumnoId === sesion.alumnoId) : null;
+  const kahootTodosRespondieron = kahootPreguntaActiva && estado.alumnos.length > 0 && kahootRespuestas.length >= estado.alumnos.length;
+  const kahootMostrarResultados = Boolean(kahootPreguntaActiva && (kahootSegundos <= 0 || kahootTodosRespondieron || kahootMiRespuesta || sesion.tipo === 'maestro'));
+  const kahootOpciones = ['a', 'b', 'c', 'd'];
+  const kahootConteos = kahootOpciones.reduce((resumen, opcion) => ({
+    ...resumen,
+    [opcion]: kahootRespuestas.filter((respuesta) => respuesta.opcion === opcion)
+  }), {});
+  const kahootRanking = Object.values((kahootPreguntas || []).flatMap((pregunta) => pregunta.respuestas || []).reduce((resumen, respuesta) => {
+    const previo = resumen[respuesta.alumnoId] || { alumnoId: respuesta.alumnoId, alumno: respuesta.alumno, casaId: respuesta.casaId, aciertos: 0, tiempo: 0 };
+    resumen[respuesta.alumnoId] = {
+      ...previo,
+      aciertos: previo.aciertos + (respuesta.correcta ? 1 : 0),
+      tiempo: previo.tiempo + (respuesta.correcta ? respuesta.tiempoMs : 20000)
+    };
+    return resumen;
+  }, {})).sort((a, b) => b.aciertos - a.aciertos || a.tiempo - b.tiempo);
 
   const moverAlumno = (direccion) => {
     if (!alumnosFiltrados.length) return;
@@ -615,17 +718,99 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       </div>
     </section>
   );
+  const kahootFormPanel = (!kahoot || kahoot.estado === 'borrador') && (
+    <form className='kahoot-form' onSubmit={crearPreguntaKahoot}>
+      <label>
+        <span>Pregunta</span>
+        <textarea value={kahootForm.pregunta} onChange={(event) => actualizarKahootForm('pregunta', event.target.value)} placeholder='Escribe la pregunta para la clase' />
+      </label>
+      <div className='kahoot-answer-grid'>
+        {kahootOpciones.map((opcion) => (
+          <label key={opcion}>
+            <span>Inciso {opcion.toUpperCase()}</span>
+            <input value={kahootForm['opcion' + opcion.toUpperCase()]} onChange={(event) => actualizarKahootForm('opcion' + opcion.toUpperCase(), event.target.value)} placeholder={'Respuesta ' + opcion.toUpperCase()} />
+          </label>
+        ))}
+      </div>
+      <div className='kahoot-correct-row'>
+        <span>Respuesta correcta</span>
+        <div>
+          {kahootOpciones.map((opcion) => (
+            <button key={opcion} type='button' className={kahootForm.correcta === opcion ? 'active' : ''} onClick={() => actualizarKahootForm('correcta', opcion)}>{opcion.toUpperCase()}</button>
+          ))}
+        </div>
+      </div>
+      <button type='submit'>Agregar pregunta</button>
+    </form>
+  );
+  const kahootResults = kahootPreguntaActiva && (
+    <div className='kahoot-results'>
+      {kahootOpciones.map((opcion) => {
+        const respuestas = kahootConteos[opcion] || [];
+        const porcentaje = kahootRespuestas.length ? Math.round((respuestas.length / kahootRespuestas.length) * 100) : 0;
+        return (
+          <article className={kahootPreguntaActiva.correcta === opcion ? 'correct' : ''} key={opcion}>
+            <div><strong>{opcion.toUpperCase()}</strong><span>{kahootPreguntaActiva.opciones?.[opcion]}</span><b>{respuestas.length}</b></div>
+            <i style={{ width: porcentaje + '%' }} />
+            <small>{respuestas.map((respuesta) => respuesta.alumno).join(', ') || 'Sin respuestas'}</small>
+          </article>
+        );
+      })}
+    </div>
+  );
+  const kahootPanel = (
+    <section className='panel kahoot-panel student-tab-panel'>
+      <div className='kahoot-heading'><span><strong>Kahoot mágico</strong><small>{kahootPreguntas.length} preguntas listas</small></span>{kahoot?.estado && <b>{kahoot.estado}</b>}</div>
+      {kahootFormPanel}
+      {(!kahoot || kahoot.estado === 'borrador') && (
+        <div className='kahoot-draft'>
+          {kahootPreguntas.length === 0 && <p className='empty'>Agrega preguntas para preparar la actividad.</p>}
+          {kahootPreguntas.map((pregunta, index) => <article key={pregunta.id}><strong>{index + 1}. {pregunta.pregunta}</strong><span>Correcta: {pregunta.correcta?.toUpperCase()}</span></article>)}
+          {sesion.tipo === 'maestro' && kahootPreguntas.length > 0 && <button type='button' onClick={iniciarKahoot}>Iniciar Kahoot</button>}
+        </div>
+      )}
+      {kahootPreguntaActiva && (
+        <div className='kahoot-live'>
+          <div className='kahoot-live-top'><span>Pregunta {(kahoot.preguntaActual || 0) + 1}/{kahootPreguntas.length}</span><b>{kahootSegundos}s</b></div>
+          <h2>{kahootPreguntaActiva.pregunta}</h2>
+          {!kahootMiRespuesta && sesion.tipo === 'alumno' && kahootSegundos > 0 && (
+            <div className='kahoot-options'>
+              {kahootOpciones.map((opcion) => <button key={opcion} type='button' onClick={() => responderKahoot(kahootPreguntaActiva.id, opcion)}><strong>{opcion.toUpperCase()}</strong><span>{kahootPreguntaActiva.opciones?.[opcion]}</span></button>)}
+            </div>
+          )}
+          {kahootMiRespuesta && <p className='kahoot-answer-state'>Contestaste {kahootMiRespuesta.opcion.toUpperCase()}.</p>}
+          {kahootMostrarResultados && kahootResults}
+          {sesion.tipo === 'maestro' && kahootMostrarResultados && (
+            <div className='kahoot-controls'>
+              {(kahoot.preguntaActual || 0) + 1 < kahootPreguntas.length && <button type='button' onClick={siguientePreguntaKahoot}>Siguiente pregunta</button>}
+              <button type='button' className='danger-soft' onClick={finalizarKahoot}>Finalizar y premiar</button>
+            </div>
+          )}
+        </div>
+      )}
+      {kahoot?.estado === 'finalizada' && (
+        <div className='kahoot-ranking'>
+          <h2>Ganadores</h2>
+          {kahootRanking.length === 0 && <p className='empty'>No hubo respuestas correctas.</p>}
+          {kahootRanking.slice(0, 3).map((item, index) => <article key={item.alumnoId}><strong>{index + 1}. {item.alumno}</strong><span>{item.aciertos} aciertos - premio: {index === 0 ? 3 : index === 1 ? 2 : 1} carta{index === 2 ? '' : 's'}</span></article>)}
+          {sesion.tipo === 'maestro' && <button type='button' onClick={nuevaActividadKahoot}>Nueva actividad</button>}
+        </div>
+      )}
+    </section>
+  );
   const studentTabs = [
     { id: 'inicio', label: 'Inicio', icon: <FaHouse /> },
     { id: 'puntaje', label: 'Puntaje', icon: <FaTrophy /> },
     { id: 'bestiario', label: 'Bestiario', icon: <FaBookOpen /> },
-    { id: 'hechizos', label: 'Hechizos', icon: <FaScroll /> }
+    { id: 'hechizos', label: 'Hechizos', icon: <FaScroll /> },
+    { id: 'kahoot', label: 'Kahoot', icon: <FaTrophy /> }
   ];
   const teacherTabs = [
     { id: 'inicio', label: 'Inicio', icon: <FaWandMagicSparkles /> },
     { id: 'salon', label: 'Gran salón', icon: <FaHouse /> },
     { id: 'puntajes', label: 'Puntajes', icon: <FaTrophy /> },
-    { id: 'hechizos', label: 'Hechizos', icon: <FaScroll /> }
+    { id: 'hechizos', label: 'Hechizos', icon: <FaScroll /> },
+    { id: 'kahoot', label: 'Kahoot', icon: <FaTrophy /> }
   ];
   const houseBoard = (
     <section className='house-board student-score-view'>
@@ -863,6 +1048,8 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
             </aside>
           )}
 
+          {studentTab === 'kahoot' && kahootPanel}
+
           <nav className='student-bottom-nav' aria-label='Navegacion de alumno'>
             {studentTabs.map((tab) => (
               <button key={tab.id} type='button' className={studentTab === tab.id ? 'active' : ''} onClick={() => setStudentTab(tab.id)} aria-label={tab.label}>
@@ -873,13 +1060,28 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         </section>
       ) : (
         <>
-          <section className='teacher-desktop-class-layout'>
-            {houseBoard}
-            <section className='pocket-layout no-scroll-grid'>
-              {rosterPanel}
-              {requestsPanel}
-              {historyPanel}
-            </section>
+          <section className='teacher-desktop-tabs-area'>
+            <div className='student-tab-switcher teacher-desktop-tab-switcher'>
+              {teacherTabs.map((tab) => (
+                <button key={tab.id} type='button' className={teacherTab === tab.id ? 'active' : ''} onClick={() => setTeacherTab(tab.id)}>
+                  {tab.icon}<span>{tab.label}</span>
+                </button>
+              ))}
+            </div>
+            {teacherTab === 'inicio' && (
+              <section className='teacher-desktop-class-layout'>
+                {houseBoard}
+                <section className='pocket-layout no-scroll-grid'>
+                  {rosterPanel}
+                  {requestsPanel}
+                  {historyPanel}
+                </section>
+              </section>
+            )}
+            {teacherTab === 'salon' && rosterPanel}
+            {teacherTab === 'puntajes' && houseBoard}
+            {teacherTab === 'hechizos' && historyPanel}
+            {teacherTab === 'kahoot' && kahootPanel}
           </section>
 
           <section className='teacher-mobile-tabs-area'>
@@ -894,6 +1096,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
             {teacherTab === 'salon' && rosterPanel}
             {teacherTab === 'puntajes' && houseBoard}
             {teacherTab === 'hechizos' && historyPanel}
+            {teacherTab === 'kahoot' && kahootPanel}
           </section>
         </>
       )}
