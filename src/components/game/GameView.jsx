@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { FaArrowLeft, FaArrowRight, FaBookOpen, FaHouse, FaScroll, FaTrophy, FaWandMagicSparkles } from 'react-icons/fa6';
 import { bestiario, precioBestia, RAREZAS_BESTIARIO } from '../../data/bestiaryData';
 import { CARTAS_ACTIVAS, casas, PLAYER_KEY } from '../../data/gameData';
-import { db } from '../../services/hechiApi';
+import { db, supabase } from '../../services/hechiApi';
 import { efectoCarta, guardarLocal, obtenerCasa, randomEntero } from '../../utils/gameUtils';
 import ActionModal from '../ui/ActionModal';
 import CardModal from './CardModal';
@@ -479,6 +479,10 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     setKahootForm((actual) => ({ ...actual, [campo]: valor }));
   };
 
+  const asegurarContextoKahoot = async () => {
+    if (sesion.tipo === 'alumno') await supabase.auth.signOut();
+  };
+
   const limpiarKahootForm = () => {
     setKahootForm({ pregunta: '', opcionA: '', opcionB: '', opcionC: '', opcionD: '', correcta: 'a' });
     setKahootEditandoId(null);
@@ -488,6 +492,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     event?.preventDefault?.();
     const campos = ['pregunta', 'opcionA', 'opcionB', 'opcionC', 'opcionD'];
     if (campos.some((campo) => !kahootForm[campo].trim())) return setMensaje('Completa la pregunta y sus cuatro respuestas.');
+    await asegurarContextoKahoot();
     const payload = {
       p_token: sesion.token,
       p_alumno_id: sesion.tipo === 'alumno' ? sesion.alumnoId : null,
@@ -519,6 +524,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   };
 
   const eliminarPreguntaKahoot = async (preguntaId) => {
+    await asegurarContextoKahoot();
     const { data, error } = await db.rpc('kahoot_eliminar_pregunta', {
       p_token: sesion.token,
       p_alumno_id: sesion.tipo === 'alumno' ? sesion.alumnoId : null,
@@ -532,6 +538,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   };
 
   const reiniciarKahoot = async () => {
+    await asegurarContextoKahoot();
     const { data, error } = await db.rpc('kahoot_reiniciar', {
       p_token: sesion.token,
       p_alumno_id: sesion.tipo === 'alumno' ? sesion.alumnoId : null,

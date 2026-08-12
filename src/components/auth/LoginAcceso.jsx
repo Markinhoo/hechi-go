@@ -29,6 +29,7 @@ function LoginAcceso({ onAlumno, onMaestro, mensaje, setMensaje }) {
     setMensaje('Entrando a la clase...');
     const tokenLimpio = limpiarTexto(token);
     const nombreAlumno = identificador.trim();
+    await supabase.auth.signOut();
     const { data, error } = await db.rpc('entrar_alumno', { p_token: tokenLimpio, p_nombre: nombreAlumno, p_password: password });
     if (error) return setMensaje(error.message);
     guardarLocal(PLAYER_KEY, { token: tokenLimpio, nombre: nombreAlumno, password, alumnoId: data.alumno_id });

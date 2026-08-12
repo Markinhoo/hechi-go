@@ -162,7 +162,7 @@ begin
     raise exception 'Token de clase no encontrado';
   end if;
 
-  v_es_maestro := auth.uid() is not null and v_clase.created_by = auth.uid();
+  v_es_maestro := p_alumno_id is null and auth.uid() is not null and v_clase.created_by = auth.uid();
   if v_es_maestro then
     v_creador_nombre := 'Maestro';
   else
@@ -230,7 +230,7 @@ begin
     raise exception 'Token de clase no encontrado';
   end if;
 
-  v_es_maestro := auth.uid() is not null and v_clase.created_by = auth.uid();
+  v_es_maestro := p_alumno_id is null and auth.uid() is not null and v_clase.created_by = auth.uid();
   if not v_es_maestro then
     select * into v_alumno from hechi.alumnos where id = p_alumno_id and clase_id = v_clase.id;
     if not found or v_alumno.password <> p_password then
@@ -287,7 +287,7 @@ begin
     raise exception 'Token de clase no encontrado';
   end if;
 
-  v_es_maestro := auth.uid() is not null and v_clase.created_by = auth.uid();
+  v_es_maestro := p_alumno_id is null and auth.uid() is not null and v_clase.created_by = auth.uid();
   if not v_es_maestro then
     select * into v_alumno from hechi.alumnos where id = p_alumno_id and clase_id = v_clase.id;
     if not found or v_alumno.password <> p_password then
@@ -330,7 +330,7 @@ begin
     raise exception 'Token de clase no encontrado';
   end if;
 
-  v_es_maestro := auth.uid() is not null and v_clase.created_by = auth.uid();
+  v_es_maestro := p_alumno_id is null and auth.uid() is not null and v_clase.created_by = auth.uid();
   if not v_es_maestro then
     select * into v_alumno from hechi.alumnos where id = p_alumno_id and clase_id = v_clase.id;
     if not found or v_alumno.password <> p_password then
