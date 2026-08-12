@@ -29,8 +29,8 @@ function AlumnoAcceso({ onEntrar, mensaje, setMensaje }) {
         <form onSubmit={entrar}>
           <input value={token} onChange={(event) => setToken(event.target.value.toUpperCase())} placeholder='Token de clase' required />
           <input value={nombre} onChange={(event) => setNombre(event.target.value)} placeholder='Nombre del alumno' required />
-          <input type='password' value={password} onChange={(event) => setPassword(event.target.value)} placeholder='Contrasena' required />
-          <button type='submit'>Entrar al gran salon</button>
+          <input type='password' value={password} onChange={(event) => setPassword(event.target.value)} placeholder='Contraseña' required />
+          <button type='submit'>Entrar al gran salón</button>
         </form>
         {mensaje && <p className='form-message'>{mensaje}</p>}
       </section>

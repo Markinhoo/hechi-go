@@ -8,7 +8,7 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
   const [roboIds, setRoboIds] = useState([]);
   const cartaActiva = carta || { casaId: 'gryffindor', tipo: '', puntos: 0, alumnoId: '' };
   const casa = obtenerCasa(cartaActiva.casaId);
-  const puntosTexto = cartaActiva.tipo === 'proteccion' ? 'Proteccion activa' : (cartaActiva.tipo === 'intercambio' ? 'Intercambio magico' : (cartaActiva.tipo === 'puntosIntercambio' ? 'Intercambio de puntos' : (cartaActiva.tipo === 'companeroBonus' ? 'Bonificacion compartida' : (cartaActiva.tipo === 'replicaPuntos' ? 'Replica de puntos' : (cartaActiva.tipo === 'roboMultiple' ? 'Robo de puntos' : (cartaActiva.tipo === 'decisionChiste' ? 'Decision de chiste' : (cartaActiva.puntos > 0 ? '+' + cartaActiva.puntos + ' puntos' : String(cartaActiva.puntos) + ' puntos')))))));
+  const puntosTexto = cartaActiva.tipo === 'proteccion' ? 'Protección activa' : (cartaActiva.tipo === 'intercambio' ? 'Intercambio mágico' : (cartaActiva.tipo === 'puntosIntercambio' ? 'Intercambio de puntos' : (cartaActiva.tipo === 'companeroBonus' ? 'Bonificación compartida' : (cartaActiva.tipo === 'replicaPuntos' ? 'Réplica de puntos' : (cartaActiva.tipo === 'roboMultiple' ? 'Robo de puntos' : (cartaActiva.tipo === 'decisionChiste' ? 'Decisión de chiste' : (cartaActiva.puntos > 0 ? '+' + cartaActiva.puntos + ' puntos' : String(cartaActiva.puntos) + ' puntos')))))));
   const esperaRival = cartaActiva.tipo === 'rival' && cartaActiva.pendienteRival;
   const esperaIntercambio = cartaActiva.tipo === 'intercambio' && cartaActiva.pendienteIntercambio;
   const esperaPuntosIntercambio = cartaActiva.tipo === 'puntosIntercambio' && cartaActiva.pendientePuntosIntercambio;
@@ -16,6 +16,7 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
   const esperaReplicaPuntos = cartaActiva.tipo === 'replicaPuntos' && cartaActiva.pendienteReplicaPuntos;
   const esperaRoboMultiple = cartaActiva.tipo === 'roboMultiple' && cartaActiva.pendienteRoboMultiple;
   const esperaDecisionChiste = cartaActiva.tipo === 'decisionChiste' && cartaActiva.pendienteDecisionChiste;
+  const tieneDecisionPendiente = esperaRival || esperaIntercambio || esperaPuntosIntercambio || esperaCompaneroBonus || esperaReplicaPuntos || esperaRoboMultiple || esperaDecisionChiste;
   const miCasa = cartaActiva.casaId;
   const alumnosMiCasa = useMemo(() => alumnosIntercambio.filter((alumno) => alumno.casaId === miCasa && alumno.id !== cartaActiva.alumnoId), [alumnosIntercambio, cartaActiva.alumnoId, miCasa]);
   const alumnosRivales = useMemo(() => alumnosIntercambio.filter((alumno) => alumno.casaId !== miCasa), [alumnosIntercambio, miCasa]);
@@ -84,7 +85,7 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
             {casaPropiaDisponible && <div className='exchange-section'>
               <strong>Intercambiar a alguien de mi casa</strong>
               <select value={companeroId} onChange={(event) => setCompaneroId(event.target.value)}>
-                <option value=''>Companero de mi casa</option>
+                <option value=''>Compañero de mi casa</option>
                 {alumnosMiCasa.map((alumno) => <option key={alumno.id} value={alumno.id}>{alumno.nombre} - {alumno.puntos} pts</option>)}
               </select>
               <select value={rivalId} onChange={(event) => setRivalId(event.target.value)}>
@@ -112,9 +113,9 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
           </div>
         )}
         {esperaCompaneroBonus && (
-          <div className='companion-bonus-options' aria-label='Elegir companero'>
-            <small>Elige un companero: ambos ganan +2 puntos.</small>
-            {alumnosParaCompanero.length === 0 && <span>No hay otro companero disponible.</span>}
+          <div className='companion-bonus-options' aria-label='Elegir compañero'>
+            <small>Elige un compañero: ambos ganan +2 puntos.</small>
+            {alumnosParaCompanero.length === 0 && <span>No hay otro compañero disponible.</span>}
             <div>
               {alumnosParaCompanero.map((alumno) => {
                 const casaAlumno = obtenerCasa(alumno.casaId);
@@ -128,7 +129,7 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
           </div>
         )}
         {esperaReplicaPuntos && (
-          <div className='point-swap-options' aria-label='Replica de puntos'>
+          <div className='point-swap-options' aria-label='Réplica de puntos'>
             <small>Elige un alumno disponible. Puede ser de tu casa, pero no de una casa protegida.</small>
             {alumnosParaReplica.length === 0 && <span>No hay alumnos disponibles para replicar.</span>}
             <div>
@@ -162,13 +163,16 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
           </div>
         )}
         {esperaDecisionChiste && (
-          <div className='joke-decision-options' aria-label='Decision de Riddikulus'>
-            <small>Pasa al frente a contar un chiste frente al salon.</small>
+          <div className='joke-decision-options' aria-label='Decisión de Riddikulus'>
+            <small>Pasa al frente a contar un chiste frente al salón.</small>
             <div>
-              <button type='button' className='joke-choice accept' onClick={() => onSelectJokeDecision?.(true)}>Si, contar chiste (+2)</button>
+              <button type='button' className='joke-choice accept' onClick={() => onSelectJokeDecision?.(true)}>Sí, contar chiste (+2)</button>
               <button type='button' className='joke-choice reject' onClick={() => onSelectJokeDecision?.(false)}>No, me niego (-2)</button>
             </div>
           </div>
+        )}
+        {!tieneDecisionPendiente && (
+          <button type='button' className='exchange-apply modal-finish' onClick={onClose}>Cerrar carta</button>
         )}
       </article>
     </section>

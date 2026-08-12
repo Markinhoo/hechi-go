@@ -1,6 +1,6 @@
 import { FaWandMagicSparkles, FaXmark } from 'react-icons/fa6';
 
-function ActionModal({ open, title, eyebrow = 'Accion del maestro', description, fields = [], confirmText = 'Confirmar', cancelText = 'Cancelar', variant = 'default', loading = false, error = '', onClose, onConfirm }) {
+function ActionModal({ open, title, eyebrow = 'Acción del maestro', description, fields = [], confirmText = 'Confirmar', cancelText = 'Cancelar', variant = 'default', loading = false, error = '', onClose, onConfirm }) {
   if (!open) return null;
 
   const submit = (event) => {
@@ -11,7 +11,7 @@ function ActionModal({ open, title, eyebrow = 'Accion del maestro', description,
   return (
     <div className='action-modal' role='dialog' aria-modal='true' aria-labelledby='action-modal-title'>
       <form className={'action-card ' + variant} onSubmit={submit}>
-        <button type='button' className='action-close' onClick={onClose} aria-label='Cerrar accion' disabled={loading}><FaXmark /></button>
+        <button type='button' className='action-close' onClick={onClose} aria-label='Cerrar acción' disabled={loading}><FaXmark /></button>
         <span className='eyebrow'><FaWandMagicSparkles /> {eyebrow}</span>
         <h2 id='action-modal-title'>{title}</h2>
         {description && <p>{description}</p>}

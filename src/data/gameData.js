@@ -27,7 +27,7 @@ export const efectosCartas = Array.from({ length: MAX_CARTA }, (_, index) => {
   if (numero === 12) return { puntos: -2, titulo: 'Sectumsempra', descripcion: 'QUITA -2 A LAS OTRAS CASAS, EXCEPTO A LA CASA PROTEGIDA', tipo: 'otrasCasas' };
   if (numero === 13) return { puntos: 0, titulo: 'Muertos en Vida', descripcion: 'RESCATA A ALGUIEN DE REPROBAR', tipo: 'guardable' };
   if (numero === 15) return { puntos: 2, titulo: 'Riddikulus', descripcion: 'CUENTA UN CHISTE FRENTE AL SALON: SI ACEPTAS +2, SI TE NIEGAS -2', tipo: 'decisionChiste' };
-  if (numero === 16) return { puntos: 0, titulo: 'Amortentia', descripcion: 'SUMA +2 A TI Y OTRO COMPANERO', tipo: 'companeroBonus' };
+  if (numero === 16) return { puntos: 0, titulo: 'Amortentia', descripcion: 'SUMA +2 A TI Y OTRO COMPAÑERO', tipo: 'companeroBonus' };
   if (numero === 17) return { puntos: 0, titulo: 'Elixir de Vida', descripcion: 'QUITA LA MITAD DE LOS PUNTOS NEGATIVOS A SU CASA', tipo: 'limpiaNegativos' };
   if (numero === 18) return { puntos: 1, titulo: 'Crecehuesos', descripcion: 'SUMA +1 O JUSTIFICA UNA FALTA', tipo: 'guardable' };
   if (numero === 19) return { puntos: 0, titulo: 'Invisibilidad', descripcion: 'SE PROTEGE CONTRA CUALQUIER HECHIZO', tipo: 'guardable' };

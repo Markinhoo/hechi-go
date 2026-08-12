@@ -53,7 +53,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     const { data, error } = await db.rpc('solicitar_carta', { p_token: sesion.token, p_alumno_id: sesion.alumnoId, p_password: sesion.password });
     if (error) return setMensaje(error.message);
     setEstado(data);
-    setMensaje('Solicitud enviada al maestro. La carta se abrira cuando autorice.');
+    setMensaje('Solicitud enviada al maestro. La carta se abrirá cuando autorice.');
   };
 
   const abrirAccionMaestro = (accion) => {
@@ -77,23 +77,23 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       if (accionMaestro.tipo === 'password') {
         const passwordNueva = (valores.password || '').trim();
         if (passwordNueva.length < 3) {
-          setAccionError('La nueva contrasena debe tener al menos 3 caracteres.');
+          setAccionError('La nueva contraseña debe tener al menos 3 caracteres.');
           return;
         }
-        setMensaje('Restableciendo contrasena de ' + accionMaestro.alumno.nombre + '...');
+        setMensaje('Restableciendo contraseña de ' + accionMaestro.alumno.nombre + '...');
         const { data, error } = await db.rpc('cambiar_password_alumno', { p_token: sesion.token, p_alumno_id: accionMaestro.alumno.id, p_password: passwordNueva });
         if (error) {
           setAccionError(error.message);
           return;
         }
         setEstado(data);
-        setMensaje('Contrasena restablecida para ' + accionMaestro.alumno.nombre + '.');
+        setMensaje('Contraseña restablecida para ' + accionMaestro.alumno.nombre + '.');
       }
 
       if (accionMaestro.tipo === 'quitar-puntos') {
         const puntos = Math.floor(Number(valores.puntos));
         if (!Number.isFinite(puntos) || puntos <= 0) {
-          setAccionError('Escribe una cantidad valida mayor a 0.');
+          setAccionError('Escribe una cantidad válida mayor a 0.');
           return;
         }
         setMensaje('Quitando ' + puntos + ' puntos a ' + accionMaestro.alumno.nombre + '...');
@@ -126,6 +126,16 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         setMensaje('Nuevo parcial listo. Se conservaron casas, galeones y bestiario.');
       }
 
+      if (accionMaestro.tipo === 'reiniciar-bestiario') {
+        const { data, error } = await db.rpc('reiniciar_bestiario_galeones', { p_token: sesion.token });
+        if (error) {
+          setAccionError(error.message);
+          return;
+        }
+        setEstado(data);
+        setMensaje('Bestiario y galeones reiniciados para hacer pruebas.');
+      }
+
       if (accionMaestro.tipo === 'eliminar-clase') {
         const { error } = await db.rpc('eliminar_clase', { p_token: sesion.token });
         if (error) {
@@ -149,10 +159,10 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     if (sesion.tipo !== 'alumno') return;
     const passwordNueva = passwordNuevaAlumno.trim();
     const passwordConfirmacion = passwordConfirmacionAlumno.trim();
-    if (!passwordNueva) return setMensaje('Escribe tu nueva contrasena.');
-    if (passwordNueva.length < 3) return setMensaje('La nueva contrasena debe tener al menos 3 caracteres.');
-    if (passwordNueva !== passwordConfirmacion) return setMensaje('La confirmacion no coincide.');
-    setMensaje('Actualizando tu contrasena...');
+    if (!passwordNueva) return setMensaje('Escribe tu nueva contraseña.');
+    if (passwordNueva.length < 3) return setMensaje('La nueva contraseña debe tener al menos 3 caracteres.');
+    if (passwordNueva !== passwordConfirmacion) return setMensaje('La confirmación no coincide.');
+    setMensaje('Actualizando tu contraseña...');
     const { data, error } = await db.rpc('cambiar_password_propia', {
       p_token: sesion.token,
       p_alumno_id: sesion.alumnoId,
@@ -167,7 +177,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     setMostrarCambioPassword(false);
     setPasswordNuevaAlumno('');
     setPasswordConfirmacionAlumno('');
-    setMensaje('Tu contrasena fue actualizada.');
+    setMensaje('Tu contraseña fue actualizada.');
   };
 
 
@@ -226,11 +236,11 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         const data = await registrarCarta({ numero, efecto });
         if (!data) return null;
         setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id });
-        setMensaje('Amortentia no encontro otro companero disponible.');
+        setMensaje('Amortentia no encontró otro compañero disponible.');
         return data;
       }
       setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteCompaneroBonus: true });
-      setMensaje('Amortentia: elige un companero para sumar puntos a ambos.');
+      setMensaje('Amortentia: elige un compañero para sumar puntos a ambos.');
       return null;
     }
     if (efecto.tipo === 'replicaPuntos') {
@@ -277,7 +287,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       if (error) return setMensaje(error.message);
       setEstado(data);
       setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id });
-      setMensaje('Sectumsempra quito 2 puntos a las otras casas disponibles.');
+      setMensaje('Sectumsempra quitó 2 puntos a las otras casas disponibles.');
       return data;
     }
     if (efecto.tipo === 'intercambio') {
@@ -298,7 +308,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     const puntosFinales = data?.historial?.[0]?.puntos ?? efecto.puntos;
     setCartaAbierta({ numero, ...efecto, puntos: puntosFinales, casaId: alumno.casaId, alumnoId: alumno.id });
     if (efecto.tipo === 'proteccion') {
-      setMensaje(obtenerCasa(alumno.casaId).nombre + ' queda protegida y activa x2 para su siguiente accion.');
+      setMensaje(obtenerCasa(alumno.casaId).nombre + ' queda protegida y activa x2 para su siguiente acción.');
     } else {
       setMensaje(obtenerCasa(alumno.casaId).nombre + ' gana ' + puntosFinales + ' puntos.');
     }
@@ -361,7 +371,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
 
   const seleccionarCompaneroBonus = async (companeroId) => {
     if (!cartaAbierta || cartaAbierta.tipo !== 'companeroBonus' || !cartaAbierta.pendienteCompaneroBonus) return;
-    if (!companeroId || companeroId === sesion.alumnoId) return setMensaje('Elige otro companero.');
+    if (!companeroId || companeroId === sesion.alumnoId) return setMensaje('Elige otro compañero.');
     const { data, error } = await db.rpc('sumar_puntos_companero', {
       p_token: sesion.token,
       p_alumno_id: sesion.alumnoId,
@@ -376,7 +386,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     const puntos = data?.historial?.[0]?.puntos || 2;
     setEstado(data);
     setCartaAbierta({ ...cartaAbierta, pendienteCompaneroBonus: false, puntos });
-    setMensaje('Amortentia sumo +' + puntos + ' a ti y a ' + (companero?.nombre || 'otro companero') + '.');
+    setMensaje('Amortentia sumó +' + puntos + ' a ti y a ' + (companero?.nombre || 'otro compañero') + '.');
   };
 
   const seleccionarReplicaPuntos = async (objetivoId) => {
@@ -396,7 +406,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     const puntos = data?.historial?.[0]?.puntos ?? objetivo?.puntos ?? 0;
     setEstado(data);
     setCartaAbierta({ ...cartaAbierta, pendienteReplicaPuntos: false, puntos });
-    setMensaje('Multijugos replico +' + puntos + ' puntos de ' + (objetivo?.nombre || 'otro alumno') + '.');
+    setMensaje('Multijugos replicó +' + puntos + ' puntos de ' + (objetivo?.nombre || 'otro alumno') + '.');
   };
 
   const seleccionarRoboMultiple = async (objetivoIds) => {
@@ -414,7 +424,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     if (error) return setMensaje(error.message);
     setEstado(data);
     setCartaAbierta({ ...cartaAbierta, pendienteRoboMultiple: false, puntos: 5 });
-    setMensaje('Morsmordre quito 1 punto a 5 alumnos y sumo +5 a tu casa.');
+    setMensaje('Morsmordre quitó 1 punto a 5 alumnos y sumó +5 a tu casa.');
   };
 
   const seleccionarDecisionChiste = async (acepta) => {
@@ -432,7 +442,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     const puntos = acepta ? 2 : -2;
     setEstado(data);
     setCartaAbierta({ ...cartaAbierta, pendienteDecisionChiste: false, puntos });
-    setMensaje(acepta ? 'Riddikulus sumo +2 por contar el chiste.' : 'Riddikulus resto -2 por negarse a contar el chiste.');
+    setMensaje(acepta ? 'Riddikulus sumó +2 por contar el chiste.' : 'Riddikulus restó -2 por negarse a contar el chiste.');
   };
 
   const usarCartaGuardada = async (carta) => {
@@ -459,7 +469,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     });
     if (error) return setMensaje(error.message);
     setEstado(data);
-    setMensaje('Compraste ' + bestia.nombre + ' para tu Bestiario Magico.');
+    setMensaje('Compraste ' + bestia.nombre + ' para tu Bestiario Mágico.');
   };
 
   useEffect(() => {
@@ -514,7 +524,13 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const salir = () => { setSesion(null); setEstado(null); setModo('inicio'); setCartaAbierta(null); setMensaje(''); };
   const alumnoActual = sesion.tipo === 'alumno' ? estado.alumnos.find((alumno) => alumno.id === sesion.alumnoId) : null;
   const casaActual = obtenerCasa(alumnoActual?.casaId);
-  const puntajesCasas = casas.map((casa) => ({ ...casa, puntos: estado.puntajes?.[casa.id] ?? 0 }));
+  const puntajeCasa = (casaId) => {
+    const positivos = estado.puntajesPositivos?.[casaId];
+    const negativos = estado.puntajesNegativos?.[casaId];
+    if (positivos !== undefined || negativos !== undefined) return (positivos ?? 0) - (negativos ?? 0);
+    return estado.puntajes?.[casaId] ?? 0;
+  };
+  const puntajesCasas = casas.map((casa) => ({ ...casa, puntos: puntajeCasa(casa.id) }));
   const maxPuntos = Math.max(...puntajesCasas.map((casa) => casa.puntos));
   const ganadoras = puntajesCasas.filter((casa) => casa.puntos === maxPuntos);
   const casaGanadora = maxPuntos > 0 && ganadoras.length === 1 ? ganadoras[0] : null;
@@ -541,7 +557,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     if (!alumnosFiltrados.length) return;
     setIndiceAlumno((actual) => (Math.min(actual, alumnosFiltrados.length - 1) + direccion + alumnosFiltrados.length) % alumnosFiltrados.length);
   };
-  const textoInicioAlumno = 'Bienvenido al gran salon. Espera autorizacion para abrir carta; toca la carta central y, cuando el maestro autorice, se abrira automaticamente.';
+  const textoInicioAlumno = 'Bienvenido al gran salón. Espera autorización para abrir carta; toca la carta central y, cuando el maestro autorice, se abrirá automáticamente.';
   const cartasGuardadasAlumno = (
     <div className='stored-cards-panel'>
         <div>
@@ -569,7 +585,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     <section className='panel bestiary-panel student-tab-panel'>
       <div className='bestiary-heading'>
         <span>
-          <strong>Bestiario Magico</strong>
+          <strong>Bestiario Mágico</strong>
           <small>{bestiasAlumno.length}/{bestiario.length} criaturas descubiertas</small>
         </span>
         <b>{alumnoActual?.galeones || 0} galeones</b>
@@ -607,7 +623,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   ];
   const teacherTabs = [
     { id: 'inicio', label: 'Inicio', icon: <FaWandMagicSparkles /> },
-    { id: 'salon', label: 'Gran salon', icon: <FaHouse /> },
+    { id: 'salon', label: 'Gran salón', icon: <FaHouse /> },
     { id: 'puntajes', label: 'Puntajes', icon: <FaTrophy /> },
     { id: 'hechizos', label: 'Hechizos', icon: <FaScroll /> }
   ];
@@ -618,11 +634,11 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
           <img className='house-crest' src={casa.escudo} alt='' />
           <span>{estado.conteos[casa.id]}/{estado.objetivos[casa.id]} aprendices</span>
           <h2>{casa.nombre}</h2>
-          <strong>{estado.puntajes[casa.id]} pts</strong>
+          <strong>{puntajeCasa(casa.id)} pts</strong>
           <dl className='house-score-breakdown'>
             <div><dt>+</dt><dd>{estado.puntajesPositivos?.[casa.id] ?? estado.puntajes[casa.id]}</dd></div>
             <div><dt>-</dt><dd>{estado.puntajesNegativos?.[casa.id] ?? 0}</dd></div>
-            <div><dt>Total</dt><dd>{estado.puntajes[casa.id]}</dd></div>
+            <div><dt>Total</dt><dd>{puntajeCasa(casa.id)}</dd></div>
           </dl>
           {estado.casaProtegida === casa.id && <em className='house-status protected'>Protegida</em>}
           {estado.casaMultiplicador === casa.id && <em className='house-status multiplier'>x2 pendiente</em>}
@@ -633,7 +649,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const rosterPanel = (
     <aside className='panel roster hall-panel'>
       <div className='roster-heading'>
-        <h2>Gran salon</h2>
+        <h2>Gran salón</h2>
         <span>{alumnosFiltrados.length}/{estado.alumnos.length}</span>
       </div>
       <label className='student-search'>
@@ -657,7 +673,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
             </div>
             <b>{alumnoCarrusel.puntos} pts</b>
             <div className='student-actions'>
-              <button type='button' className='authorize password' onClick={() => abrirAccionMaestro({ tipo: 'password', alumno: alumnoCarrusel })}>Cambiar contrasena</button>
+              <button type='button' className='authorize password' onClick={() => abrirAccionMaestro({ tipo: 'password', alumno: alumnoCarrusel })}>Cambiar contraseña</button>
               <button type='button' className='authorize remove-points' onClick={() => abrirAccionMaestro({ tipo: 'quitar-puntos', alumno: alumnoCarrusel })}>Quitar puntos</button>
               <button type='button' className='authorize delete-student' onClick={() => abrirAccionMaestro({ tipo: 'eliminar-alumno', alumno: alumnoCarrusel })}>Eliminar</button>
             </div>
@@ -678,7 +694,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       <div className='request-board'>
         <span className='eyebrow'><FaWandMagicSparkles /> Solicitudes de carta</span>
         <h2>Permisos pendientes</h2>
-        {(!estado.solicitudes || estado.solicitudes.length === 0) && <p className='empty light'>Cuando un alumno participe y pida carta, aparecera aqui para autorizarlo.</p>}
+        {(!estado.solicitudes || estado.solicitudes.length === 0) && <p className='empty light'>Cuando un alumno participe y pida carta, aparecerá aquí para autorizarlo.</p>}
         <div className='request-list'>
           {(estado.solicitudes || []).map((solicitud) => {
             const casa = obtenerCasa(solicitud.casaId);
@@ -700,8 +716,8 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   );
   const historyPanel = (
     <aside className='panel history parchment-panel'>
-      <h2>Ultimos hechizos</h2>
-      {estado.historial.length === 0 && <p className='empty'>Aun no se abre ninguna carta.</p>}
+      <h2>Últimos hechizos</h2>
+      {estado.historial.length === 0 && <p className='empty'>Aún no se abre ninguna carta.</p>}
       {estado.historial.map((item) => {
         const casaHistorial = obtenerCasa(item.casaId);
         const puntosHistorial = item.puntos > 0 ? '+' + item.puntos : String(item.puntos);
@@ -713,18 +729,18 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     if (!accionMaestro) return null;
     if (accionMaestro.tipo === 'password') {
       return {
-        title: 'Cambiar contrasena',
+        title: 'Cambiar contraseña',
         eyebrow: accionMaestro.alumno.nombre,
-        description: 'Restablece la contrasena de acceso de este alumno.',
-        confirmText: 'Guardar contrasena',
-        fields: [{ name: 'password', label: 'Nueva contrasena', type: 'password', defaultValue: '12345', minLength: '3', autoFocus: true, autoComplete: 'new-password' }]
+        description: 'Restablece la contraseña de acceso de este alumno.',
+        confirmText: 'Guardar contraseña',
+        fields: [{ name: 'password', label: 'Nueva contraseña', type: 'password', defaultValue: '12345', minLength: '3', autoFocus: true, autoComplete: 'new-password' }]
       };
     }
     if (accionMaestro.tipo === 'quitar-puntos') {
       return {
         title: 'Quitar puntos',
         eyebrow: accionMaestro.alumno.nombre,
-        description: 'La cantidad se restara del puntaje del alumno y de su casa.',
+        description: 'La cantidad se restará del puntaje del alumno y de su casa.',
         confirmText: 'Quitar puntos',
         variant: 'warning',
         fields: [{ name: 'puntos', label: 'Puntos a quitar', type: 'number', defaultValue: '1', min: '1', autoFocus: true }]
@@ -734,7 +750,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       return {
         title: 'Eliminar alumno',
         eyebrow: accionMaestro.alumno.nombre,
-        description: 'Se borraran sus cartas, puntos y solicitudes de esta clase.',
+        description: 'Se borrarán sus cartas, puntos y solicitudes de esta clase.',
         confirmText: 'Eliminar alumno',
         variant: 'danger'
       };
@@ -743,8 +759,17 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       return {
         title: 'Nuevo parcial',
         eyebrow: estado.nombre || 'Clase',
-        description: 'Se borraran puntos, cartas del parcial, solicitudes e historial. Se conservan alumnos, casas, galeones y bestiario.',
+        description: 'Se borrarán puntos, cartas del parcial, solicitudes e historial. Se conservan alumnos, casas, galeones y bestiario.',
         confirmText: 'Iniciar parcial',
+        variant: 'warning'
+      };
+    }
+    if (accionMaestro.tipo === 'reiniciar-bestiario') {
+      return {
+        title: 'Reiniciar pruebas',
+        eyebrow: estado.nombre || 'Clase',
+        description: 'Se borrarán el bestiario y los galeones de todos los alumnos. Las casas, puntos y usuarios se conservan.',
+        confirmText: 'Reiniciar bestiario',
         variant: 'warning'
       };
     }
@@ -752,7 +777,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       return {
         title: 'Eliminar clase',
         eyebrow: estado.nombre || 'Clase',
-        description: 'Esta accion borrara definitivamente grupo, alumnos, bestiarios, puntos y token.',
+        description: 'Esta acción borrará definitivamente grupo, alumnos, bestiarios, puntos y token.',
         confirmText: 'Eliminar clase',
         variant: 'danger'
       };
@@ -766,12 +791,13 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         <div>
           <span className='eyebrow'><FaWandMagicSparkles /> {sesion.tipo === 'maestro' ? 'Vista maestro' : 'Vista alumno'}</span>
           <h1>{tituloClase}</h1>
-          <p className={sesion.tipo === 'alumno' ? 'student-token-hint' : ''}>{sesion.tipo === 'maestro' ? ('Token de clase: ' + estado.token + (casaGanadora ? ' - Va ganando ' + casaGanadora.nombre : '')) : ('Token ' + estado.token + ' - espera autorizacion para abrir carta.')}</p>
+          <p className={sesion.tipo === 'alumno' ? 'student-token-hint' : ''}>{sesion.tipo === 'maestro' ? ('Token de clase: ' + estado.token + (casaGanadora ? ' - Va ganando ' + casaGanadora.nombre : '')) : ('Token ' + estado.token + ' - espera autorización para abrir carta.')}</p>
         </div>
         <div className='hero-actions'>
           {sesion.tipo === 'alumno' && <span className='player-badge' style={{ '--house': casaActual.color, '--metal': casaActual.metal }}>{alumnoActual?.nombre} - {casaActual.nombre} - {alumnoActual?.oportunidades || 0} oportunidades</span>}
-          {sesion.tipo === 'alumno' && <button type='button' className='ghost change-own-password' onClick={() => setMostrarCambioPassword(true)}>Cambiar contrasena</button>}
+          {sesion.tipo === 'alumno' && <button type='button' className='ghost change-own-password' onClick={() => setMostrarCambioPassword(true)}>Cambiar contraseña</button>}
           {sesion.tipo === 'maestro' && <button type='button' className='ghost' onClick={() => abrirAccionMaestro({ tipo: 'nuevo-parcial' })}>Nuevo parcial</button>}
+          {sesion.tipo === 'maestro' && <button type='button' className='ghost' onClick={() => abrirAccionMaestro({ tipo: 'reiniciar-bestiario' })}>Reiniciar bestiario</button>}
           {sesion.tipo === 'maestro' && <button type='button' className='ghost danger-soft' onClick={() => abrirAccionMaestro({ tipo: 'eliminar-clase' })}>Eliminar clase</button>}
           <button type='button' className='ghost' onClick={salir}>Salir</button>
         </div>
@@ -827,8 +853,8 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
 
           {studentTab === 'hechizos' && (
             <aside className='panel history parchment-panel student-tab-panel'>
-              <h2>Ultimos hechizos</h2>
-              {estado.historial.length === 0 && <p className='empty'>Aun no se abre ninguna carta.</p>}
+              <h2>Últimos hechizos</h2>
+              {estado.historial.length === 0 && <p className='empty'>Aún no se abre ninguna carta.</p>}
               {estado.historial.map((item) => {
                 const casaHistorial = obtenerCasa(item.casaId);
                 const puntosHistorial = item.puntos > 0 ? '+' + item.puntos : String(item.puntos);
@@ -916,17 +942,17 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       {mostrarCambioPassword && (
         <div className='password-modal' role='dialog' aria-modal='true' aria-labelledby='password-modal-title'>
           <form className='password-card' onSubmit={cambiarPasswordPropia}>
-            <button type='button' className='house-detail-close' onClick={() => setMostrarCambioPassword(false)} aria-label='Cerrar cambio de contrasena'>x</button>
-            <h2 id='password-modal-title'>Cambiar contrasena</h2>
+            <button type='button' className='house-detail-close' onClick={() => setMostrarCambioPassword(false)} aria-label='Cerrar cambio de contraseña'>x</button>
+            <h2 id='password-modal-title'>Cambiar contraseña</h2>
             <label>
-              <span>Nueva contrasena</span>
+              <span>Nueva contraseña</span>
               <input type='password' value={passwordNuevaAlumno} onChange={(event) => setPasswordNuevaAlumno(event.target.value)} minLength='3' autoComplete='new-password' />
             </label>
             <label>
-              <span>Confirmar contrasena</span>
+              <span>Confirmar contraseña</span>
               <input type='password' value={passwordConfirmacionAlumno} onChange={(event) => setPasswordConfirmacionAlumno(event.target.value)} minLength='3' autoComplete='new-password' />
             </label>
-            <button type='submit' className='authorize password'>Guardar contrasena</button>
+            <button type='submit' className='authorize password'>Guardar contraseña</button>
           </form>
         </div>
       )}
@@ -939,7 +965,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
             <span>{RAREZAS_BESTIARIO[bestiaDetalle.rareza].nombre} - {precioBestia(bestiaDetalle)} galeones</span>
             <h2 id='beast-detail-title'>{bestiaDetalle.nombre}</h2>
             <p>{bestiaDetalle.descripcion}</p>
-            <strong>{bestiasCompradas.has(bestiaDetalle.id) ? 'Ya vive en tu Bestiario Magico.' : 'Aun no la has comprado.'}</strong>
+            <strong>{bestiasCompradas.has(bestiaDetalle.id) ? 'Ya vive en tu Bestiario Mágico.' : 'Aún no la has comprado.'}</strong>
           </article>
         </div>
       )}
@@ -972,10 +998,10 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
           if (cartaAbierta?.pendienteRival) return setMensaje('Primero elige la casa rival para aplicar la carta.');
           if (cartaAbierta?.pendienteIntercambio) return setMensaje('Primero completa el intercambio de Imperio.');
           if (cartaAbierta?.pendientePuntosIntercambio) return setMensaje('Primero completa el intercambio de puntos de Confundo.');
-          if (cartaAbierta?.pendienteCompaneroBonus) return setMensaje('Primero elige el companero para Amortentia.');
+          if (cartaAbierta?.pendienteCompaneroBonus) return setMensaje('Primero elige el compañero para Amortentia.');
           if (cartaAbierta?.pendienteReplicaPuntos) return setMensaje('Primero elige el alumno para Multijugos.');
           if (cartaAbierta?.pendienteRoboMultiple) return setMensaje('Primero elige 5 alumnos para Morsmordre.');
-          if (cartaAbierta?.pendienteDecisionChiste) return setMensaje('Primero elige si contaras el chiste de Riddikulus.');
+          if (cartaAbierta?.pendienteDecisionChiste) return setMensaje('Primero elige si contarás el chiste de Riddikulus.');
           return setCartaAbierta(null);
         }}
       />

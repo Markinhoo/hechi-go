@@ -163,7 +163,7 @@ function MaestroAcceso({ onEntrar, onSalir, mensaje, setMensaje }) {
         <button type='button' className='ghost dark small' onClick={cargarClases} disabled={!authUser || cargandoClases}>{cargandoClases ? '...' : 'Actualizar'}</button>
       </div>
       {!authUser && <p className='empty'>Inicia sesion para ver tus clases.</p>}
-      {authUser && clases.length === 0 && <p className='empty'>Aun no tienes clases guardadas.</p>}
+      {authUser && clases.length === 0 && <p className='empty'>Aún no tienes clases guardadas.</p>}
       <div className='class-list'>
         {clases.map((clase) => (
           <article className='class-row' key={clase.id}>
@@ -192,7 +192,7 @@ function MaestroAcceso({ onEntrar, onSalir, mensaje, setMensaje }) {
         <input value={busquedaClase} onChange={(event) => { setBusquedaClase(event.target.value); setIndiceClase(0); }} placeholder='Nombre o token' disabled={!authUser} />
       </label>
       {!authUser && <p className='empty'>Inicia sesion para ver tus clases.</p>}
-      {authUser && clases.length === 0 && <p className='empty'>Aun no tienes clases guardadas.</p>}
+      {authUser && clases.length === 0 && <p className='empty'>Aún no tienes clases guardadas.</p>}
       {authUser && clases.length > 0 && clasesFiltradas.length === 0 && <p className='empty'>No hay clases con esa busqueda.</p>}
       {claseActual && (
         <div className='mobile-class-carousel'>
@@ -239,8 +239,8 @@ function MaestroAcceso({ onEntrar, onSalir, mensaje, setMensaje }) {
           <form onSubmit={iniciarSesion} className='teacher-auth-form'>
             <label className='field-label'>Correo del maestro</label>
             <input type='email' value={email} onChange={(event) => setEmail(event.target.value)} placeholder='tu correo de Supabase Auth' required />
-            <label className='field-label'>Contrasena</label>
-            <input type='password' value={password} onChange={(event) => setPassword(event.target.value)} placeholder='Contrasena del maestro' required />
+            <label className='field-label'>Contraseña</label>
+            <input type='password' value={password} onChange={(event) => setPassword(event.target.value)} placeholder='Contraseña del maestro' required />
             <button type='submit'>Entrar como maestro</button>
           </form>
         ) : (
@@ -276,7 +276,7 @@ function MaestroAcceso({ onEntrar, onSalir, mensaje, setMensaje }) {
         open={Boolean(accionClase)}
         title='Nuevo parcial'
         eyebrow={accionClase?.nombre || 'Clase'}
-        description='Se borraran puntos, cartas del parcial, solicitudes e historial. Se conservan alumnos, casas, galeones y bestiario.'
+        description='Se borrarán puntos, cartas del parcial, solicitudes e historial. Se conservan alumnos, casas, galeones y bestiario.'
         confirmText='Iniciar parcial'
         variant='warning'
         loading={accionProcesando}

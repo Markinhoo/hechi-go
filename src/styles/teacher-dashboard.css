@@ -116,11 +116,11 @@
 
 .pack-card.active img{animation:cardPulse 2.1s ease-in-out infinite,magicSheen 2.8s linear infinite}
 
-.card-modal{position:fixed;inset:0;z-index:50;display:grid;place-items:center;align-content:center;gap:20px;padding:24px;overflow:auto;background:radial-gradient(circle at 50% 40%,rgba(255,214,109,.16),transparent 28%),rgba(6,4,10,.82);backdrop-filter:blur(8px);animation:modalIn .22s ease-out}
+.card-modal{position:fixed;inset:0;left:0;right:0;width:100dvw;max-width:100dvw;z-index:50;display:grid;place-items:center;align-content:center;justify-content:center;gap:20px;padding:24px;overflow:auto;background:radial-gradient(circle at 50% 40%,rgba(255,214,109,.16),transparent 28%),rgba(6,4,10,.82);backdrop-filter:blur(8px);animation:modalIn .22s ease-out}
 
 .modal-close{position:fixed;right:22px;top:22px;width:46px;height:46px;display:grid;place-items:center;border-radius:50%;color:#ffeeca;background:rgba(20,10,20,.78);border:1px solid rgba(255,214,109,.5);z-index:55}
 
-.modal-card-wrap{width:min(76vw,360px);aspect-ratio:3/4;perspective:1300px}
+.modal-card-wrap{width:min(76vw,360px);aspect-ratio:3/4;perspective:1300px;margin-inline:auto}
 
 .modal-card-flip{position:relative;width:100%;height:100%;transform-style:preserve-3d;animation:cardRevealFlip 1.05s cubic-bezier(.2,.8,.2,1) forwards}
 
@@ -130,7 +130,7 @@
 
 .modal-card-front{transform:rotateY(180deg)}
 
-.modal-effect{width:min(92vw,520px);padding:16px 18px;border-radius:10px;text-align:center;color:#fff;background:linear-gradient(120deg,var(--house),#1b101d);border:1px solid var(--metal);box-shadow:0 24px 70px rgba(0,0,0,.45),0 0 46px color-mix(in srgb,var(--metal) 32%,transparent);animation:effectRise .7s ease-out .72s both}
+.modal-effect{width:min(92vw,520px);margin-inline:auto;padding:16px 18px;border-radius:10px;text-align:center;color:#fff;background:linear-gradient(120deg,var(--house),#1b101d);border:1px solid var(--metal);box-shadow:0 24px 70px rgba(0,0,0,.45),0 0 46px color-mix(in srgb,var(--metal) 32%,transparent);animation:effectRise .7s ease-out .72s both}
 
 .modal-effect span{color:var(--metal);font-weight:1000;text-transform:uppercase;font-size:12px}
 
@@ -167,6 +167,8 @@
 .exchange-apply{--house:#5b1730;--metal:#ffd66d;text-align:center}
 
 .exchange-apply:disabled{opacity:.48;cursor:not-allowed;filter:saturate(.4)}
+
+.modal-finish{justify-self:center;width:min(100%,260px);margin-top:10px}
 
 .exchange-section select{width:100%;padding:10px;border-radius:8px;color:#2b160d;background:#fff4d5;border:1px solid rgba(122,78,25,.55);font-weight:800}
 
@@ -235,7 +237,7 @@
 
 .beast-card>button:disabled{opacity:.5;cursor:not-allowed;filter:saturate(.45)}
 
-.beast-detail-modal{position:fixed;inset:0;z-index:55;display:grid;place-items:center;padding:20px;background:rgba(6,4,10,.78);backdrop-filter:blur(8px)}
+.beast-detail-modal{position:fixed;inset:0;left:0;right:0;width:100dvw;max-width:100dvw;z-index:55;display:grid;place-items:center;justify-content:center;padding:20px;background:rgba(6,4,10,.78);backdrop-filter:blur(8px)}
 
 .beast-detail-card{position:relative;width:min(92vw,420px);display:grid;gap:10px;padding:16px;border-radius:12px;text-align:center;color:#ffeeca;background:linear-gradient(145deg,rgba(30,22,43,.96),rgba(8,22,30,.94));border:1px solid rgba(255,214,109,.46);box-shadow:0 28px 80px rgba(0,0,0,.52)}
 
@@ -249,7 +251,7 @@
 
 .beast-detail-card strong{color:#ffd66d}
 
-.action-modal{position:fixed;inset:0;z-index:70;display:grid;place-items:center;padding:20px;background:radial-gradient(circle at 50% 38%,rgba(255,214,109,.18),transparent 28%),rgba(6,4,10,.82);backdrop-filter:blur(9px)}
+.action-modal{position:fixed;inset:0;left:0;right:0;width:100dvw;max-width:100dvw;z-index:70;display:grid;place-items:center;justify-content:center;padding:20px;background:radial-gradient(circle at 50% 38%,rgba(255,214,109,.18),transparent 28%),rgba(6,4,10,.82);backdrop-filter:blur(9px)}
 
 .action-card{position:relative;width:min(92vw,500px);display:grid;gap:13px;padding:18px;border-radius:12px;color:#ffeeca;background:linear-gradient(145deg,rgba(40,18,36,.97),rgba(14,28,34,.95));border:1px solid rgba(255,214,109,.48);box-shadow:0 30px 90px rgba(0,0,0,.56),0 0 54px rgba(255,214,109,.16)}
 
@@ -395,7 +397,7 @@ body { overscroll-behavior: none; }
 
 .message { margin: 0; }
 
-.card-modal { touch-action: none; }
+.card-modal { touch-action: pan-y; }
 
 .modal-card-front { transform: rotateY(180deg) translateZ(1px); }
 
@@ -1434,9 +1436,14 @@ button,
 .house-detail-modal {
   position: fixed;
   inset: 0;
+  left: 0;
+  right: 0;
+  width: 100dvw;
+  max-width: 100dvw;
   z-index: 70;
   display: grid;
   place-items: center;
+  justify-content: center;
   padding: 18px;
   background: rgba(12, 6, 14, .74);
   backdrop-filter: blur(8px);
@@ -1580,9 +1587,14 @@ button,
 .password-modal {
   position: fixed;
   inset: 0;
+  left: 0;
+  right: 0;
+  width: 100dvw;
+  max-width: 100dvw;
   z-index: 75;
   display: grid;
   place-items: center;
+  justify-content: center;
   padding: 18px;
   background: rgba(12, 6, 14, .76);
   backdrop-filter: blur(8px);
@@ -1695,17 +1707,23 @@ button,
 
 /* Final carousel polish */
 .student-view .pack-stage {
-  overflow: visible !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
 }
 
 .student-view .carousel-shell {
-  overflow: visible !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
 }
 
 .student-view .pack-carousel {
+  width: 100% !important;
+  min-width: 0 !important;
   height: clamp(330px, 42vh, 430px) !important;
   min-height: 330px !important;
-  overflow: visible !important;
+  overflow: hidden !important;
   touch-action: pan-y !important;
 }
 
@@ -2180,6 +2198,59 @@ button,
 }
 
 @media (min-width: 761px) {
+  .teacher-desktop-class-layout .history {
+    max-height: calc(100dvh - 222px) !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    padding-right: 12px !important;
+    scrollbar-width: thin !important;
+  }
+
+  .teacher-desktop-class-layout .history .history-row {
+    margin-right: 2px !important;
+  }
+
+  .teacher-view .action-modal {
+    padding: 28px !important;
+  }
+
+  .teacher-view .action-card {
+    width: min(92vw, 560px) !important;
+    padding: 24px !important;
+    gap: 15px !important;
+    border-radius: 12px !important;
+    color: #ffeeca !important;
+    background:
+      radial-gradient(circle at 88% 12%, rgba(255,214,109,.2), transparent 28%),
+      linear-gradient(145deg, rgba(44,18,38,.98), rgba(13,31,34,.96)) !important;
+    border: 2px solid rgba(255,214,109,.58) !important;
+    box-shadow: 0 34px 100px rgba(0,0,0,.62), 0 0 54px rgba(255,214,109,.16), inset 0 0 0 1px rgba(255,255,255,.08) !important;
+  }
+
+  .teacher-view .action-card h2 {
+    margin-right: 42px !important;
+    color: #ffd66d !important;
+    text-align: left !important;
+  }
+
+  .teacher-view .action-card p,
+  .teacher-view .action-fields label {
+    color: rgba(255,238,202,.9) !important;
+    font-size: clamp(18px, 1.15vw, 21px) !important;
+  }
+
+  .teacher-view .action-fields input {
+    min-height: 48px !important;
+    border-radius: 9px !important;
+    color: #21130d !important;
+    background: linear-gradient(180deg,#fff7df,#ead29f) !important;
+    border: 1px solid rgba(255,214,109,.66) !important;
+  }
+
+  .teacher-view .action-buttons {
+    grid-template-columns: minmax(0,1fr) minmax(0,1fr) !important;
+  }
+
   .teacher-auth-shell {
     overflow: hidden !important;
     padding: 12px !important;
@@ -2707,5 +2778,176 @@ button,
     max-height: 100% !important;
     overflow: auto !important;
     margin: 0 !important;
+  }
+}
+
+/* Spell card modal mobile fit: every spell keeps close/apply controls reachable. */
+@media (max-width: 760px) {
+  .card-modal {
+    left: 0 !important;
+    right: 0 !important;
+    width: 100dvw !important;
+    max-width: 100dvw !important;
+    grid-template-rows: auto auto minmax(0, 1fr) !important;
+    place-items: stretch center !important;
+    justify-content: center !important;
+    align-content: stretch !important;
+    gap: 8px !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    padding: calc(10px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom)) !important;
+    overflow: hidden !important;
+    touch-action: pan-y !important;
+  }
+
+  .modal-close {
+    position: static !important;
+    justify-self: end !important;
+    width: 42px !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    padding: 0 !important;
+    z-index: 60 !important;
+  }
+
+  .modal-card-wrap {
+    width: min(46vw, 168px) !important;
+    min-height: 0 !important;
+    justify-self: center !important;
+    margin-inline: auto !important;
+  }
+
+  .modal-card-face,
+  .modal-card-face img {
+    border-radius: 10px !important;
+  }
+
+  .modal-card-face img {
+    border-width: 2px !important;
+    box-shadow: 0 16px 42px rgba(0,0,0,.58),0 0 34px rgba(255,214,109,.22) !important;
+  }
+
+  .modal-effect {
+    display: grid !important;
+    grid-template-rows: auto auto auto minmax(0, 1fr) !important;
+    align-self: stretch !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-inline: auto !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    padding: 10px !important;
+    gap: 5px !important;
+    overflow: hidden !important;
+  }
+
+  .modal-effect span {
+    font-size: 14px !important;
+    line-height: 1.05 !important;
+  }
+
+  .modal-effect h2 {
+    margin: 0 !important;
+    font-size: clamp(26px, 8.2vw, 34px) !important;
+    line-height: .95 !important;
+  }
+
+  .modal-effect p {
+    font-size: 15px !important;
+    line-height: 1.22 !important;
+  }
+
+  .rival-options,
+  .exchange-options,
+  .point-swap-options,
+  .companion-bonus-options,
+  .joke-decision-options {
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: hidden !important;
+    gap: 7px !important;
+    margin-top: 6px !important;
+    padding-top: 8px !important;
+  }
+
+  .exchange-options {
+    overflow: auto !important;
+    overscroll-behavior: contain !important;
+  }
+
+  .exchange-options,
+  .point-swap-options,
+  .companion-bonus-options {
+    grid-template-rows: auto minmax(0, 1fr) auto !important;
+  }
+
+  .rival-options > div,
+  .point-swap-options > div,
+  .companion-bonus-options > div,
+  .joke-decision-options > div {
+    min-height: 0 !important;
+    overflow: auto !important;
+    overscroll-behavior: contain !important;
+    padding-right: 2px !important;
+  }
+
+  .exchange-section {
+    gap: 6px !important;
+    padding: 8px !important;
+  }
+
+  .rival-options small,
+  .exchange-options small,
+  .point-swap-options small,
+  .companion-bonus-options small,
+  .joke-decision-options small {
+    font-size: 14px !important;
+    line-height: 1.18 !important;
+  }
+
+  .rival-choice,
+  .exchange-choice,
+  .point-swap-choice,
+  .companion-bonus-choice,
+  .joke-choice,
+  .exchange-apply {
+    min-height: 38px !important;
+    padding: 8px 9px !important;
+    font-size: 15px !important;
+    line-height: 1.12 !important;
+  }
+
+  .point-swap-options > .exchange-apply {
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 2 !important;
+    margin-top: 2px !important;
+    box-shadow: 0 -8px 18px rgba(6,4,10,.32),0 10px 24px rgba(0,0,0,.24) !important;
+  }
+
+  .exchange-section select {
+    min-height: 38px !important;
+    padding: 8px !important;
+    font-size: 15px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .modal-card-wrap {
+    width: min(42vw, 146px) !important;
+  }
+
+  .modal-effect h2 {
+    font-size: clamp(24px, 7.6vw, 30px) !important;
+  }
+
+  .modal-effect p,
+  .rival-choice,
+  .exchange-choice,
+  .point-swap-choice,
+  .companion-bonus-choice,
+  .joke-choice,
+  .exchange-apply {
+    font-size: 14px !important;
   }
 }

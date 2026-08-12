@@ -41,14 +41,14 @@ function LoginAcceso({ onAlumno, onMaestro, mensaje, setMensaje }) {
         <Galaxy mouseRepulsion mouseInteraction density={1.45} glowIntensity={0.48} saturation={0.72} hueShift={245} starSpeed={0.72} speed={1.05} twinkleIntensity={0.46} rotationSpeed={0.08} transparent={false} />
       </div>
       <section className='auth-card login-card unified-login-card'>
-        <span className='eyebrow'><FaHatWizard /> Acceso magico</span>
+        <span className='eyebrow'><FaHatWizard /> Acceso mágico</span>
         <h1>La Copa de las Casas <span>(UTD)</span></h1>
         <p>Entra con tu correo si eres maestro, o con tu usuario y token si eres alumno.</p>
         <form onSubmit={entrar}>
           <label className='field-label'>Correo o usuario</label>
           <input value={identificador} onChange={(event) => setIdentificador(event.target.value)} placeholder='maestro@correo.com o nombre del alumno' required />
-          <label className='field-label'>Contrasena</label>
-          <input type='password' value={password} onChange={(event) => setPassword(event.target.value)} placeholder={esCorreo ? 'Contrasena de maestro' : 'Contrasena de alumno'} required />
+          <label className='field-label'>Contraseña</label>
+          <input type='password' value={password} onChange={(event) => setPassword(event.target.value)} placeholder={esCorreo ? 'Contraseña de maestro' : 'Contraseña de alumno'} required />
           {!esCorreo && (
             <>
               <label className='field-label'>Token de clase</label>
