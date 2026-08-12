@@ -807,7 +807,6 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   ];
   const teacherTabs = [
     { id: 'inicio', label: 'Inicio', icon: <FaWandMagicSparkles /> },
-    { id: 'salon', label: 'Gran salón', icon: <FaHouse /> },
     { id: 'puntajes', label: 'Puntajes', icon: <FaTrophy /> },
     { id: 'hechizos', label: 'Hechizos', icon: <FaScroll /> },
     { id: 'kahoot', label: 'Kahoot', icon: <FaTrophy /> }
@@ -1062,7 +1061,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         <>
           <section className='teacher-desktop-tabs-area'>
             <div className='student-tab-switcher teacher-desktop-tab-switcher'>
-              {teacherTabs.map((tab) => (
+              {teacherTabs.filter((tab) => tab.id === 'inicio' || tab.id === 'kahoot').map((tab) => (
                 <button key={tab.id} type='button' className={teacherTab === tab.id ? 'active' : ''} onClick={() => setTeacherTab(tab.id)}>
                   {tab.icon}<span>{tab.label}</span>
                 </button>
@@ -1078,7 +1077,6 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
                 </section>
               </section>
             )}
-            {teacherTab === 'salon' && rosterPanel}
             {teacherTab === 'puntajes' && houseBoard}
             {teacherTab === 'hechizos' && historyPanel}
             {teacherTab === 'kahoot' && kahootPanel}
@@ -1093,7 +1091,6 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
               ))}
             </div>
             {teacherTab === 'inicio' && requestsPanel}
-            {teacherTab === 'salon' && rosterPanel}
             {teacherTab === 'puntajes' && houseBoard}
             {teacherTab === 'hechizos' && historyPanel}
             {teacherTab === 'kahoot' && kahootPanel}
