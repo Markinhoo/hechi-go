@@ -8,7 +8,7 @@ import ActionModal from '../ui/ActionModal';
 import CardModal from './CardModal';
 import KahootPanel from './KahootPanel';
 
-function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setMensaje }) {
+function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setMensaje, onCameraFlash }) {
   const [arrastre, setArrastre] = useState({ activo: false, inicio: 0, inicioY: 0, startPos: 0, lastX: 0, lastTime: 0, velocity: 0 });
   const [posicionCarrusel, setPosicionCarrusel] = useState(estado.sobreActivo || 0);
   const [cartaAbierta, setCartaAbierta] = useState(null);
@@ -28,6 +28,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const [accionProcesando, setAccionProcesando] = useState(false);
   const autoAbrirRef = useRef(false);
   const abrirCartaRef = useRef(null);
+  const flashSignalRef = useRef(null);
   const sobres = Array.from({ length: 7 }, (_, index) => index);
 
   const autorizar = async (alumnoId) => {
@@ -209,6 +210,19 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     return data;
   };
 
+  const marcarFlashAlumnos = async (objetivoIds = []) => {
+    const ids = [...new Set(objetivoIds.filter(Boolean))];
+    if (sesion.tipo !== 'alumno' || ids.length === 0) return null;
+    const { data, error } = await db.rpc('marcar_flash_alumnos_elegidos', {
+      p_token: sesion.token,
+      p_alumno_id: sesion.alumnoId,
+      p_password: sesion.password,
+      p_objetivo_ids: ids
+    });
+    if (!error && data) setEstado(data);
+    return data;
+  };
+
   const elegirCartaLegendaria = async (numero) => {
     if (selectorCartaProcesando) return null;
     setSelectorCartaProcesando(true);
@@ -239,6 +253,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     setMostrarSelectorCarta(false);
     const numero = numeroElegido || elegirCartaAleatoria();
     const efecto = efectoCarta(numero);
+    onCameraFlash?.();
     if (efecto.tipo === 'rival') {
       setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteRival: true });
       setMensaje(efecto.titulo + ': elige una casa rival.');
@@ -373,6 +388,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     const origen = estado.alumnos.find((alumno) => alumno.id === origenId);
     const destino = estado.alumnos.find((alumno) => alumno.id === destinoId);
     setEstado(data);
+    marcarFlashAlumnos([origenId, destinoId]);
     setCartaAbierta({ ...cartaAbierta, pendienteIntercambio: false });
     setMensaje('Imperio intercambio a ' + (origen?.nombre || 'un alumno') + ' con ' + (destino?.nombre || 'otro alumno') + '.');
   };
@@ -392,6 +408,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     if (error) return setMensaje(error.message);
     const objetivo = estado.alumnos.find((alumno) => alumno.id === objetivoId);
     setEstado(data);
+    marcarFlashAlumnos([objetivoId]);
     setCartaAbierta({ ...cartaAbierta, pendientePuntosIntercambio: false });
     setMensaje('Confundo aplico intercambio de puntos con ' + (objetivo?.nombre || 'otro alumno') + '.');
   };
@@ -412,6 +429,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     const companero = estado.alumnos.find((alumno) => alumno.id === companeroId);
     const puntos = data?.historial?.[0]?.puntos || 2;
     setEstado(data);
+    marcarFlashAlumnos([companeroId]);
     setCartaAbierta({ ...cartaAbierta, pendienteCompaneroBonus: false, puntos });
     setMensaje('Amortentia sumó +' + puntos + ' a ti y a ' + (companero?.nombre || 'otro compañero') + '.');
   };
@@ -432,6 +450,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     const objetivo = estado.alumnos.find((alumno) => alumno.id === objetivoId);
     const puntos = data?.historial?.[0]?.puntos ?? objetivo?.puntos ?? 0;
     setEstado(data);
+    marcarFlashAlumnos([objetivoId]);
     setCartaAbierta({ ...cartaAbierta, pendienteReplicaPuntos: false, puntos });
     setMensaje('Multijugos replicó +' + puntos + ' puntos de ' + (objetivo?.nombre || 'otro alumno') + '.');
   };
@@ -450,6 +469,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     });
     if (error) return setMensaje(error.message);
     setEstado(data);
+    marcarFlashAlumnos(objetivoIds);
     setCartaAbierta({ ...cartaAbierta, pendienteRoboMultiple: false, puntos: 5 });
     setMensaje('Morsmordre quitó 1 punto a 5 alumnos y sumó +5 a tu casa.');
   };
@@ -558,6 +578,18 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     autoAbrirRef.current = false;
     abrirCartaRef.current?.();
   }, [estado.alumnos, sesion.alumnoId, sesion.tipo]);
+
+  useEffect(() => {
+    if (sesion.tipo !== 'alumno') return;
+    const alumno = estado.alumnos.find((item) => item.id === sesion.alumnoId);
+    const signal = alumno?.flashSignal || 0;
+    if (flashSignalRef.current === null) {
+      flashSignalRef.current = signal;
+      return;
+    }
+    if (signal > flashSignalRef.current) onCameraFlash?.();
+    flashSignalRef.current = signal;
+  }, [estado.alumnos, onCameraFlash, sesion.alumnoId, sesion.tipo]);
 
   const salir = () => { setSesion(null); setEstado(null); setModo('inicio'); setCartaAbierta(null); setMensaje(''); };
   const alumnoActual = sesion.tipo === 'alumno' ? estado.alumnos.find((alumno) => alumno.id === sesion.alumnoId) : null;

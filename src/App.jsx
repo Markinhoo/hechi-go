@@ -10,6 +10,7 @@ function App() {
   const [estado, setEstado] = useState(null);
   const [mensaje, setMensaje] = useState('');
   const [destellos, setDestellos] = useState([]);
+  const [flashesPantalla, setFlashesPantalla] = useState([]);
 
   const crearDestello = (event, intenso = false) => {
     const x = event.clientX;
@@ -18,6 +19,40 @@ function App() {
     const id = crypto.randomUUID();
     setDestellos((actual) => [...actual.slice(-18), { id, x, y, intenso }]);
     window.setTimeout(() => setDestellos((actual) => actual.filter((d) => d.id !== id)), intenso ? 900 : 620);
+  };
+
+  const esperar = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
+  const crearFlashVisual = () => {
+    for (let index = 0; index < 3; index += 1) {
+      window.setTimeout(() => {
+        const id = crypto.randomUUID();
+        setFlashesPantalla((actual) => [...actual, id]);
+        window.setTimeout(() => setFlashesPantalla((actual) => actual.filter((item) => item !== id)), 260);
+      }, index * 140);
+    }
+  };
+
+  const parpadearCamara = async () => {
+    crearFlashVisual();
+    if (!navigator.mediaDevices?.getUserMedia) return;
+    let stream = null;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } });
+      const track = stream.getVideoTracks()[0];
+      const capabilities = track?.getCapabilities?.();
+      if (!track || !capabilities || !('torch' in capabilities)) return;
+      for (let index = 0; index < 3; index += 1) {
+        await track.applyConstraints({ advanced: [{ torch: true }] });
+        await esperar(70);
+        await track.applyConstraints({ advanced: [{ torch: false }] });
+        await esperar(70);
+      }
+    } catch {
+      // The visual flash already covers browsers without torch support or camera permission.
+    } finally {
+      stream?.getTracks().forEach((track) => track.stop());
+    }
   };
 
   const entrarMaestro = (data) => {
@@ -55,11 +90,12 @@ function App() {
         setModo={setModo}
         mensaje={mensaje}
         setMensaje={setMensaje}
+        onCameraFlash={parpadearCamara}
       />
     );
   }
 
-  return <MagicSurface destellos={destellos} onSpark={crearDestello}>{contenido}</MagicSurface>;
+  return <MagicSurface destellos={destellos} flashesPantalla={flashesPantalla} onSpark={crearDestello}>{contenido}</MagicSurface>;
 }
 
 export default App;

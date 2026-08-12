@@ -77,6 +77,10 @@
 
 .spark.burst{width:18px;height:18px;animation:sparkBurst .9s ease-out forwards}
 
+.camera-flash-layer{position:fixed;inset:0;pointer-events:none;z-index:10000}
+
+.camera-flash{position:absolute;inset:0;background:rgba(255,248,218,.92);animation:cameraFlashBlink .26s ease-out forwards}
+
 .game-shell::before{content:'';position:fixed;left:-10vw;top:12vh;width:44vw;height:72vh;background:linear-gradient(90deg,rgba(18,11,19,.18),rgba(18,11,19,.74)),url('/backgrounds/great-hall.png') center/cover no-repeat;border-radius:0 26px 26px 0;opacity:.48;filter:saturate(1.05) contrast(1.06);pointer-events:none;z-index:0}
 
 .game-shell::after{content:'';position:fixed;right:-8vw;top:10vh;width:32vw;height:78vh;background:linear-gradient(270deg,rgba(18,11,19,.22),rgba(18,11,19,.8)),url('/backgrounds/parchment.png') center/cover no-repeat;border-radius:26px 0 0 26px;opacity:.36;filter:sepia(.18);pointer-events:none;z-index:0}
@@ -422,6 +426,8 @@
 @keyframes sparkFade{0%{opacity:.95;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-110%) scale(.25)}}
 
 @keyframes sparkBurst{0%{opacity:1;transform:translate(-50%,-50%) scale(.8)}100%{opacity:0;transform:translate(-50%,-50%) scale(2.8)}}
+
+@keyframes cameraFlashBlink{0%{opacity:0}18%{opacity:1}100%{opacity:0}}
 
 @keyframes cardRevealFlip{0%{transform:translateY(84px) scale(.58) rotateY(0deg);filter:brightness(.8)}48%{transform:translateY(0) scale(1.08) rotateY(92deg);filter:brightness(1.35)}100%{transform:translateY(0) scale(1) rotateY(180deg);filter:brightness(1)}}
 
