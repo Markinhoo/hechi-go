@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { FaArrowLeft, FaArrowRight, FaBookOpen, FaHouse, FaScroll, FaTrophy, FaWandMagicSparkles } from 'react-icons/fa6';
-import { bestiario, precioBestia, RAREZAS_BESTIARIO } from '../../data/bestiaryData';
+import { bestiario, bonusGaleonesBestia, precioBestia, RAREZAS_BESTIARIO } from '../../data/bestiaryData';
 import { CARTAS_ACTIVAS, casas, PLAYER_KEY } from '../../data/gameData';
 import { db } from '../../services/hechiApi';
-import { efectoCarta, guardarLocal, obtenerCasa, randomEntero } from '../../utils/gameUtils';
+import { efectoCarta, elegirCartaAleatoria, guardarLocal, obtenerCasa } from '../../utils/gameUtils';
 import ActionModal from '../ui/ActionModal';
 import CardModal from './CardModal';
 import KahootPanel from './KahootPanel';
@@ -19,6 +19,8 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const [busquedaAlumno, setBusquedaAlumno] = useState('');
   const [indiceAlumno, setIndiceAlumno] = useState(0);
   const [bestiaDetalleId, setBestiaDetalleId] = useState(null);
+  const [mostrarSelectorCarta, setMostrarSelectorCarta] = useState(false);
+  const [selectorCartaProcesando, setSelectorCartaProcesando] = useState(false);
   const [studentTab, setStudentTab] = useState('inicio');
   const [teacherTab, setTeacherTab] = useState('inicio');
   const [accionMaestro, setAccionMaestro] = useState(null);
@@ -207,11 +209,35 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     return data;
   };
 
-  const abrirCarta = async () => {
+  const elegirCartaLegendaria = async (numero) => {
+    if (selectorCartaProcesando) return null;
+    setSelectorCartaProcesando(true);
+    const { data, error } = await db.rpc('consumir_eleccion_legendaria', {
+      p_token: sesion.token,
+      p_alumno_id: sesion.alumnoId,
+      p_password: sesion.password
+    });
+    if (error) {
+      setSelectorCartaProcesando(false);
+      setMensaje(error.message);
+      return null;
+    }
+    setEstado(data);
+    setSelectorCartaProcesando(false);
+    return abrirCarta(numero);
+  };
+
+  const abrirCarta = async (numeroElegido = null) => {
     if (sesion.tipo !== 'alumno') return setMensaje('Solo el alumno puede abrir su carta.');
     const alumno = estado.alumnos.find((item) => item.id === sesion.alumnoId);
     if (!alumno || alumno.oportunidades <= 0) return solicitarCarta(true);
-    const numero = CARTAS_ACTIVAS[randomEntero(CARTAS_ACTIVAS.length)];
+    if (!numeroElegido && puedeElegirCarta) {
+      setMostrarSelectorCarta(true);
+      setMensaje('Tu bestia legendaria te permite escoger cualquier carta.');
+      return null;
+    }
+    setMostrarSelectorCarta(false);
+    const numero = numeroElegido || elegirCartaAleatoria();
     const efecto = efectoCarta(numero);
     if (efecto.tipo === 'rival') {
       setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteRival: true });
@@ -470,7 +496,13 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     });
     if (error) return setMensaje(error.message);
     setEstado(data);
-    setMensaje('Compraste ' + bestia.nombre + ' para tu Bestiario Mágico.');
+    const alumnoActualizado = data.alumnos?.find((alumno) => alumno.id === sesion.alumnoId);
+    const bestiarioCompleto = (alumnoActualizado?.bestiario || []).length >= bestiario.length;
+    if (bestiarioCompleto) {
+      setMensaje('¡Felicidades por completar el Bestiario Mágico! Has exentado el proyecto final.');
+      return;
+    }
+    setMensaje('Compraste ' + bestia.nombre + ' para tu Bestiario Mágico.' + (bestia.rareza === 'legendaria' ? ' Ganaste 1 elección legendaria para tu siguiente carta.' : ''));
   };
 
   useEffect(() => {
@@ -557,6 +589,8 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const rankingAlumno = alumnoCarrusel ? alumnosOrdenados.findIndex((alumno) => alumno.id === alumnoCarrusel.id) + 1 : 0;
   const bestiasAlumno = alumnoActual?.bestiario || [];
   const bestiasCompradas = new Set(bestiasAlumno);
+  const eleccionesLegendarias = alumnoActual?.eleccionesLegendarias || 0;
+  const puedeElegirCarta = sesion.tipo === 'alumno' && eleccionesLegendarias > 0;
   const bestiaDetalle = bestiario.find((bestia) => bestia.id === bestiaDetalleId);
 
   const moverAlumno = (direccion) => {
@@ -593,6 +627,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         <span>
           <strong>Bestiario Mágico</strong>
           <small>{bestiasAlumno.length}/{bestiario.length} criaturas descubiertas</small>
+          {eleccionesLegendarias > 0 && <small>{eleccionesLegendarias} elección legendaria pendiente</small>}
         </span>
         <b>{alumnoActual?.galeones || 0} galeones</b>
       </div>
@@ -600,6 +635,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         {bestiario.map((bestia) => {
           const comprada = bestiasCompradas.has(bestia.id);
           const precio = precioBestia(bestia);
+          const bonus = bonusGaleonesBestia(bestia);
           const puedeComprar = !comprada && (alumnoActual?.galeones || 0) >= precio;
           const rareza = RAREZAS_BESTIARIO[bestia.rareza];
           return (
@@ -610,7 +646,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
               </button>
               <div>
                 <strong>{bestia.nombre}</strong>
-                <small>{rareza.nombre} - {precio} galeones</small>
+                <small>{rareza.nombre} - {precio} galeones - bonus +{bonus}</small>
               </div>
               <button type='button' disabled={comprada || !puedeComprar} onClick={() => comprarBestia(bestia)}>
                 {comprada ? 'Tuya' : 'Comprar'}
@@ -989,7 +1025,33 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
             <span>{RAREZAS_BESTIARIO[bestiaDetalle.rareza].nombre} - {precioBestia(bestiaDetalle)} galeones</span>
             <h2 id='beast-detail-title'>{bestiaDetalle.nombre}</h2>
             <p>{bestiaDetalle.descripcion}</p>
+            <p>Bonus: +{bonusGaleonesBestia(bestiaDetalle)} galeones por participación autorizada.</p>
             <strong>{bestiasCompradas.has(bestiaDetalle.id) ? 'Ya vive en tu Bestiario Mágico.' : 'Aún no la has comprado.'}</strong>
+          </article>
+        </div>
+      )}
+
+      {mostrarSelectorCarta && (
+        <div className='beast-detail-modal' role='dialog' aria-modal='true' aria-labelledby='card-choice-title'>
+          <article className='beast-detail-card card-choice-card'>
+            <button type='button' className='house-detail-close' onClick={() => setMostrarSelectorCarta(false)} aria-label='Cerrar selector de carta'>x</button>
+            <span>Beneficio legendario</span>
+            <h2 id='card-choice-title'>Escoge cualquier carta</h2>
+            <p>Tienes {eleccionesLegendarias} elección legendaria pendiente. Elige una carta para usar una oportunidad.</p>
+            <div className='card-choice-grid'>
+              {CARTAS_ACTIVAS.map((numero) => {
+                const efecto = efectoCarta(numero);
+                return (
+                  <button key={numero} type='button' className='card-choice-option' disabled={selectorCartaProcesando} onClick={() => elegirCartaLegendaria(numero)}>
+                    <img src={'/hechi/card-' + numero + '.png'} alt={'Carta ' + numero} />
+                    <span>
+                      <strong>{efecto.titulo}</strong>
+                      <small>{efecto.descripcion}</small>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </article>
         </div>
       )}

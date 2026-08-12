@@ -1,5 +1,29 @@
 export const CARTAS_ACTIVAS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 22, 26];
 export const TOTAL_CARTAS = CARTAS_ACTIVAS.length;
+export const GALEONES_POR_PARTICIPACION = 37;
+export const CARTAS_PROBABILIDAD = [
+  { numero: 1, rareza: 'comun', peso: 16 },
+  { numero: 18, rareza: 'comun', peso: 16 },
+  { numero: 7, rareza: 'comun', peso: 14 },
+  { numero: 15, rareza: 'comun', peso: 12 },
+  { numero: 11, rareza: 'comun', peso: 10 },
+  { numero: 9, rareza: 'poco_comun', peso: 9 },
+  { numero: 3, rareza: 'poco_comun', peso: 8 },
+  { numero: 16, rareza: 'poco_comun', peso: 8 },
+  { numero: 12, rareza: 'rara', peso: 7 },
+  { numero: 5, rareza: 'rara', peso: 7 },
+  { numero: 4, rareza: 'rara', peso: 6 },
+  { numero: 6, rareza: 'epica', peso: 5 },
+  { numero: 17, rareza: 'epica', peso: 5 },
+  { numero: 10, rareza: 'epica', peso: 4 },
+  { numero: 26, rareza: 'epica', peso: 4 },
+  { numero: 19, rareza: 'legendaria', peso: 3 },
+  { numero: 8, rareza: 'legendaria', peso: 2 },
+  { numero: 13, rareza: 'legendaria', peso: 2 },
+  { numero: 22, rareza: 'legendaria', peso: 2 },
+  { numero: 2, rareza: 'legendaria', peso: 2 }
+];
+export const TOTAL_PESO_CARTAS = CARTAS_PROBABILIDAD.reduce((total, carta) => total + carta.peso, 0);
 const MAX_CARTA = 28;
 export const PLAYER_KEY = 'hechi-pocket-player-v3';
 export const TEACHER_KEY = 'hechi-pocket-teacher-v4';
