@@ -24,6 +24,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const [accionError, setAccionError] = useState('');
   const [accionProcesando, setAccionProcesando] = useState(false);
   const [kahootForm, setKahootForm] = useState({ pregunta: '', opcionA: '', opcionB: '', opcionC: '', opcionD: '', correcta: 'a' });
+  const [kahootEditandoId, setKahootEditandoId] = useState(null);
   const [kahootNow, setKahootNow] = useState(() => Date.now());
   const autoAbrirRef = useRef(false);
   const abrirCartaRef = useRef(null);
@@ -478,11 +479,16 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     setKahootForm((actual) => ({ ...actual, [campo]: valor }));
   };
 
+  const limpiarKahootForm = () => {
+    setKahootForm({ pregunta: '', opcionA: '', opcionB: '', opcionC: '', opcionD: '', correcta: 'a' });
+    setKahootEditandoId(null);
+  };
+
   const crearPreguntaKahoot = async (event) => {
     event?.preventDefault?.();
     const campos = ['pregunta', 'opcionA', 'opcionB', 'opcionC', 'opcionD'];
     if (campos.some((campo) => !kahootForm[campo].trim())) return setMensaje('Completa la pregunta y sus cuatro respuestas.');
-    const { data, error } = await db.rpc('kahoot_crear_pregunta', {
+    const payload = {
       p_token: sesion.token,
       p_alumno_id: sesion.tipo === 'alumno' ? sesion.alumnoId : null,
       p_password: sesion.tipo === 'alumno' ? sesion.password : null,
@@ -492,11 +498,49 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       p_opcion_c: kahootForm.opcionC,
       p_opcion_d: kahootForm.opcionD,
       p_correcta: kahootForm.correcta
-    });
+    };
+    const { data, error } = await db.rpc(kahootEditandoId ? 'kahoot_modificar_pregunta' : 'kahoot_crear_pregunta', kahootEditandoId ? { ...payload, p_pregunta_id: kahootEditandoId } : payload);
     if (error) return setMensaje(error.message);
     setEstado(data);
-    setKahootForm({ pregunta: '', opcionA: '', opcionB: '', opcionC: '', opcionD: '', correcta: 'a' });
-    setMensaje('Pregunta agregada al Kahoot.');
+    limpiarKahootForm();
+    setMensaje(kahootEditandoId ? 'Pregunta actualizada.' : 'Pregunta agregada al Kahoot.');
+  };
+
+  const editarPreguntaKahoot = (pregunta) => {
+    setKahootEditandoId(pregunta.id);
+    setKahootForm({
+      pregunta: pregunta.pregunta || '',
+      opcionA: pregunta.opciones?.a || '',
+      opcionB: pregunta.opciones?.b || '',
+      opcionC: pregunta.opciones?.c || '',
+      opcionD: pregunta.opciones?.d || '',
+      correcta: pregunta.correcta || 'a'
+    });
+  };
+
+  const eliminarPreguntaKahoot = async (preguntaId) => {
+    const { data, error } = await db.rpc('kahoot_eliminar_pregunta', {
+      p_token: sesion.token,
+      p_alumno_id: sesion.tipo === 'alumno' ? sesion.alumnoId : null,
+      p_password: sesion.tipo === 'alumno' ? sesion.password : null,
+      p_pregunta_id: preguntaId
+    });
+    if (error) return setMensaje(error.message);
+    if (kahootEditandoId === preguntaId) limpiarKahootForm();
+    setEstado(data);
+    setMensaje('Pregunta eliminada.');
+  };
+
+  const reiniciarKahoot = async () => {
+    const { data, error } = await db.rpc('kahoot_reiniciar', {
+      p_token: sesion.token,
+      p_alumno_id: sesion.tipo === 'alumno' ? sesion.alumnoId : null,
+      p_password: sesion.tipo === 'alumno' ? sesion.password : null
+    });
+    if (error) return setMensaje(error.message);
+    limpiarKahootForm();
+    setEstado(data);
+    setMensaje('Kahoot reiniciado.');
   };
 
   const iniciarKahoot = async () => {
@@ -582,11 +626,16 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   useEffect(() => {
     if (!sesion?.token || !estado?.token) return undefined;
     const id = window.setInterval(async () => {
-      const { data } = await db.rpc('cargar_clase', { p_token: sesion.token });
+      const { data, error } = await db.rpc('cargar_clase_vista', {
+        p_token: sesion.token,
+        p_alumno_id: sesion.tipo === 'alumno' ? sesion.alumnoId : null,
+        p_password: sesion.tipo === 'alumno' ? sesion.password : null
+      });
+      if (error) return;
       if (data) setEstado(data);
     }, 900);
     return () => window.clearInterval(id);
-  }, [sesion?.token, estado?.token, setEstado]);
+  }, [sesion?.alumnoId, sesion?.password, sesion?.tipo, sesion?.token, estado?.token, setEstado]);
 
   useEffect(() => {
     const id = window.setInterval(() => setKahootNow(Date.now()), 500);
@@ -634,6 +683,13 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const bestiaDetalle = bestiario.find((bestia) => bestia.id === bestiaDetalleId);
   const kahoot = estado.kahoot;
   const kahootPreguntas = kahoot?.preguntas || [];
+  const kahootEnBorrador = kahoot?.estado === 'borrador';
+  const kahootBorradorPropioAlumno = sesion.tipo === 'alumno' && kahootEnBorrador && kahoot?.creadorAlumnoId === sesion.alumnoId;
+  const kahootBorradorDelMaestro = sesion.tipo === 'maestro' && kahootEnBorrador && !kahoot?.creadorAlumnoId;
+  const kahootPuedePreparar = !kahoot || kahoot.estado !== 'activa';
+  const kahootPuedeAgregarPreguntas = !kahoot || kahoot.estado === 'finalizada' || kahootBorradorPropioAlumno || kahootBorradorDelMaestro;
+  const kahootSubtitulo = kahootEnBorrador && kahoot?.creadorNombre ? 'Borrador de ' + kahoot.creadorNombre : (kahoot?.estado === 'finalizada' ? 'Actividad finalizada' : kahootPreguntas.length + ' preguntas listas');
+  const kahootPreguntasBorrador = kahoot?.estado === 'borrador' ? kahootPreguntas : [];
   const kahootPreguntaActiva = kahoot?.estado === 'activa' ? kahootPreguntas[kahoot.preguntaActual] : null;
   const kahootRespuestas = kahootPreguntaActiva?.respuestas || [];
   const kahootInicio = kahoot?.iniciadaAt ? new Date(kahoot.iniciadaAt).getTime() : kahootNow;
@@ -718,7 +774,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       </div>
     </section>
   );
-  const kahootFormPanel = (!kahoot || kahoot.estado === 'borrador') && (
+  const kahootFormPanel = (kahootPuedeAgregarPreguntas || kahootEditandoId) && (
     <form className='kahoot-form' onSubmit={crearPreguntaKahoot}>
       <label>
         <span>Pregunta</span>
@@ -740,7 +796,10 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
           ))}
         </div>
       </div>
-      <button type='submit'>Agregar pregunta</button>
+      <div className='kahoot-form-actions'>
+        <button type='submit'>{kahootEditandoId ? 'Guardar cambios' : 'Agregar pregunta'}</button>
+        {kahootEditandoId && <button type='button' className='ghost' onClick={limpiarKahootForm}>Cancelar edición</button>}
+      </div>
     </form>
   );
   const kahootResults = kahootPreguntaActiva && (
@@ -760,13 +819,28 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   );
   const kahootPanel = (
     <section className='panel kahoot-panel student-tab-panel'>
-      <div className='kahoot-heading'><span><strong>Kahoot mágico</strong><small>{kahootPreguntas.length} preguntas listas</small></span>{kahoot?.estado && <b>{kahoot.estado}</b>}</div>
+      <div className='kahoot-heading'><span><strong>Kahoot mágico</strong><small>{kahootSubtitulo}</small></span>{kahoot?.estado && <b>{kahoot.estado}</b>}</div>
+      {kahootPuedePreparar && <p className='kahoot-note'>{kahoot?.estado === 'finalizada' ? 'Agrega una pregunta para comenzar una nueva actividad.' : (sesion.tipo === 'maestro' && kahootEnBorrador && kahoot?.creadorAlumnoId ? 'Revisa el borrador y autorízalo cuando esté listo.' : 'Agrega todas las preguntas que quieras antes de iniciar.')}</p>}
       {kahootFormPanel}
-      {(!kahoot || kahoot.estado === 'borrador') && (
+      {kahootPuedePreparar && (
         <div className='kahoot-draft'>
-          {kahootPreguntas.length === 0 && <p className='empty'>Agrega preguntas para preparar la actividad.</p>}
-          {kahootPreguntas.map((pregunta, index) => <article key={pregunta.id}><strong>{index + 1}. {pregunta.pregunta}</strong><span>Correcta: {pregunta.correcta?.toUpperCase()}</span></article>)}
-          {sesion.tipo === 'maestro' && kahootPreguntas.length > 0 && <button type='button' onClick={iniciarKahoot}>Iniciar Kahoot</button>}
+          {kahootPreguntasBorrador.length === 0 && <p className='empty'>Agrega preguntas para preparar la actividad.</p>}
+          {kahootPreguntasBorrador.map((pregunta, index) => (
+            <article key={pregunta.id}>
+              <strong>{index + 1}. {pregunta.pregunta}</strong>
+              <span>Correcta: {pregunta.correcta?.toUpperCase()}</span>
+              <div className='kahoot-question-actions'>
+                <button type='button' onClick={() => editarPreguntaKahoot(pregunta)}>Modificar</button>
+                <button type='button' className='danger-soft' onClick={() => eliminarPreguntaKahoot(pregunta.id)}>Eliminar</button>
+              </div>
+            </article>
+          ))}
+          {kahootEnBorrador && kahootPreguntasBorrador.length > 0 && (
+            <div className='kahoot-controls'>
+              <button type='button' className='danger-soft' onClick={reiniciarKahoot}>Reiniciar Kahoot</button>
+              {sesion.tipo === 'maestro' && <button type='button' onClick={iniciarKahoot}>Autorizar e iniciar</button>}
+            </div>
+          )}
         </div>
       )}
       {kahootPreguntaActiva && (
