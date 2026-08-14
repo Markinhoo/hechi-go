@@ -232,6 +232,10 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const cartaPuedeSalir = (numero, alumnoBase) => {
     const efecto = efectoCarta(numero);
     if (efecto.tipo === 'puntosIntercambio') return alumnosConfundoDisponibles(alumnoBase).length > 0;
+    if (efecto.tipo === 'limpiaNegativos') {
+      const casaId = alumnoBase?.casaId;
+      return Boolean(casaId && Number(estado.puntajesNegativos?.[casaId] || 0) < 0);
+    }
     return true;
   };
 
@@ -239,7 +243,11 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     if (selectorCartaProcesando) return null;
     const alumno = estado.alumnos.find((item) => item.id === sesion.alumnoId);
     if (!cartaPuedeSalir(numero, alumno)) {
-      setMensaje('Confundo no tiene alumnos con mas puntos disponibles. Elige otra carta.');
+      const efecto = efectoCarta(numero);
+      const mensajeCartaInvalida = efecto.tipo === 'limpiaNegativos'
+        ? 'Elixir de Vida no puede salir porque tu casa no tiene puntos negativos.'
+        : 'Confundo no tiene alumnos con mas puntos disponibles. Elige otra carta.';
+      setMensaje(mensajeCartaInvalida);
       return null;
     }
     setSelectorCartaProcesando(true);
@@ -272,7 +280,10 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     const numero = numeroElegido || elegirCartaAleatoria(cartasDisponibles);
     const efecto = efectoCarta(numero);
     if (!cartaPuedeSalir(numero, alumno)) {
-      setMensaje(efecto.titulo + ' no tiene objetivos validos ahora. Intenta con otra carta.');
+      const mensajeCartaInvalida = efecto.tipo === 'limpiaNegativos'
+        ? 'Elixir de Vida no puede salir porque tu casa no tiene puntos negativos.'
+        : efecto.titulo + ' no tiene objetivos validos ahora. Intenta con otra carta.';
+      setMensaje(mensajeCartaInvalida);
       return null;
     }
     onCameraFlash?.();
