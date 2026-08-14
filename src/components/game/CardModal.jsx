@@ -16,6 +16,7 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
   const esperaReplicaPuntos = cartaActiva.tipo === 'replicaPuntos' && cartaActiva.pendienteReplicaPuntos;
   const esperaRoboMultiple = cartaActiva.tipo === 'roboMultiple' && cartaActiva.pendienteRoboMultiple;
   const esperaDecisionChiste = cartaActiva.tipo === 'decisionChiste' && cartaActiva.pendienteDecisionChiste;
+  const tieneDecisionPendiente = esperaRival || esperaIntercambio || esperaPuntosIntercambio || esperaCompaneroBonus || esperaReplicaPuntos || esperaRoboMultiple || esperaDecisionChiste;
   const miCasa = cartaActiva.casaId;
   const alumnosMiCasa = useMemo(() => alumnosIntercambio.filter((alumno) => alumno.casaId === miCasa && alumno.id !== cartaActiva.alumnoId), [alumnosIntercambio, cartaActiva.alumnoId, miCasa]);
   const alumnosRivales = useMemo(() => alumnosIntercambio.filter((alumno) => alumno.casaId !== miCasa), [alumnosIntercambio, miCasa]);
@@ -28,7 +29,9 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
     setRoboIds((actuales) => {
       if (actuales.includes(alumnoId)) return actuales.filter((id) => id !== alumnoId);
       if (actuales.length >= 5) return actuales;
-      return [...actuales, alumnoId];
+      const siguientes = [...actuales, alumnoId];
+      if (siguientes.length === 5) window.setTimeout(() => onSelectRobbery?.(siguientes), 0);
+      return siguientes;
     });
   };
 
@@ -37,7 +40,7 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
   return (
     <section className='card-modal' role='dialog' aria-modal='true'>
       <button type='button' className='modal-close' onClick={onClose} aria-label='Cerrar carta'><FaXmark /></button>
-      <div className='modal-card-wrap'>
+      <div className={'modal-card-wrap ' + (!tieneDecisionPendiente ? 'clickable-card' : '')} onClick={!tieneDecisionPendiente ? onClose : undefined} title={!tieneDecisionPendiente ? 'Toca la carta para cerrar' : undefined}>
         <div className='modal-card-flip'>
           <div className='modal-card-face modal-card-back'><img src='/hechi/card-back.png' alt='' /></div>
           <div className='modal-card-face modal-card-front'><img src={'/hechi/card-' + carta.numero + '.png'} alt={'Carta ' + carta.numero} /></div>
@@ -158,7 +161,7 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
                 );
               })}
             </div>
-            <button type='button' className='exchange-apply' disabled={roboIds.length !== 5} onClick={() => onSelectRobbery?.(roboIds)}>Aplicar {roboIds.length}/5</button>
+            <span className='morsmordre-counter'>Seleccionados {roboIds.length}/5. Al elegir el quinto se aplica automaticamente.</span>
           </div>
         )}
         {esperaDecisionChiste && (

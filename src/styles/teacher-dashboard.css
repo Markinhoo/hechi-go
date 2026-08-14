@@ -3150,3 +3150,102 @@ button,
     overflow: auto !important;
   }
 }
+
+/* Card modal balance: larger card, compact effect text, stable close button */
+.card-modal {
+  grid-template-rows: minmax(0, auto) auto;
+  gap: clamp(8px, 1.8vh, 14px);
+  padding: clamp(14px, 2.2vw, 24px);
+  padding-top: max(18px, env(safe-area-inset-top));
+}
+
+.modal-close {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  top: max(14px, env(safe-area-inset-top));
+  width: 52px;
+  height: 52px;
+  font-size: 24px;
+}
+
+.modal-card-wrap {
+  width: min(84vw, 450px);
+  max-height: min(68vh, 600px);
+}
+
+.modal-card-wrap.clickable-card {
+  cursor: pointer;
+}
+
+.modal-card-wrap.clickable-card .modal-card-face img {
+  box-shadow: 0 34px 90px rgba(0,0,0,.72), 0 0 86px rgba(255,214,109,.42);
+}
+
+.modal-effect {
+  width: min(88vw, 430px);
+  padding: 8px 12px;
+  border-radius: 12px;
+  box-shadow: 0 14px 34px rgba(0,0,0,.36), 0 0 30px color-mix(in srgb,var(--metal) 24%,transparent);
+}
+
+.modal-effect span {
+  display: block;
+  font-size: clamp(14px, 1.2vw, 17px);
+  line-height: 1.05;
+  letter-spacing: .08em;
+}
+
+.modal-effect h2 {
+  margin: 2px 0;
+  font-size: clamp(24px, 2.6vw, 34px);
+  line-height: .95;
+}
+
+.modal-effect p {
+  font-size: clamp(14px, 1.28vw, 17px);
+  line-height: 1.12;
+}
+
+.morsmordre-counter {
+  display: block;
+  margin-top: 10px;
+  color: #ffeeca;
+  font-weight: 900;
+  font-size: clamp(14px, 1.1vw, 16px);
+}
+
+@media(max-width:760px){
+  .card-modal {
+    align-content: center;
+    gap: 8px;
+    padding: 12px;
+    padding-top: max(12px, env(safe-area-inset-top));
+  }
+
+  .modal-close {
+    right: max(10px, env(safe-area-inset-right));
+    top: max(10px, env(safe-area-inset-top));
+    width: 46px;
+    height: 46px;
+    font-size: 22px;
+  }
+
+  .modal-card-wrap {
+    width: min(90vw, 390px);
+    max-height: 66vh;
+  }
+
+  .modal-effect {
+    width: min(90vw, 390px);
+    padding: 7px 10px;
+  }
+
+  .modal-effect h2 {
+    font-size: clamp(22px, 8vw, 30px);
+  }
+
+  .modal-effect p,
+  .modal-effect span {
+    font-size: 14px;
+  }
+}

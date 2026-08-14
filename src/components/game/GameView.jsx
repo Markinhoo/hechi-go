@@ -367,7 +367,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     if (!data) return;
     const rival = obtenerCasa(casaObjetivo);
     const puntosFinales = Math.abs(data?.historial?.[0]?.puntos || cartaAbierta.puntos);
-    setCartaAbierta({ ...cartaAbierta, casaObjetivo, pendienteRival: false, puntos: -(puntosFinales) });
+    setCartaAbierta(null);
     setMensaje(rival.nombre + ' pierde ' + puntosFinales + ' puntos por Crucio.');
   };
 
@@ -389,7 +389,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     const destino = estado.alumnos.find((alumno) => alumno.id === destinoId);
     setEstado(data);
     marcarFlashAlumnos([origenId, destinoId]);
-    setCartaAbierta({ ...cartaAbierta, pendienteIntercambio: false });
+    setCartaAbierta(null);
     setMensaje('Imperio intercambio a ' + (origen?.nombre || 'un alumno') + ' con ' + (destino?.nombre || 'otro alumno') + '.');
   };
 
@@ -409,7 +409,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     const objetivo = estado.alumnos.find((alumno) => alumno.id === objetivoId);
     setEstado(data);
     marcarFlashAlumnos([objetivoId]);
-    setCartaAbierta({ ...cartaAbierta, pendientePuntosIntercambio: false });
+    setCartaAbierta(null);
     setMensaje('Confundo aplico intercambio de puntos con ' + (objetivo?.nombre || 'otro alumno') + '.');
   };
 
@@ -430,7 +430,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     const puntos = data?.historial?.[0]?.puntos || 2;
     setEstado(data);
     marcarFlashAlumnos([companeroId]);
-    setCartaAbierta({ ...cartaAbierta, pendienteCompaneroBonus: false, puntos });
+    setCartaAbierta(null);
     setMensaje('Amortentia sumó +' + puntos + ' a ti y a ' + (companero?.nombre || 'otro compañero') + '.');
   };
 
@@ -451,7 +451,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     const puntos = data?.historial?.[0]?.puntos ?? objetivo?.puntos ?? 0;
     setEstado(data);
     marcarFlashAlumnos([objetivoId]);
-    setCartaAbierta({ ...cartaAbierta, pendienteReplicaPuntos: false, puntos });
+    setCartaAbierta(null);
     setMensaje('Multijugos replicó +' + puntos + ' puntos de ' + (objetivo?.nombre || 'otro alumno') + '.');
   };
 
@@ -470,7 +470,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     if (error) return setMensaje(error.message);
     setEstado(data);
     marcarFlashAlumnos(objetivoIds);
-    setCartaAbierta({ ...cartaAbierta, pendienteRoboMultiple: false, puntos: 5 });
+    setCartaAbierta(null);
     setMensaje('Morsmordre quitó 1 punto a 5 alumnos y sumó +5 a tu casa.');
   };
 
@@ -486,9 +486,8 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       p_acepta: acepta
     });
     if (error) return setMensaje(error.message);
-    const puntos = acepta ? 2 : -2;
     setEstado(data);
-    setCartaAbierta({ ...cartaAbierta, pendienteDecisionChiste: false, puntos });
+    setCartaAbierta(null);
     setMensaje(acepta ? 'Riddikulus sumó +2 por contar el chiste.' : 'Riddikulus restó -2 por negarse a contar el chiste.');
   };
 
