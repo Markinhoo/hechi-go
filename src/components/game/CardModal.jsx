@@ -6,6 +6,7 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
   const [companeroId, setCompaneroId] = useState('');
   const [rivalId, setRivalId] = useState('');
   const [roboIds, setRoboIds] = useState([]);
+  const [roboProcesando, setRoboProcesando] = useState(false);
   const cartaActiva = carta || { casaId: 'gryffindor', tipo: '', puntos: 0, alumnoId: '' };
   const casa = obtenerCasa(cartaActiva.casaId);
   const puntosTexto = cartaActiva.tipo === 'proteccion' ? 'Protección activa' : (cartaActiva.tipo === 'intercambio' ? 'Intercambio mágico' : (cartaActiva.tipo === 'puntosIntercambio' ? 'Intercambio de puntos' : (cartaActiva.tipo === 'companeroBonus' ? 'Bonificación compartida' : (cartaActiva.tipo === 'replicaPuntos' ? 'Réplica de puntos' : (cartaActiva.tipo === 'roboMultiple' ? 'Robo de puntos' : (cartaActiva.tipo === 'decisionChiste' ? 'Decisión de chiste' : (cartaActiva.puntos > 0 ? '+' + cartaActiva.puntos + ' puntos' : String(cartaActiva.puntos) + ' puntos')))))));
@@ -26,11 +27,19 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
   const alumnosParaReplica = useMemo(() => alumnosReplica.filter((alumno) => alumno.id !== cartaActiva.alumnoId), [alumnosReplica, cartaActiva.alumnoId]);
   const alumnosParaRobo = useMemo(() => alumnosRobo.filter((alumno) => alumno.id !== cartaActiva.alumnoId), [alumnosRobo, cartaActiva.alumnoId]);
   const alternarRobo = (alumnoId) => {
+    if (roboProcesando) return;
     setRoboIds((actuales) => {
       if (actuales.includes(alumnoId)) return actuales.filter((id) => id !== alumnoId);
       if (actuales.length >= 5) return actuales;
       const siguientes = [...actuales, alumnoId];
-      if (siguientes.length === 5) window.setTimeout(() => onSelectRobbery?.(siguientes), 0);
+      if (siguientes.length === 5) {
+        setRoboProcesando(true);
+        Promise.resolve(onSelectRobbery?.(siguientes))
+          .then((resultado) => {
+            if (resultado === false) setRoboProcesando(false);
+          })
+          .catch(() => setRoboProcesando(false));
+      }
       return siguientes;
     });
   };
@@ -38,7 +47,7 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
   if (!carta) return null;
 
   return (
-    <section className={'card-modal ' + (tieneDecisionPendiente ? 'has-options' : 'simple-card-modal')} role='dialog' aria-modal='true'>
+    <section className={'card-modal ' + (tieneDecisionPendiente ? 'has-options' : 'simple-card-modal') + (esperaRoboMultiple ? ' morsmordre-modal' : '')} role='dialog' aria-modal='true'>
       <button type='button' className='modal-close' onClick={onClose} aria-label='Cerrar carta'><FaXmark /></button>
       <div className={'modal-card-wrap ' + (!tieneDecisionPendiente ? 'clickable-card' : '')} onClick={!tieneDecisionPendiente ? onClose : undefined} title={!tieneDecisionPendiente ? 'Toca la carta para cerrar' : undefined}>
         <div className='modal-card-flip'>
@@ -155,13 +164,13 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
                 const casaAlumno = obtenerCasa(alumno.casaId);
                 const seleccionado = roboIds.includes(alumno.id);
                 return (
-                  <button key={alumno.id} type='button' className={'point-swap-choice ' + (seleccionado ? 'selected' : '')} style={{ '--house': casaAlumno.color, '--metal': casaAlumno.metal }} onClick={() => alternarRobo(alumno.id)}>
+                  <button key={alumno.id} type='button' disabled={roboProcesando} className={'point-swap-choice ' + (seleccionado ? 'selected' : '')} style={{ '--house': casaAlumno.color, '--metal': casaAlumno.metal }} onClick={() => alternarRobo(alumno.id)}>
                     {seleccionado ? '[x] ' : ''}{alumno.nombre} - {casaAlumno.nombre} - {alumno.puntos} pts
                   </button>
                 );
               })}
             </div>
-            <span className='morsmordre-counter'>Seleccionados {roboIds.length}/5. Al elegir el quinto se aplica automaticamente.</span>
+            <span className='morsmordre-counter'>{roboProcesando ? 'Aplicando Morsmordre...' : 'Seleccionados ' + roboIds.length + '/5. Al elegir el quinto se aplica automaticamente.'}</span>
           </div>
         )}
         {esperaDecisionChiste && (

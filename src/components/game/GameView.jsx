@@ -486,8 +486,11 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   };
 
   const seleccionarRoboMultiple = async (objetivoIds) => {
-    if (!cartaAbierta || cartaAbierta.tipo !== 'roboMultiple' || !cartaAbierta.pendienteRoboMultiple) return;
-    if (!Array.isArray(objetivoIds) || objetivoIds.length !== 5) return setMensaje('Elige exactamente 5 alumnos.');
+    if (!cartaAbierta || cartaAbierta.tipo !== 'roboMultiple' || !cartaAbierta.pendienteRoboMultiple) return false;
+    if (!Array.isArray(objetivoIds) || objetivoIds.length !== 5) {
+      setMensaje('Elige exactamente 5 alumnos.');
+      return false;
+    }
     const { data, error } = await db.rpc('morsmordre_robar_puntos', {
       p_token: sesion.token,
       p_alumno_id: sesion.alumnoId,
@@ -497,11 +500,15 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       p_descripcion: cartaAbierta.descripcion,
       p_objetivo_ids: objetivoIds
     });
-    if (error) return setMensaje(error.message);
+    if (error) {
+      setMensaje(error.message);
+      return false;
+    }
     setEstado(data);
     marcarFlashAlumnos(objetivoIds);
     setCartaAbierta(null);
     setMensaje('Morsmordre quitó 1 punto a 5 alumnos y sumó +5 a tu casa.');
+    return true;
   };
 
   const seleccionarDecisionChiste = async (acepta) => {

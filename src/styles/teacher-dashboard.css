@@ -3533,3 +3533,80 @@ button,
     font-size: 15px !important;
   }
 }
+
+/* Morsmordre needs list-first layout: small card, large selectable roster. */
+.card-modal.morsmordre-modal .modal-card-wrap {
+  width: min(64vw, 310px) !important;
+  max-height: 42vh !important;
+}
+
+.card-modal.morsmordre-modal .modal-effect {
+  width: min(94vw, 560px) !important;
+}
+
+.card-modal.morsmordre-modal .point-swap-options {
+  max-height: min(48vh, 430px) !important;
+  overflow: hidden !important;
+}
+
+.card-modal.morsmordre-modal .point-swap-options > div {
+  max-height: min(34vh, 310px) !important;
+  overflow: auto !important;
+  padding-right: 4px !important;
+}
+
+.card-modal.morsmordre-modal .point-swap-choice:disabled {
+  opacity: .78;
+  cursor: wait;
+}
+
+@media (max-width: 760px) {
+  .card-modal.morsmordre-modal {
+    justify-content: center !important;
+    gap: 6px !important;
+  }
+
+  .card-modal.morsmordre-modal .modal-card-wrap {
+    width: min(58vw, 250px) !important;
+    max-height: 32dvh !important;
+  }
+
+  .card-modal.morsmordre-modal .modal-effect {
+    width: min(94vw, 430px) !important;
+    max-height: 58dvh !important;
+    padding: 8px 10px !important;
+    overflow: hidden !important;
+  }
+
+  .card-modal.morsmordre-modal .modal-effect h2 {
+    font-size: clamp(20px, 6.2vw, 28px) !important;
+  }
+
+  .card-modal.morsmordre-modal .modal-effect p {
+    display: none !important;
+  }
+
+  .card-modal.morsmordre-modal .point-swap-options {
+    max-height: none !important;
+    margin-top: 6px !important;
+    padding-top: 7px !important;
+    gap: 6px !important;
+  }
+
+  .card-modal.morsmordre-modal .point-swap-options > div {
+    max-height: 38dvh !important;
+    gap: 6px !important;
+  }
+
+  .card-modal.morsmordre-modal .point-swap-choice {
+    min-height: 36px !important;
+    padding: 7px 9px !important;
+    font-size: 14px !important;
+  }
+
+  .card-modal.morsmordre-modal .morsmordre-counter {
+    margin-top: 6px !important;
+    font-size: 13px !important;
+    line-height: 1.05 !important;
+  }
+}
