@@ -299,3 +299,21 @@
     min-height: 58px;
   }
 }
+
+.kahoot-error {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: #ffeeca;
+  background: linear-gradient(120deg, rgba(107, 29, 34, .88), rgba(27, 16, 29, .92));
+  border: 1px solid rgba(255, 122, 95, .55);
+  font-weight: 900;
+  text-align: center;
+  box-shadow: 0 10px 26px rgba(0,0,0,.2);
+}
+
+.kahoot-controls button:disabled {
+  opacity: .62;
+  cursor: wait;
+  filter: grayscale(.25);
+}

@@ -8,6 +8,8 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
   const [kahootForm, setKahootForm] = useState(KAHOOT_FORM_INICIAL);
   const [kahootEditandoId, setKahootEditandoId] = useState(null);
   const [kahootNow, setKahootNow] = useState(() => Date.now());
+  const [kahootAccion, setKahootAccion] = useState('');
+  const [kahootError, setKahootError] = useState('');
 
   useEffect(() => {
     const id = window.setInterval(() => setKahootNow(Date.now()), 500);
@@ -152,11 +154,23 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
   };
 
   const finalizarKahoot = async () => {
-    if (sesion.tipo !== 'maestro') return;
+    if (sesion.tipo !== 'maestro' || kahootAccion === 'finalizar') return;
+    setKahootAccion('finalizar');
+    setKahootError('');
+    setMensaje('Premiando Kahoot...');
+    const ganadoresConAciertos = kahootRanking.filter((item) => item.aciertos > 0).slice(0, 3);
     const { data, error } = await db.rpc('kahoot_finalizar', { p_token: sesion.token });
-    if (error) return setMensaje(error.message);
+    setKahootAccion('');
+    if (error) {
+      setKahootError(error.message);
+      return setMensaje('No se pudo premiar el Kahoot: ' + error.message);
+    }
+    if (!data) {
+      setKahootError('Supabase no devolvio informacion actualizada. Intenta actualizar la clase.');
+      return setMensaje('No se recibio respuesta al premiar el Kahoot.');
+    }
     setEstado(data);
-    setMensaje('Kahoot finalizado. Se repartieron oportunidades: 3, 2 y 1 carta.');
+    setMensaje(ganadoresConAciertos.length > 0 ? 'Kahoot finalizado. Se repartieron oportunidades: 3, 2 y 1 carta.' : 'Kahoot finalizado. No hubo respuestas correctas para premiar.');
   };
 
   const nuevaActividadKahoot = async () => {
@@ -216,6 +230,7 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
     <section className='panel kahoot-panel student-tab-panel'>
       <div className='kahoot-heading'><span><strong>Kahoot mágico</strong><small>{kahootSubtitulo}</small></span>{kahoot?.estado && <b>{kahoot.estado}</b>}</div>
       {kahootPuedePreparar && <p className='kahoot-note'>{kahoot?.estado === 'finalizada' ? 'Agrega una pregunta para comenzar una nueva actividad.' : (sesion.tipo === 'maestro' && kahootEnBorrador && kahoot?.creadorAlumnoId ? 'Revisa el borrador y autorízalo cuando esté listo.' : 'Agrega todas las preguntas que quieras antes de iniciar.')}</p>}
+      {kahootError && <p className='kahoot-error'>{kahootError}</p>}
       {kahootFormPanel}
       {kahootPuedePreparar && (
         <div className='kahoot-draft'>
@@ -252,7 +267,7 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
           {sesion.tipo === 'maestro' && kahootMostrarResultados && (
             <div className='kahoot-controls'>
               {(kahoot.preguntaActual || 0) + 1 < kahootPreguntas.length && <button type='button' onClick={siguientePreguntaKahoot}>Siguiente pregunta</button>}
-              <button type='button' className='danger-soft' onClick={finalizarKahoot}>Finalizar y premiar</button>
+              <button type='button' className='danger-soft' onClick={finalizarKahoot} disabled={kahootAccion === 'finalizar'}>{kahootAccion === 'finalizar' ? 'Premiando...' : 'Finalizar y premiar'}</button>
             </div>
           )}
         </div>
