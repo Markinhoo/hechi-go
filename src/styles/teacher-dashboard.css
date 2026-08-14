@@ -3469,3 +3469,67 @@ button,
     display: none !important;
   }
 }
+
+/* Compact row choices for short rival-house decisions. */
+.rival-options > div {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+.rival-choice {
+  width: 100% !important;
+  min-height: 40px !important;
+  padding: 8px 12px !important;
+  border-radius: 12px !important;
+  text-align: left !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.rival-choice::after {
+  content: 'Elegir';
+  color: var(--metal);
+  font-size: .82em;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 760px) {
+  .card-modal.has-options {
+    gap: 7px !important;
+  }
+
+  .card-modal.has-options .modal-card-wrap {
+    width: min(86vw, 390px) !important;
+    max-height: 58dvh !important;
+  }
+
+  .card-modal.has-options .modal-effect {
+    width: min(92vw, 430px) !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: 42dvh !important;
+    padding: 9px 12px !important;
+    overflow: auto !important;
+  }
+
+  .card-modal.has-options .rival-options {
+    gap: 7px !important;
+    margin-top: 8px !important;
+    padding-top: 8px !important;
+  }
+
+  .card-modal.has-options .rival-options small {
+    font-size: 12px !important;
+    line-height: 1.05 !important;
+  }
+
+  .card-modal.has-options .rival-choice {
+    min-height: 38px !important;
+    padding: 7px 11px !important;
+    font-size: 15px !important;
+  }
+}

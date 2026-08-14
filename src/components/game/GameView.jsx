@@ -223,8 +223,25 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     return data;
   };
 
+  const alumnosConfundoDisponibles = (alumnoBase) => {
+    if (!alumnoBase) return [];
+    const puntosBase = Number(alumnoBase.puntos || 0);
+    return estado.alumnos.filter((item) => item.id !== alumnoBase.id && Number(item.puntos || 0) > puntosBase);
+  };
+
+  const cartaPuedeSalir = (numero, alumnoBase) => {
+    const efecto = efectoCarta(numero);
+    if (efecto.tipo === 'puntosIntercambio') return alumnosConfundoDisponibles(alumnoBase).length > 0;
+    return true;
+  };
+
   const elegirCartaLegendaria = async (numero) => {
     if (selectorCartaProcesando) return null;
+    const alumno = estado.alumnos.find((item) => item.id === sesion.alumnoId);
+    if (!cartaPuedeSalir(numero, alumno)) {
+      setMensaje('Confundo no tiene alumnos con mas puntos disponibles. Elige otra carta.');
+      return null;
+    }
     setSelectorCartaProcesando(true);
     const { data, error } = await db.rpc('consumir_eleccion_legendaria', {
       p_token: sesion.token,
@@ -251,8 +268,13 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       return null;
     }
     setMostrarSelectorCarta(false);
-    const numero = numeroElegido || elegirCartaAleatoria();
+    const cartasDisponibles = CARTAS_ACTIVAS.filter((numeroCarta) => cartaPuedeSalir(numeroCarta, alumno));
+    const numero = numeroElegido || elegirCartaAleatoria(cartasDisponibles);
     const efecto = efectoCarta(numero);
+    if (!cartaPuedeSalir(numero, alumno)) {
+      setMensaje(efecto.titulo + ' no tiene objetivos validos ahora. Intenta con otra carta.');
+      return null;
+    }
     onCameraFlash?.();
     if (efecto.tipo === 'rival') {
       setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteRival: true });
@@ -260,16 +282,13 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       return null;
     }
     if (efecto.tipo === 'puntosIntercambio') {
-      const hayAlumnoDisponible = estado.alumnos.some((item) => item.id !== alumno.id);
-      if (!hayAlumnoDisponible) {
-        const data = await registrarCarta({ numero, efecto });
-        if (!data) return null;
-        setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id });
-        setMensaje('Confundo no encontro otro alumno para intercambiar puntos.');
-        return data;
+      const objetivosConfundo = alumnosConfundoDisponibles(alumno);
+      if (objetivosConfundo.length === 0) {
+        setMensaje('Confundo se omitio porque no hay alumnos con mas puntos. Vuelve a tocar una carta.');
+        return null;
       }
       setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendientePuntosIntercambio: true });
-      setMensaje('Confundo: elige un alumno para intercambiar puntos.');
+      setMensaje('Confundo: elige un alumno con mas puntos que tu.');
       return null;
     }
     if (efecto.tipo === 'companeroBonus') {
@@ -622,6 +641,8 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const bestiasCompradas = new Set(bestiasAlumno);
   const eleccionesLegendarias = alumnoActual?.eleccionesLegendarias || 0;
   const puedeElegirCarta = sesion.tipo === 'alumno' && eleccionesLegendarias > 0;
+  const cartasActivasDisponibles = CARTAS_ACTIVAS.filter((numero) => cartaPuedeSalir(numero, alumnoActual));
+  const alumnosPuntosConfundo = alumnosConfundoDisponibles(alumnoActual);
   const bestiaDetalle = bestiario.find((bestia) => bestia.id === bestiaDetalleId);
 
   const moverAlumno = (direccion) => {
@@ -1070,7 +1091,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
             <h2 id='card-choice-title'>Escoge cualquier carta</h2>
             <p>Tienes {eleccionesLegendarias} elección legendaria pendiente. Elige una carta para usar una oportunidad.</p>
             <div className='card-choice-grid'>
-              {CARTAS_ACTIVAS.map((numero) => {
+              {cartasActivasDisponibles.map((numero) => {
                 const efecto = efectoCarta(numero);
                 return (
                   <button key={numero} type='button' className='card-choice-option' disabled={selectorCartaProcesando} onClick={() => elegirCartaLegendaria(numero)}>
@@ -1100,7 +1121,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         carta={cartaAbierta}
         casasRivales={casas.filter((casa) => casa.id !== alumnoActual?.casaId && casa.id !== estado.casaProtegida)}
         alumnosIntercambio={estado.alumnos.filter((alumno) => alumno.casaId !== estado.casaProtegida)}
-        alumnosPuntos={estado.alumnos}
+        alumnosPuntos={alumnosPuntosConfundo}
         alumnosCompanero={estado.alumnos}
         alumnosReplica={estado.alumnos.filter((alumno) => alumno.casaId !== estado.casaProtegida)}
         alumnosRobo={estado.alumnos.filter((alumno) => alumno.casaId !== estado.casaProtegida)}
