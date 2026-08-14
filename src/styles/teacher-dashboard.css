@@ -3264,22 +3264,23 @@ button,
   }
 
   .simple-card-modal .modal-effect {
-    width: min(86vw, 360px);
-    padding: 5px 9px;
-    border-radius: 999px;
-    background: linear-gradient(120deg, color-mix(in srgb,var(--house) 72%,#1b101d), rgba(17, 10, 19, .86));
+    width: min(88vw, 390px);
+    min-height: 0;
+    padding: 8px 12px;
+    border-radius: 14px;
+    background: linear-gradient(120deg, color-mix(in srgb,var(--house) 72%,#1b101d), rgba(17, 10, 19, .9));
   }
 
   .simple-card-modal .modal-effect span {
     font-size: 12px;
-    line-height: 1;
+    line-height: 1.05;
     letter-spacing: .07em;
   }
 
   .simple-card-modal .modal-effect h2 {
-    margin: 0;
-    font-size: clamp(18px, 6vw, 24px);
-    line-height: .95;
+    margin: 2px 0 0;
+    font-size: clamp(20px, 6vw, 26px);
+    line-height: 1;
   }
 
   .simple-card-modal .modal-effect p {
