@@ -3303,3 +3303,169 @@ button,
     font-size: 14px;
   }
 }
+
+/* Final desktop board fit: prevent clipped hero/sections and keep requests higher. */
+@media (min-width: 761px) {
+  .teacher-view.app-fixed {
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    overflow: hidden !important;
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
+    gap: 8px !important;
+    padding: 3px 10px 8px !important;
+  }
+
+  .teacher-view .house-cup-hero {
+    min-height: 88px !important;
+    max-height: 92px !important;
+    padding: 8px 16px 10px !important;
+    overflow: visible !important;
+  }
+
+  .teacher-view .house-cup-hero h1 {
+    font-size: clamp(38px, 3.4vw, 58px) !important;
+    line-height: 1.03 !important;
+    padding-bottom: 4px !important;
+  }
+
+  .teacher-view .hero-actions .ghost {
+    min-height: 38px !important;
+    padding: 8px 12px !important;
+  }
+
+  .teacher-desktop-tabs-area {
+    min-height: 0 !important;
+    overflow: hidden !important;
+    gap: 8px !important;
+  }
+
+  .teacher-desktop-tab-switcher {
+    margin: 2px auto 4px !important;
+  }
+
+  .teacher-desktop-tab-switcher button {
+    min-height: 46px !important;
+    padding: 8px 14px !important;
+  }
+
+  .teacher-desktop-class-layout {
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  .teacher-desktop-class-layout > .house-board {
+    min-height: 0 !important;
+  }
+
+  .teacher-desktop-class-layout .house-card {
+    min-height: 140px !important;
+    padding-top: 18px !important;
+    padding-bottom: 14px !important;
+  }
+
+  .teacher-desktop-class-layout .pocket-layout.no-scroll-grid {
+    min-height: 0 !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    align-items: stretch !important;
+  }
+
+  .teacher-desktop-class-layout .hall-panel,
+  .teacher-desktop-class-layout .parchment-panel,
+  .teacher-desktop-class-layout .teacher-requests-stage {
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .teacher-desktop-class-layout .hall-panel,
+  .teacher-desktop-class-layout .parchment-panel {
+    padding-top: 18px !important;
+  }
+
+  .teacher-desktop-class-layout .parchment-panel {
+    overflow-y: auto !important;
+  }
+
+  .teacher-desktop-class-layout .teacher-requests-stage {
+    display: grid !important;
+    place-items: start center !important;
+    align-content: start !important;
+    padding-top: clamp(16px, 4vh, 46px) !important;
+  }
+
+  .teacher-desktop-class-layout .teacher-requests-stage .request-board {
+    align-self: start !important;
+    justify-self: center !important;
+    min-height: 0 !important;
+    width: min(94%, 680px) !important;
+    padding: clamp(16px, 2vw, 24px) !important;
+  }
+
+  .teacher-desktop-class-layout .teacher-requests-stage .message {
+    margin-top: 10px !important;
+  }
+}
+
+/* Final mobile card modal fit: simple cards get a bigger card and tiny text badge. */
+@media (max-width: 760px) {
+  .card-modal.simple-card-modal {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+    padding: calc(10px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .card-modal.simple-card-modal .modal-close {
+    position: absolute !important;
+    right: max(12px, env(safe-area-inset-right)) !important;
+    top: max(12px, env(safe-area-inset-top)) !important;
+    flex: 0 0 auto !important;
+  }
+
+  .card-modal.simple-card-modal .modal-card-wrap {
+    width: min(92vw, 410px) !important;
+    max-height: 72dvh !important;
+    flex: 0 1 auto !important;
+  }
+
+  .card-modal.simple-card-modal .modal-effect {
+    display: block !important;
+    flex: 0 0 auto !important;
+    align-self: center !important;
+    width: fit-content !important;
+    max-width: min(88vw, 390px) !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 auto !important;
+    padding: 8px 14px !important;
+    border-radius: 14px !important;
+    overflow: visible !important;
+  }
+
+  .card-modal.simple-card-modal .modal-effect span {
+    font-size: 12px !important;
+    line-height: 1 !important;
+  }
+
+  .card-modal.simple-card-modal .modal-effect h2 {
+    margin: 2px 0 0 !important;
+    font-size: clamp(22px, 7vw, 30px) !important;
+    line-height: .95 !important;
+  }
+
+  .card-modal.simple-card-modal .modal-effect p {
+    display: none !important;
+  }
+}
