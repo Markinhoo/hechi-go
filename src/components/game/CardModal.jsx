@@ -38,7 +38,7 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
   if (!carta) return null;
 
   return (
-    <section className='card-modal' role='dialog' aria-modal='true'>
+    <section className={'card-modal ' + (tieneDecisionPendiente ? 'has-options' : 'simple-card-modal')} role='dialog' aria-modal='true'>
       <button type='button' className='modal-close' onClick={onClose} aria-label='Cerrar carta'><FaXmark /></button>
       <div className={'modal-card-wrap ' + (!tieneDecisionPendiente ? 'clickable-card' : '')} onClick={!tieneDecisionPendiente ? onClose : undefined} title={!tieneDecisionPendiente ? 'Toca la carta para cerrar' : undefined}>
         <div className='modal-card-flip'>

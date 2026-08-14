@@ -3249,3 +3249,56 @@ button,
     font-size: 14px;
   }
 }
+
+/* Mobile split: simple cards prioritize the card; option cards keep room for choices */
+@media(max-width:760px){
+  .simple-card-modal.card-modal {
+    grid-template-rows: minmax(0, auto) auto;
+    gap: 6px;
+    align-content: center;
+  }
+
+  .simple-card-modal .modal-card-wrap {
+    width: min(94vw, 430px);
+    max-height: 78vh;
+  }
+
+  .simple-card-modal .modal-effect {
+    width: min(86vw, 360px);
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: linear-gradient(120deg, color-mix(in srgb,var(--house) 72%,#1b101d), rgba(17, 10, 19, .86));
+  }
+
+  .simple-card-modal .modal-effect span {
+    font-size: 12px;
+    line-height: 1;
+    letter-spacing: .07em;
+  }
+
+  .simple-card-modal .modal-effect h2 {
+    margin: 0;
+    font-size: clamp(18px, 6vw, 24px);
+    line-height: .95;
+  }
+
+  .simple-card-modal .modal-effect p {
+    display: none;
+  }
+
+  .has-options .modal-card-wrap {
+    width: min(82vw, 340px);
+    max-height: 52vh;
+  }
+
+  .has-options .modal-effect {
+    width: min(92vw, 430px);
+    padding: 10px 12px;
+    border-radius: 14px;
+  }
+
+  .has-options .modal-effect p {
+    display: block;
+    font-size: 14px;
+  }
+}
