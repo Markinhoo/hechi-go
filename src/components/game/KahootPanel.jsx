@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { db, supabase } from '../../services/hechiApi';
 
 const KAHOOT_FORM_INICIAL = { pregunta: '', opcionA: '', opcionB: '', opcionC: '', opcionD: '', correcta: 'a' };
@@ -11,6 +11,7 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
   const [kahootAccion, setKahootAccion] = useState('');
   const [kahootError, setKahootError] = useState('');
   const [kahootGuardandoPregunta, setKahootGuardandoPregunta] = useState(false);
+  const kahootAutoAccionRef = useRef('');
 
   useEffect(() => {
     const id = window.setInterval(() => setKahootNow(Date.now()), 500);
@@ -31,7 +32,8 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
   const kahootInicio = kahoot?.iniciadaAt ? new Date(kahoot.iniciadaAt).getTime() : kahootNow;
   const kahootSegundos = kahootPreguntaActiva ? Math.max(0, 20 - Math.floor((kahootNow - kahootInicio) / 1000)) : 0;
   const kahootMiRespuesta = sesion.tipo === 'alumno' && kahootPreguntaActiva ? kahootRespuestas.find((respuesta) => respuesta.alumnoId === sesion.alumnoId) : null;
-  const kahootTodosRespondieron = kahootPreguntaActiva && estado.alumnos.length > 0 && kahootRespuestas.length >= estado.alumnos.length;
+  const kahootParticipantes = estado.alumnos || [];
+  const kahootTodosRespondieron = kahootPreguntaActiva && kahootParticipantes.length > 0 && kahootRespuestas.length >= kahootParticipantes.length;
   const kahootMostrarResultados = Boolean(kahootPreguntaActiva && (kahootSegundos <= 0 || kahootTodosRespondieron || kahootMiRespuesta || sesion.tipo === 'maestro'));
   const kahootConteos = KAHOOT_OPCIONES.reduce((resumen, opcion) => ({
     ...resumen,
@@ -204,6 +206,39 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
     setEstado(data);
     setMensaje('Nueva actividad Kahoot lista para preguntas.');
   };
+  useEffect(() => {
+    if (sesion.tipo !== 'maestro' || !kahootPreguntaActiva || kahootAccion === 'finalizar') return;
+
+    const preguntaActual = kahoot?.preguntaActual || 0;
+    const terminoTiempo = kahootSegundos <= 0;
+    const listoPorRespuestas = Boolean(kahootTodosRespondieron);
+    if (!terminoTiempo && !listoPorRespuestas) return;
+
+    const esUltimaPregunta = preguntaActual + 1 >= kahootPreguntas.length;
+    const accion = esUltimaPregunta ? 'finalizar' : 'siguiente';
+    const motivo = terminoTiempo ? 'tiempo' : 'respuestas';
+    const accionKey = `${kahoot?.id || 'kahoot'}:${kahootPreguntaActiva.id}:${accion}:${motivo}`;
+
+    if (kahootAutoAccionRef.current === accionKey) return;
+    kahootAutoAccionRef.current = accionKey;
+
+    const espera = listoPorRespuestas ? 700 : 1000;
+    const id = window.setTimeout(() => {
+      if (esUltimaPregunta) finalizarKahoot();
+      else siguientePreguntaKahoot();
+    }, espera);
+
+    return () => window.clearTimeout(id);
+  }, [
+    sesion.tipo,
+    kahoot?.id,
+    kahoot?.preguntaActual,
+    kahootPreguntaActiva,
+    kahootSegundos,
+    kahootTodosRespondieron,
+    kahootPreguntas.length,
+    kahootAccion
+  ]);
 
   const kahootFormPanel = (kahootPuedeAgregarPreguntas || kahootEditandoId) && (
     <form className='kahoot-form' onSubmit={crearPreguntaKahoot}>
