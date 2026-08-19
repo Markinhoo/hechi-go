@@ -10,6 +10,7 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
   const [kahootNow, setKahootNow] = useState(() => Date.now());
   const [kahootAccion, setKahootAccion] = useState('');
   const [kahootError, setKahootError] = useState('');
+  const [kahootGuardandoPregunta, setKahootGuardandoPregunta] = useState(false);
 
   useEffect(() => {
     const id = window.setInterval(() => setKahootNow(Date.now()), 500);
@@ -61,8 +62,15 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
 
   const crearPreguntaKahoot = async (event) => {
     event?.preventDefault?.();
+    if (kahootGuardandoPregunta) return;
+    setKahootError('');
     const campos = ['pregunta', 'opcionA', 'opcionB', 'opcionC', 'opcionD'];
-    if (campos.some((campo) => !kahootForm[campo].trim())) return setMensaje('Completa la pregunta y sus cuatro respuestas.');
+    if (campos.some((campo) => !kahootForm[campo].trim())) {
+      const mensaje = 'Completa la pregunta y sus cuatro respuestas.';
+      setKahootError(mensaje);
+      return setMensaje(mensaje);
+    }
+    setKahootGuardandoPregunta(true);
     await asegurarContextoKahoot();
     const payload = {
       p_token: sesion.token,
@@ -76,7 +84,11 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
       p_correcta: kahootForm.correcta
     };
     const { data, error } = await db.rpc(kahootEditandoId ? 'kahoot_modificar_pregunta' : 'kahoot_crear_pregunta', kahootEditandoId ? { ...payload, p_pregunta_id: kahootEditandoId } : payload);
-    if (error) return setMensaje(error.message);
+    setKahootGuardandoPregunta(false);
+    if (error) {
+      setKahootError(error.message);
+      return setMensaje('No se pudo guardar la pregunta: ' + error.message);
+    }
     setEstado(data);
     limpiarKahootForm();
     setMensaje(kahootEditandoId ? 'Pregunta actualizada.' : 'Pregunta agregada al Kahoot.');
@@ -204,7 +216,7 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
         </div>
       </div>
       <div className='kahoot-form-actions'>
-        <button type='submit'>{kahootEditandoId ? 'Guardar cambios' : 'Agregar pregunta'}</button>
+        <button type='submit' disabled={kahootGuardandoPregunta}>{kahootGuardandoPregunta ? 'Guardando...' : (kahootEditandoId ? 'Guardar cambios' : 'Agregar pregunta')}</button>
         {kahootEditandoId && <button type='button' className='ghost' onClick={limpiarKahootForm}>Cancelar edición</button>}
       </div>
     </form>
