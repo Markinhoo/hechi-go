@@ -20,9 +20,9 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
   const kahootPreguntas = kahoot?.preguntas || [];
   const kahootEnBorrador = kahoot?.estado === 'borrador';
   const kahootBorradorPropioAlumno = sesion.tipo === 'alumno' && kahootEnBorrador && kahoot?.creadorAlumnoId === sesion.alumnoId;
-  const kahootBorradorDelMaestro = sesion.tipo === 'maestro' && kahootEnBorrador && !kahoot?.creadorAlumnoId;
+  const kahootBorradorEditableMaestro = sesion.tipo === 'maestro' && kahootEnBorrador;
   const kahootPuedePreparar = !kahoot || kahoot.estado !== 'activa';
-  const kahootPuedeAgregarPreguntas = !kahoot || kahoot.estado === 'finalizada' || kahootBorradorPropioAlumno || kahootBorradorDelMaestro;
+  const kahootPuedeAgregarPreguntas = !kahoot || kahoot.estado === 'finalizada' || kahootBorradorPropioAlumno || kahootBorradorEditableMaestro;
   const kahootSubtitulo = kahootEnBorrador && kahoot?.creadorNombre ? 'Borrador de ' + kahoot.creadorNombre : (kahoot?.estado === 'finalizada' ? 'Actividad finalizada' : kahootPreguntas.length + ' preguntas listas');
   const kahootPreguntasBorrador = kahoot?.estado === 'borrador' ? kahootPreguntas : [];
   const kahootPreguntaActiva = kahoot?.estado === 'activa' ? kahootPreguntas[kahoot.preguntaActual] : null;
@@ -229,7 +229,7 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
   return (
     <section className='panel kahoot-panel student-tab-panel'>
       <div className='kahoot-heading'><span><strong>Kahoot mágico</strong><small>{kahootSubtitulo}</small></span>{kahoot?.estado && <b>{kahoot.estado}</b>}</div>
-      {kahootPuedePreparar && <p className='kahoot-note'>{kahoot?.estado === 'finalizada' ? 'Agrega una pregunta para comenzar una nueva actividad.' : (sesion.tipo === 'maestro' && kahootEnBorrador && kahoot?.creadorAlumnoId ? 'Revisa el borrador y autorízalo cuando esté listo.' : 'Agrega todas las preguntas que quieras antes de iniciar.')}</p>}
+      {kahootPuedePreparar && <p className='kahoot-note'>{kahoot?.estado === 'finalizada' ? 'Agrega una pregunta para comenzar una nueva actividad.' : (sesion.tipo === 'maestro' && kahootEnBorrador && kahoot?.creadorAlumnoId ? 'Revisa el borrador, agrega preguntas si hace falta y autorízalo cuando esté listo.' : 'Agrega todas las preguntas que quieras antes de iniciar.')}</p>}
       {kahootError && <p className='kahoot-error'>{kahootError}</p>}
       {kahootFormPanel}
       {kahootPuedePreparar && (
