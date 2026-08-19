@@ -26,22 +26,26 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
   const alumnosParaCompanero = useMemo(() => alumnosCompanero.filter((alumno) => alumno.id !== cartaActiva.alumnoId), [alumnosCompanero, cartaActiva.alumnoId]);
   const alumnosParaReplica = useMemo(() => alumnosReplica.filter((alumno) => alumno.id !== cartaActiva.alumnoId), [alumnosReplica, cartaActiva.alumnoId]);
   const alumnosParaRobo = useMemo(() => alumnosRobo.filter((alumno) => alumno.id !== cartaActiva.alumnoId), [alumnosRobo, cartaActiva.alumnoId]);
-  const alternarRobo = (alumnoId) => {
+  const alternarRobo = async (alumnoId) => {
     if (roboProcesando) return;
-    setRoboIds((actuales) => {
-      if (actuales.includes(alumnoId)) return actuales.filter((id) => id !== alumnoId);
-      if (actuales.length >= 5) return actuales;
-      const siguientes = [...actuales, alumnoId];
-      if (siguientes.length === 5) {
-        setRoboProcesando(true);
-        Promise.resolve(onSelectRobbery?.(siguientes))
-          .then((resultado) => {
-            if (resultado === false) setRoboProcesando(false);
-          })
-          .catch(() => setRoboProcesando(false));
+    if (roboIds.includes(alumnoId)) {
+      setRoboIds(roboIds.filter((id) => id !== alumnoId));
+      return;
+    }
+    if (roboIds.length >= 5) return;
+
+    const siguientes = [...roboIds, alumnoId];
+    setRoboIds(siguientes);
+
+    if (siguientes.length === 5) {
+      setRoboProcesando(true);
+      try {
+        const resultado = await onSelectRobbery?.(siguientes);
+        if (resultado === false) setRoboProcesando(false);
+      } catch {
+        setRoboProcesando(false);
       }
-      return siguientes;
-    });
+    }
   };
 
   if (!carta) return null;
