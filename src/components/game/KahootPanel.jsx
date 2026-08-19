@@ -206,6 +206,7 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
     setEstado(data);
     setMensaje('Nueva actividad Kahoot lista para preguntas.');
   };
+
   useEffect(() => {
     if (sesion.tipo !== 'maestro' || !kahootPreguntaActiva || kahootAccion === 'finalizar') return;
 
@@ -222,22 +223,53 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
     if (kahootAutoAccionRef.current === accionKey) return;
     kahootAutoAccionRef.current = accionKey;
 
-    const espera = listoPorRespuestas ? 700 : 1000;
-    const id = window.setTimeout(() => {
-      if (esUltimaPregunta) finalizarKahoot();
-      else siguientePreguntaKahoot();
-    }, espera);
+    const ejecutarAvanceAutomatico = async () => {
+      if (esUltimaPregunta) {
+        setKahootAccion('finalizar');
+        setKahootError('');
+        setMensaje('Premiando Kahoot...');
+        const ganadoresConAciertos = kahootRanking.filter((item) => item.aciertos > 0).slice(0, 3);
+        const { data, error } = await db.rpc('kahoot_finalizar', { p_token: sesion.token });
+        setKahootAccion('');
+        if (error) {
+          kahootAutoAccionRef.current = '';
+          setKahootError(error.message);
+          return setMensaje('No se pudo premiar el Kahoot: ' + error.message);
+        }
+        if (!data) {
+          kahootAutoAccionRef.current = '';
+          setKahootError('Supabase no devolvio informacion actualizada. Intenta actualizar la clase.');
+          return setMensaje('No se recibio respuesta al premiar el Kahoot.');
+        }
+        setEstado(data);
+        return setMensaje(ganadoresConAciertos.length > 0 ? 'Kahoot finalizado. Se repartieron oportunidades: 3, 2 y 1 carta.' : 'Kahoot finalizado. No hubo respuestas correctas para premiar.');
+      }
 
-    return () => window.clearTimeout(id);
+      const { data, error } = await db.rpc('kahoot_siguiente_pregunta', { p_token: sesion.token });
+      if (error) {
+        kahootAutoAccionRef.current = '';
+        setKahootError(error.message);
+        return setMensaje('No se pudo avanzar la pregunta: ' + error.message);
+      }
+      setEstado(data);
+      setKahootNow(Date.now());
+      setMensaje(listoPorRespuestas ? 'Todos respondieron. Siguiente pregunta.' : 'Tiempo terminado. Siguiente pregunta.');
+    };
+
+    ejecutarAvanceAutomatico();
   }, [
     sesion.tipo,
+    sesion.token,
     kahoot?.id,
     kahoot?.preguntaActual,
     kahootPreguntaActiva,
     kahootSegundos,
     kahootTodosRespondieron,
     kahootPreguntas.length,
-    kahootAccion
+    kahootAccion,
+    kahootRanking,
+    setEstado,
+    setMensaje
   ]);
 
   const kahootFormPanel = (kahootPuedeAgregarPreguntas || kahootEditandoId) && (
