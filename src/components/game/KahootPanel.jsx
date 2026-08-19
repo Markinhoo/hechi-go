@@ -121,13 +121,17 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
   };
 
   const reiniciarKahoot = async () => {
+    setKahootError('');
     await asegurarContextoKahoot();
     const { data, error } = await db.rpc('kahoot_reiniciar', {
       p_token: sesion.token,
       p_alumno_id: sesion.tipo === 'alumno' ? sesion.alumnoId : null,
       p_password: sesion.tipo === 'alumno' ? sesion.password : null
     });
-    if (error) return setMensaje(error.message);
+    if (error) {
+      setKahootError(error.message);
+      return setMensaje('No se pudo reiniciar el Kahoot: ' + error.message);
+    }
     limpiarKahootForm();
     setEstado(data);
     setMensaje('Kahoot reiniciado.');
@@ -135,8 +139,12 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
 
   const iniciarKahoot = async () => {
     if (sesion.tipo !== 'maestro') return;
+    setKahootError('');
     const { data, error } = await db.rpc('kahoot_iniciar', { p_token: sesion.token });
-    if (error) return setMensaje(error.message);
+    if (error) {
+      setKahootError(error.message);
+      return setMensaje('No se pudo iniciar el Kahoot: ' + error.message);
+    }
     setEstado(data);
     setKahootNow(Date.now());
     setMensaje('Kahoot iniciado. Los alumnos ya pueden responder.');
@@ -187,8 +195,12 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
 
   const nuevaActividadKahoot = async () => {
     if (sesion.tipo !== 'maestro') return;
+    setKahootError('');
     const { data, error } = await db.rpc('kahoot_nueva_actividad', { p_token: sesion.token });
-    if (error) return setMensaje(error.message);
+    if (error) {
+      setKahootError(error.message);
+      return setMensaje('No se pudo crear nueva actividad: ' + error.message);
+    }
     setEstado(data);
     setMensaje('Nueva actividad Kahoot lista para preguntas.');
   };
