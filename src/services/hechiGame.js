@@ -46,7 +46,7 @@ export async function cargarClase(userId) {
   if (!clase) {
     const { data: nuevaClase, error: crearError } = await db
       .from('clases')
-      .insert({ nombre: 'Clase HECHI GO' })
+      .insert({ nombre: 'La Copa de las Casas UTD' })
       .select('id, nombre, estado, created_at')
       .single();
 

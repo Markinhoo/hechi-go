@@ -1,63 +1,52 @@
-# HECHI GO
+# La Copa de las Casas UTD
 
-Aplicacion web independiente para usar las cartas HECHI como juego de participacion en clase.
+Aplicación web independiente para usar cartas mágicas como juego de participación en clase.
 
 ## Funciones
 
 - Login y registro con Supabase Auth.
-- Clases HECHI por usuario.
-- Registro de alumnos.
-- Puntos definidos por el maestro en cada participacion.
-- Carta aleatoria estilo coleccion, evitando repetir cartas hasta completar las 28.
-- Ranking por puntos.
-- Coleccion individual por alumno.
-- Historial de participaciones en Supabase.
-- Modo local temporal si la migracion aun no esta aplicada.
+- Clases por maestro y token por grupo.
+- Registro de alumnos con nombre, contraseña y casa asignada.
+- Autorización de participaciones por parte del maestro.
+- Cartas aleatorias con efectos sobre alumnos y casas.
+- Ranking por casas y alumnos.
+- Mochila de cartas guardables.
+- Historial de hechizos y puntajes en Supabase.
 
 ## Desarrollo local
 
-`ash
+```bash
 npm install
 npm run dev
-`
+```
 
-Copia .env.example a .env y configura:
+Copia `.env.example` a `.env` y configura:
 
-`	ext
+```text
 VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
 VITE_SUPABASE_ANON_KEY=tu_clave_anon_publica
-`
+```
 
 ## Supabase
 
-Aplica esta migracion en el SQL editor de Supabase o con Supabase CLI:
+La app usa el schema `hechi` de Supabase. No cambies ese nombre sin migrar también las funciones, tablas y políticas.
 
-`	ext
-supabase/migrations/20260710_hechi_go.sql
-`
-
-Crea las tablas:
-
-- hechi_clases
-- hechi_alumnos
-- hechi_participaciones
-
-Todas tienen RLS activo. Cada usuario autenticado solo ve y modifica sus propias clases.
+Aplica las migraciones en el SQL editor de Supabase o con Supabase CLI.
 
 ## Vercel
 
 En Vercel agrega estas variables de entorno:
 
-`	ext
+```text
 VITE_SUPABASE_URL
 VITE_SUPABASE_ANON_KEY
-`
+```
 
-El archivo ercel.json ya incluye el rewrite necesario para una app Vite/React.
+El archivo `vercel.json` incluye el rewrite necesario para una app Vite/React.
 
-## Comandos de verificacion
+## Comandos de verificación
 
-`ash
+```bash
 npm run lint
 npm run build
-`
+```
