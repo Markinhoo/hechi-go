@@ -12,6 +12,7 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
   const [kahootError, setKahootError] = useState('');
   const [kahootGuardandoPregunta, setKahootGuardandoPregunta] = useState(false);
   const kahootAutoAccionRef = useRef('');
+  const kahootInicioLocalRef = useRef({ preguntaId: '', inicio: 0 });
 
   useEffect(() => {
     const id = window.setInterval(() => setKahootNow(Date.now()), 500);
@@ -29,7 +30,8 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
   const kahootPreguntasBorrador = kahoot?.estado === 'borrador' ? kahootPreguntas : [];
   const kahootPreguntaActiva = kahoot?.estado === 'activa' ? kahootPreguntas[kahoot.preguntaActual] : null;
   const kahootRespuestas = kahootPreguntaActiva?.respuestas || [];
-  const kahootInicio = kahoot?.iniciadaAt ? new Date(kahoot.iniciadaAt).getTime() : kahootNow;
+  const kahootInicioLocal = kahootPreguntaActiva && kahootInicioLocalRef.current.preguntaId === kahootPreguntaActiva.id ? kahootInicioLocalRef.current.inicio : null;
+  const kahootInicio = kahootInicioLocal || (kahoot?.iniciadaAt ? new Date(kahoot.iniciadaAt).getTime() : kahootNow);
   const kahootSegundos = kahootPreguntaActiva ? Math.max(0, 20 - Math.floor((kahootNow - kahootInicio) / 1000)) : 0;
   const kahootMiRespuesta = sesion.tipo === 'alumno' && kahootPreguntaActiva ? kahootRespuestas.find((respuesta) => respuesta.alumnoId === sesion.alumnoId) : null;
   const kahootParticipantes = estado.alumnos || [];
@@ -60,6 +62,12 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
   const limpiarKahootForm = () => {
     setKahootForm(KAHOOT_FORM_INICIAL);
     setKahootEditandoId(null);
+  };
+
+  const registrarInicioLocalKahoot = (data) => {
+    const pregunta = data?.kahoot?.estado === 'activa' ? data.kahoot.preguntas?.[data.kahoot.preguntaActual || 0] : null;
+    if (!pregunta?.id) return;
+    kahootInicioLocalRef.current = { preguntaId: pregunta.id, inicio: Date.now() };
   };
 
   const crearPreguntaKahoot = async (event) => {
@@ -147,8 +155,9 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
       setKahootError(error.message);
       return setMensaje('No se pudo iniciar el Kahoot: ' + error.message);
     }
-    setEstado(data);
+    registrarInicioLocalKahoot(data);
     setKahootNow(Date.now());
+    setEstado(data);
     setMensaje('Kahoot iniciado. Los alumnos ya pueden responder.');
   };
 
@@ -170,8 +179,9 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
     if (sesion.tipo !== 'maestro') return;
     const { data, error } = await db.rpc('kahoot_siguiente_pregunta', { p_token: sesion.token });
     if (error) return setMensaje(error.message);
-    setEstado(data);
+    registrarInicioLocalKahoot(data);
     setKahootNow(Date.now());
+    setEstado(data);
     setMensaje('Siguiente pregunta.');
   };
 
@@ -211,6 +221,9 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
     if (sesion.tipo !== 'maestro' || !kahootPreguntaActiva || kahootAccion === 'finalizar') return;
 
     const preguntaActual = kahoot?.preguntaActual || 0;
+    const preguntaRecienIniciada = kahootInicioLocal && Date.now() - kahootInicioLocal < 1200;
+    if (preguntaRecienIniciada) return;
+
     const terminoTiempo = kahootSegundos <= 0;
     const listoPorRespuestas = Boolean(kahootTodosRespondieron);
     if (!terminoTiempo && !listoPorRespuestas) return;
@@ -251,8 +264,9 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
         setKahootError(error.message);
         return setMensaje('No se pudo avanzar la pregunta: ' + error.message);
       }
-      setEstado(data);
+      registrarInicioLocalKahoot(data);
       setKahootNow(Date.now());
+      setEstado(data);
       setMensaje(listoPorRespuestas ? 'Todos respondieron. Siguiente pregunta.' : 'Tiempo terminado. Siguiente pregunta.');
     };
 
@@ -263,6 +277,7 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
     kahoot?.id,
     kahoot?.preguntaActual,
     kahootPreguntaActiva,
+    kahootInicioLocal,
     kahootSegundos,
     kahootTodosRespondieron,
     kahootPreguntas.length,
