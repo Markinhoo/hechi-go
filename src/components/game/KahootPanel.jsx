@@ -54,6 +54,7 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
     };
     return resumen;
   }, {})).sort((a, b) => b.aciertos - a.aciertos || a.tiempo - b.tiempo);
+  const kahootGanadoresPremio = kahootRanking.filter((item) => item.aciertos > 0).slice(0, 3);
 
   const actualizarKahootForm = (campo, valor) => {
     setKahootForm((actual) => ({ ...actual, [campo]: valor }));
@@ -206,7 +207,7 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
       return setMensaje('No se recibio respuesta al premiar el Kahoot.');
     }
     setEstado(data);
-    setMensaje(ganadoresConAciertos.length > 0 ? 'Kahoot finalizado. Se repartieron oportunidades: 3, 2 y 1 carta.' : 'Kahoot finalizado. No hubo respuestas correctas para premiar.');
+    setMensaje(ganadoresConAciertos.length > 0 ? 'Kahoot finalizado. Se repartieron oportunidades solo a quienes tuvieron aciertos.' : 'Kahoot finalizado. No hubo respuestas correctas para premiar.');
   };
 
   const nuevaActividadKahoot = async () => {
@@ -240,7 +241,7 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
           return setMensaje('No se pudo cerrar el Kahoot: ' + error.message);
         }
         if (data) setEstado(data);
-        setMensaje('Kahoot finalizado. Se repartieron oportunidades: 3, 2 y 1 carta.');
+        setMensaje(kahootGanadoresPremio.length > 0 ? 'Kahoot finalizado. Se repartieron oportunidades solo a quienes tuvieron aciertos.' : 'Kahoot finalizado. No hubo respuestas correctas para premiar.');
       });
       return;
     }
@@ -287,7 +288,7 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
           return setMensaje('No se recibio respuesta al premiar el Kahoot.');
         }
         setEstado(data);
-        return setMensaje(ganadoresConAciertos.length > 0 ? 'Kahoot finalizado. Se repartieron oportunidades: 3, 2 y 1 carta.' : 'Kahoot finalizado. No hubo respuestas correctas para premiar.');
+        return setMensaje(ganadoresConAciertos.length > 0 ? 'Kahoot finalizado. Se repartieron oportunidades solo a quienes tuvieron aciertos.' : 'Kahoot finalizado. No hubo respuestas correctas para premiar.');
       }
 
       const { data, error } = await db.rpc('kahoot_siguiente_pregunta', { p_token: sesion.token });
@@ -421,8 +422,8 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
       {kahoot?.estado === 'finalizada' && (
         <div className='kahoot-ranking'>
           <h2>Ganadores</h2>
-          {kahootRanking.length === 0 && <p className='empty'>No hubo respuestas correctas.</p>}
-          {kahootRanking.slice(0, 3).map((item, index) => <article key={item.alumnoId}><strong>{index + 1}. {item.alumno}</strong><span>{item.aciertos} aciertos - premio: {index === 0 ? 3 : index === 1 ? 2 : 1} carta{index === 2 ? '' : 's'}</span></article>)}
+          {kahootGanadoresPremio.length === 0 && <p className='empty'>No hubo respuestas correctas para premiar.</p>}
+          {kahootGanadoresPremio.map((item, index) => <article key={item.alumnoId}><strong>{index + 1}. {item.alumno}</strong><span>{item.aciertos} acierto{item.aciertos === 1 ? '' : 's'} - premio: {index === 0 ? 3 : index === 1 ? 2 : 1} carta{index === 2 ? '' : 's'}</span></article>)}
           {sesion.tipo === 'maestro' && <button type='button' onClick={nuevaActividadKahoot}>Nueva actividad</button>}
         </div>
       )}

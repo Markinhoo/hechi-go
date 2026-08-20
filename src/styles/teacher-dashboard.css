@@ -3610,3 +3610,35 @@ button,
     line-height: 1.05 !important;
   }
 }
+
+/* Desktop teacher tab switcher: keep Inicio/Kahoot compact like the Kahoot view. */
+@media (min-width: 761px) {
+  .teacher-view .teacher-desktop-tab-switcher.student-tab-switcher {
+    width: min(100%, 430px) !important;
+    margin: 8px auto 12px !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    align-items: center !important;
+  }
+
+  .teacher-view .teacher-desktop-tab-switcher.student-tab-switcher button {
+    width: 100% !important;
+    min-height: 46px !important;
+    max-height: 54px !important;
+    padding: 8px 16px !important;
+    border-radius: 999px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    font-size: clamp(18px, 1.08vw, 21px) !important;
+    line-height: 1 !important;
+  }
+
+  .teacher-view .teacher-desktop-tab-switcher.student-tab-switcher svg {
+    width: 20px !important;
+    height: 20px !important;
+    flex: 0 0 auto !important;
+  }
+}
