@@ -3,6 +3,8 @@ import { db, supabase } from '../../services/hechiApi';
 
 const KAHOOT_FORM_INICIAL = { pregunta: '', opcionA: '', opcionB: '', opcionC: '', opcionD: '', correcta: 'a' };
 const KAHOOT_OPCIONES = ['a', 'b', 'c', 'd'];
+const KAHOOT_AUTO_LOCK_MS = 5000;
+let kahootAutoGlobalLock = { key: '', at: 0 };
 
 function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
   const [kahootForm, setKahootForm] = useState(KAHOOT_FORM_INICIAL);
@@ -28,7 +30,9 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
   const kahootPuedeAgregarPreguntas = !kahoot || kahoot.estado === 'finalizada' || kahootBorradorPropioAlumno || kahootBorradorEditableMaestro;
   const kahootSubtitulo = kahootEnBorrador && kahoot?.creadorNombre ? 'Borrador de ' + kahoot.creadorNombre : (kahoot?.estado === 'finalizada' ? 'Actividad finalizada' : kahootPreguntas.length + ' preguntas listas');
   const kahootPreguntasBorrador = kahoot?.estado === 'borrador' ? kahootPreguntas : [];
-  const kahootPreguntaActiva = kahoot?.estado === 'activa' ? kahootPreguntas[kahoot.preguntaActual] : null;
+  const kahootActiva = kahoot?.estado === 'activa';
+  const kahootPreguntaActiva = kahootActiva ? kahootPreguntas[kahoot.preguntaActual] : null;
+  const kahootActivaSinPregunta = kahootActiva && kahootPreguntas.length > 0 && !kahootPreguntaActiva;
   const kahootRespuestas = kahootPreguntaActiva?.respuestas || [];
   const kahootInicioLocal = kahootPreguntaActiva && kahootInicioLocalRef.current.preguntaId === kahootPreguntaActiva.id ? kahootInicioLocalRef.current.inicio : null;
   const kahootInicio = kahootInicioLocal || (kahoot?.iniciadaAt ? new Date(kahoot.iniciadaAt).getTime() : kahootNow);
@@ -218,7 +222,30 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
   };
 
   useEffect(() => {
-    if (sesion.tipo !== 'maestro' || !kahootPreguntaActiva || kahootAccion === 'finalizar') return;
+    if (sesion.tipo !== 'maestro' || kahootAccion === 'finalizar') return;
+
+    if (kahootActivaSinPregunta) {
+      const cierreKey = `${kahoot?.id || 'kahoot'}:sin-pregunta:finalizar`;
+      const ahora = Date.now();
+      if (kahootAutoAccionRef.current === cierreKey) return;
+      if (kahootAutoGlobalLock.key === cierreKey && ahora - kahootAutoGlobalLock.at < KAHOOT_AUTO_LOCK_MS) return;
+      kahootAutoAccionRef.current = cierreKey;
+      kahootAutoGlobalLock = { key: cierreKey, at: ahora };
+      setMensaje('Kahoot terminado. Cerrando actividad y premiando...');
+      db.rpc('kahoot_finalizar', { p_token: sesion.token }).then(({ data, error }) => {
+        if (error) {
+          kahootAutoGlobalLock = { key: '', at: 0 };
+          kahootAutoAccionRef.current = '';
+          setKahootError(error.message);
+          return setMensaje('No se pudo cerrar el Kahoot: ' + error.message);
+        }
+        if (data) setEstado(data);
+        setMensaje('Kahoot finalizado. Se repartieron oportunidades: 3, 2 y 1 carta.');
+      });
+      return;
+    }
+
+    if (!kahootPreguntaActiva) return;
 
     const preguntaActual = kahoot?.preguntaActual || 0;
     const preguntaRecienIniciada = kahootInicioLocal && Date.now() - kahootInicioLocal < 1200;
@@ -232,9 +259,12 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
     const accion = esUltimaPregunta ? 'finalizar' : 'siguiente';
     const motivo = terminoTiempo ? 'tiempo' : 'respuestas';
     const accionKey = `${kahoot?.id || 'kahoot'}:${kahootPreguntaActiva.id}:${accion}:${motivo}`;
+    const ahora = Date.now();
 
     if (kahootAutoAccionRef.current === accionKey) return;
+    if (kahootAutoGlobalLock.key === accionKey && ahora - kahootAutoGlobalLock.at < KAHOOT_AUTO_LOCK_MS) return;
     kahootAutoAccionRef.current = accionKey;
+    kahootAutoGlobalLock = { key: accionKey, at: ahora };
 
     const ejecutarAvanceAutomatico = async () => {
       if (esUltimaPregunta) {
@@ -245,11 +275,13 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
         const { data, error } = await db.rpc('kahoot_finalizar', { p_token: sesion.token });
         setKahootAccion('');
         if (error) {
+          kahootAutoGlobalLock = { key: '', at: 0 };
           kahootAutoAccionRef.current = '';
           setKahootError(error.message);
           return setMensaje('No se pudo premiar el Kahoot: ' + error.message);
         }
         if (!data) {
+          kahootAutoGlobalLock = { key: '', at: 0 };
           kahootAutoAccionRef.current = '';
           setKahootError('Supabase no devolvio informacion actualizada. Intenta actualizar la clase.');
           return setMensaje('No se recibio respuesta al premiar el Kahoot.');
@@ -260,6 +292,7 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
 
       const { data, error } = await db.rpc('kahoot_siguiente_pregunta', { p_token: sesion.token });
       if (error) {
+        kahootAutoGlobalLock = { key: '', at: 0 };
         kahootAutoAccionRef.current = '';
         setKahootError(error.message);
         return setMensaje('No se pudo avanzar la pregunta: ' + error.message);
@@ -277,6 +310,7 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
     kahoot?.id,
     kahoot?.preguntaActual,
     kahootPreguntaActiva,
+    kahootActivaSinPregunta,
     kahootInicioLocal,
     kahootSegundos,
     kahootTodosRespondieron,
@@ -357,6 +391,12 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
               {sesion.tipo === 'maestro' && <button type='button' onClick={iniciarKahoot}>Autorizar e iniciar</button>}
             </div>
           )}
+        </div>
+      )}
+      {kahootActivaSinPregunta && (
+        <div className='kahoot-live'>
+          <p className='kahoot-error'>El Kahoot quedo activo pero ya no hay una pregunta disponible. Se cerrara automaticamente para premiar.</p>
+          {sesion.tipo === 'maestro' && <button type='button' className='danger-soft' onClick={finalizarKahoot}>Finalizar y premiar ahora</button>}
         </div>
       )}
       {kahootPreguntaActiva && (
