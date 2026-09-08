@@ -2,7 +2,8 @@ import { useMemo, useRef, useState } from 'react';
 import { FaXmark } from 'react-icons/fa6';
 import { obtenerCasa } from '../../utils/gameUtils';
 
-function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [], alumnosPuntos = [], alumnosCompanero = [], alumnosReplica = [], alumnosRobo = [], onSelectRival, onSelectExchange, onSelectPointSwap, onSelectCompanionBonus, onSelectReplica, onSelectRobbery, onSelectJokeDecision }) {
+function CardModal({ carta, onClose, casasRivales = [], casaProtegida = null, alumnosIntercambio = [], alumnosPuntos = [], alumnosCompanero = [], alumnosReplica = [], alumnosRobo = [], onSelectRival, onSelectExchange, onSelectPointSwap, onSelectCompanionBonus, onSelectReplica, onSelectRobbery, onSelectJokeDecision }) {
+  const [modoImperio, setModoImperio] = useState(null);
   const [companeroId, setCompaneroId] = useState('');
   const [rivalId, setRivalId] = useState('');
   const [roboIds, setRoboIds] = useState([]);
@@ -21,9 +22,9 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
   const esperaDecisionChiste = cartaActiva.tipo === 'decisionChiste' && cartaActiva.pendienteDecisionChiste;
   const tieneDecisionPendiente = esperaRival || esperaIntercambio || esperaPuntosIntercambio || esperaCompaneroBonus || esperaReplicaPuntos || esperaRoboMultiple || esperaDecisionChiste;
   const miCasa = cartaActiva.casaId;
-  const alumnosMiCasa = useMemo(() => alumnosIntercambio.filter((alumno) => alumno.casaId === miCasa && alumno.id !== cartaActiva.alumnoId), [alumnosIntercambio, cartaActiva.alumnoId, miCasa]);
-  const alumnosRivales = useMemo(() => alumnosIntercambio.filter((alumno) => alumno.casaId !== miCasa), [alumnosIntercambio, miCasa]);
-  const casaPropiaDisponible = alumnosIntercambio.some((alumno) => alumno.id === cartaActiva.alumnoId);
+  const alumnosMiCasa = useMemo(() => alumnosIntercambio.filter((alumno) => alumno.casaId === miCasa && alumno.casaId !== casaProtegida && alumno.id !== cartaActiva.alumnoId), [alumnosIntercambio, cartaActiva.alumnoId, miCasa, casaProtegida]);
+  const alumnosRivales = useMemo(() => alumnosIntercambio.filter((alumno) => alumno.casaId !== miCasa && alumno.casaId !== casaProtegida), [alumnosIntercambio, miCasa, casaProtegida]);
+  const casaPropiaDisponible = alumnosIntercambio.some((alumno) => alumno.id === cartaActiva.alumnoId && alumno.casaId !== casaProtegida);
   const alumnosParaPuntos = useMemo(() => alumnosPuntos.filter((alumno) => alumno.id !== cartaActiva.alumnoId), [alumnosPuntos, cartaActiva.alumnoId]);
   const alumnosParaCompanero = useMemo(() => alumnosCompanero.filter((alumno) => alumno.id !== cartaActiva.alumnoId), [alumnosCompanero, cartaActiva.alumnoId]);
   const alumnosParaReplica = useMemo(() => alumnosReplica.filter((alumno) => alumno.id !== cartaActiva.alumnoId), [alumnosReplica, cartaActiva.alumnoId]);
@@ -58,7 +59,7 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
   if (!carta) return null;
 
   return (
-    <section className={'card-modal ' + (tieneDecisionPendiente ? 'has-options' : 'simple-card-modal') + (esperaRoboMultiple ? ' morsmordre-modal' : '')} role='dialog' aria-modal='true'>
+    <section className={'card-modal ' + (tieneDecisionPendiente ? 'has-options' : 'simple-card-modal') + (esperaRoboMultiple ? ' morsmordre-modal' : '') + (esperaIntercambio ? ' imperio-modal' : '')} role='dialog' aria-modal='true'>
       <button type='button' className='modal-close' onClick={onClose} aria-label='Cerrar carta'><FaXmark /></button>
       <div className={'modal-card-wrap ' + (!tieneDecisionPendiente ? 'clickable-card' : '')} onClick={!tieneDecisionPendiente ? onClose : undefined} title={!tieneDecisionPendiente ? 'Toca la carta para cerrar' : undefined}>
         <div className='modal-card-flip'>
@@ -90,31 +91,40 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
         )}
         {esperaIntercambio && (
           <div className='exchange-options' aria-label='Opciones de intercambio'>
-            <small>Elige como se hara el intercambio. No se puede usar una casa protegida.</small>
-            {!casaPropiaDisponible && <span>Tu casa esta protegida, asi que Imperio no puede mover alumnos de tu casa.</span>}
-            {casaPropiaDisponible && <div className='exchange-section'>
-              <strong>Intercambiarme yo</strong>
-              {alumnosRivales.length === 0 && <span>No hay alumnos disponibles de otra casa.</span>}
-              {alumnosRivales.map((alumno) => {
+            {!casaPropiaDisponible && <span>Tu casa está protegida y no puede intercambiar alumnos.</span>}
+            {!modoImperio && <div className='exchange-section'>
+              <strong>¿Qué quieres hacer?</strong>
+              <button type='button' className='exchange-choice' disabled={!casaPropiaDisponible} onClick={() => setModoImperio('yo')}>Cambiarme a otra casa</button>
+              <button type='button' className='exchange-choice' disabled={!casaPropiaDisponible || !alumnosMiCasa.length} onClick={() => setModoImperio('companero')}>Intercambiar a alguien de mi casa</button>
+              {!alumnosMiCasa.length && <span>No hay compañeros de tu casa disponibles.</span>}
+            </div>}
+            {modoImperio && <button type='button' className='exchange-apply' onClick={() => setModoImperio(null)}>Volver a las opciones</button>}
+            {modoImperio === 'yo' && <div className='exchange-section'>
+              <strong>Elige con quién cambiarte de casa</strong>
+              <small>Los alumnos de tu casa y de casas protegidas no se pueden elegir.</small>
+              {alumnosIntercambio.map((alumno) => {
                 const casaAlumno = obtenerCasa(alumno.casaId);
-                return (
-                  <button key={alumno.id} type='button' className='exchange-choice' style={{ '--house': casaAlumno.color, '--metal': casaAlumno.metal }} onClick={() => onSelectExchange?.({ origenId: carta.alumnoId, destinoId: alumno.id })}>
-                    Yo por {alumno.nombre} - {casaAlumno.nombre} - {alumno.puntos} pts
-                  </button>
-                );
+                const disponible = casaPropiaDisponible && alumno.casaId !== miCasa && alumno.casaId !== casaProtegida;
+                return <button key={alumno.id} type='button' className='exchange-choice' disabled={!disponible} style={{ '--house': casaAlumno.color, '--metal': casaAlumno.metal }} onClick={() => onSelectExchange?.({ origenId: carta.alumnoId, destinoId: alumno.id })}>
+                  {alumno.nombre} - {casaAlumno.nombre} - {alumno.puntos} pts
+                </button>;
               })}
             </div>}
-            {casaPropiaDisponible && <div className='exchange-section'>
-              <strong>Intercambiar a alguien de mi casa</strong>
-              <select value={companeroId} onChange={(event) => setCompaneroId(event.target.value)}>
-                <option value=''>Compañero de mi casa</option>
-                {alumnosMiCasa.map((alumno) => <option key={alumno.id} value={alumno.id}>{alumno.nombre} - {alumno.puntos} pts</option>)}
-              </select>
-              <select value={rivalId} onChange={(event) => setRivalId(event.target.value)}>
-                <option value=''>Alumno de otra casa</option>
-                {alumnosRivales.map((alumno) => <option key={alumno.id} value={alumno.id}>{alumno.nombre} - {obtenerCasa(alumno.casaId).nombre} - {alumno.puntos} pts</option>)}
-              </select>
-              <button type='button' className='exchange-apply' disabled={!companeroId || !rivalId} onClick={() => onSelectExchange?.({ origenId: companeroId, destinoId: rivalId })}>Aplicar intercambio</button>
+            {modoImperio === 'companero' && <div className='exchange-section'>
+              <strong>¿A quién intercambiarás y por quién?</strong>
+              <label>Compañero de mi casa
+                <select value={companeroId} onChange={(event) => setCompaneroId(event.target.value)}>
+                  <option value=''>Selecciona un compañero</option>
+                  {alumnosMiCasa.map((alumno) => <option key={alumno.id} value={alumno.id}>{alumno.nombre} - {alumno.puntos} pts</option>)}
+                </select>
+              </label>
+              <label>Alumno de otra casa
+                <select value={rivalId} onChange={(event) => setRivalId(event.target.value)}>
+                  <option value=''>Selecciona con quién intercambiar</option>
+                  {alumnosRivales.map((alumno) => <option key={alumno.id} value={alumno.id}>{alumno.nombre} - {obtenerCasa(alumno.casaId).nombre} - {alumno.puntos} pts</option>)}
+                </select>
+              </label>
+              <button type='button' className='exchange-apply' disabled={!alumnosMiCasa.some((a) => a.id === companeroId) || !alumnosRivales.some((a) => a.id === rivalId)} onClick={() => onSelectExchange?.({ origenId: companeroId, destinoId: rivalId })}>Aplicar intercambio</button>
             </div>}
           </div>
         )}

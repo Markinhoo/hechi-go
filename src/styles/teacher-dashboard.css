@@ -3642,3 +3642,13 @@ button,
     flex: 0 0 auto !important;
   }
 }
+/* Imperio: keep the illustration separate from the choice panel. */
+.card-modal.imperio-modal .exchange-choice:disabled { opacity: .45; cursor: not-allowed; }
+.card-modal.imperio-modal .exchange-section label { display: grid; gap: 5px; text-align: left; }
+@media (max-width: 760px) {
+  .card-modal.imperio-modal { display: flex !important; flex-direction: column; justify-content: flex-start !important; align-items: center; gap: 12px !important; padding: 16px 12px !important; overflow-y: auto !important; }
+  .card-modal.imperio-modal .modal-card-wrap { flex: 0 0 auto; width: min(48vw, 22dvh, 190px) !important; height: auto !important; max-height: none !important; aspect-ratio: 3/4; margin: 0 auto !important; }
+  .card-modal.imperio-modal .modal-effect { flex: 0 0 auto; width: min(94vw, 430px) !important; max-height: none !important; height: auto !important; overflow: visible !important; margin: 0 !important; padding: 12px !important; }
+  .card-modal.imperio-modal .exchange-options { max-height: none !important; overflow: visible !important; }
+  .card-modal.imperio-modal .exchange-choice { min-height: 44px; }
+}

@@ -27,16 +27,24 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const [accionMaestro, setAccionMaestro] = useState(null);
   const [accionError, setAccionError] = useState('');
   const [accionProcesando, setAccionProcesando] = useState(false);
+  const aperturaEnCurso = useRef(false);
+  const autorizacionesEnCurso = useRef(new Set());
   const autoAbrirRef = useRef(false);
   const abrirCartaRef = useRef(null);
   const flashSignalRef = useRef(null);
   const sobres = Array.from({ length: 7 }, (_, index) => index);
 
   const autorizar = async (alumnoId) => {
+    if (autorizacionesEnCurso.current.has(alumnoId)) return;
+    autorizacionesEnCurso.current.add(alumnoId);
+    try {
     const { data, error } = await db.rpc('autorizar_participacion', { p_token: sesion.token, p_alumno_id: alumnoId });
     if (error) return setMensaje(error.message);
     setEstado(data);
     setMensaje('Participacion autorizada.');
+    } finally {
+      autorizacionesEnCurso.current.delete(alumnoId);
+    }
   };
 
   const rechazar = async (alumnoId) => {
@@ -46,17 +54,17 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     setMensaje('Solicitud cancelada.');
   };
 
-  const solicitarCarta = async (abrirCuandoAutoricen = false) => {
+  const solicitarCarta = async (abrirCuandoAutoricen = false, saldoVerificado = false) => {
     if (sesion.tipo !== 'alumno') return;
     const alumno = estado.alumnos.find((item) => item.id === sesion.alumnoId);
     if (!alumno) return setMensaje('No encuentro tu usuario en esta clase.');
-    if (alumno.oportunidades > 0) {
+    if (!saldoVerificado && alumno.oportunidades > 0) {
       if (abrirCuandoAutoricen) abrirCarta();
       return setMensaje('Ya tienes una oportunidad autorizada. Ahora abre una carta.');
     }
     if (abrirCuandoAutoricen) autoAbrirRef.current = true;
     const { data, error } = await db.rpc('solicitar_carta', { p_token: sesion.token, p_alumno_id: sesion.alumnoId, p_password: sesion.password });
-    if (error) return setMensaje(error.message);
+    if (error) { autoAbrirRef.current = false; return setMensaje(error.message); }
     setEstado(data);
     setMensaje('Solicitud enviada al maestro. La carta se abrirá cuando autorice.');
   };
@@ -269,8 +277,27 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
 
   const abrirCarta = async (numeroElegido = null) => {
     if (sesion.tipo !== 'alumno') return setMensaje('Solo el alumno puede abrir su carta.');
-    const alumno = estado.alumnos.find((item) => item.id === sesion.alumnoId);
-    if (!alumno || alumno.oportunidades <= 0) return solicitarCarta(true);
+    if (aperturaEnCurso.current || cartaAbierta) return null;
+    aperturaEnCurso.current = true;
+    try {
+      const { data: vigente, error } = await db.rpc('cargar_clase_vista', {
+        p_token: sesion.token, p_alumno_id: sesion.alumnoId, p_password: sesion.password
+      });
+      if (error) return setMensaje(error.message);
+      const alumno = vigente?.alumnos?.find((item) => item.id === sesion.alumnoId);
+      if (!alumno) return setMensaje('No encuentro tu usuario en esta clase.');
+      setEstado(vigente);
+      if (!(Number(alumno.oportunidades) > 0)) return await solicitarCarta(true, true);
+      return await abrirCartaAutorizada(numeroElegido, alumno);
+    } catch (error) {
+      setMensaje(error.message || 'No se pudo verificar la autorización. Intenta de nuevo.');
+      return null;
+    } finally {
+      aperturaEnCurso.current = false;
+    }
+  };
+
+  const abrirCartaAutorizada = async (numeroElegido, alumno) => {
     if (!numeroElegido && puedeElegirCarta) {
       setMostrarSelectorCarta(true);
       setMensaje('Tu bestia legendaria te permite escoger cualquier carta.');
@@ -1134,7 +1161,8 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       {cartaAbierta && <CardModal
         carta={cartaAbierta}
         casasRivales={casas.filter((casa) => casa.id !== alumnoActual?.casaId && casa.id !== estado.casaProtegida)}
-        alumnosIntercambio={estado.alumnos.filter((alumno) => alumno.casaId !== estado.casaProtegida)}
+        alumnosIntercambio={estado.alumnos}
+        casaProtegida={estado.casaProtegida}
         alumnosPuntos={alumnosPuntosConfundo}
         alumnosCompanero={estado.alumnos}
         alumnosReplica={estado.alumnos.filter((alumno) => alumno.casaId !== estado.casaProtegida)}
