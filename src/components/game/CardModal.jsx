@@ -1,8 +1,39 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FaXmark } from 'react-icons/fa6';
 import { obtenerCasa } from '../../utils/gameUtils';
+import { detenerHechizo, guardarSonido, prepararAudio, reproducirHechizo, sonidoHabilitado } from '../../utils/spellAudio';
 
 function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [], alumnosPuntos = [], alumnosCompanero = [], alumnosReplica = [], alumnosRobo = [], onSelectRival, onSelectExchange, onSelectPointSwap, onSelectCompanionBonus, onSelectReplica, onSelectRobbery, onSelectJokeDecision }) {
+  const [audioActivo, setAudioActivo] = useState(sonidoHabilitado);
+  const numeroAudio = carta?.numero;
+  const tituloAudio = carta?.titulo;
+
+  useEffect(() => {
+    const preparar = () => { if (audioActivo) prepararAudio(); };
+    document.addEventListener('pointerdown', preparar);
+    document.addEventListener('keydown', preparar);
+    return () => {
+      document.removeEventListener('pointerdown', preparar);
+      document.removeEventListener('keydown', preparar);
+    };
+  }, [audioActivo]);
+
+  useEffect(() => {
+    if (!numeroAudio || !audioActivo) return;
+    const temporizador = setTimeout(() => reproducirHechizo(numeroAudio, tituloAudio), 350);
+    return () => {
+      clearTimeout(temporizador);
+      detenerHechizo();
+    };
+  }, [numeroAudio, tituloAudio, audioActivo]);
+
+  const alternarAudio = () => {
+    const habilitado = !audioActivo;
+    guardarSonido(habilitado);
+    if (habilitado) prepararAudio();
+    else detenerHechizo();
+    setAudioActivo(habilitado);
+  };
   const [companeroId, setCompaneroId] = useState('');
   const [rivalId, setRivalId] = useState('');
   const [roboIds, setRoboIds] = useState([]);
@@ -63,6 +94,10 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
         <span>{carta.titulo}</span>
         <h2>{puntosTexto}</h2>
         <p>{carta.descripcion}</p>
+        <div className='spell-audio-controls' aria-label='Sonido del hechizo'>
+          <button type='button' onClick={alternarAudio} aria-pressed={audioActivo}>{audioActivo ? 'Silenciar sonido' : 'Activar sonido'}</button>
+          <button type='button' disabled={!audioActivo} onClick={() => reproducirHechizo(carta.numero, carta.titulo)}>Repetir hechizo</button>
+        </div>
         {esperaRival && (
           <div className='rival-options' aria-label='Selecciona una casa rival'>
             <small>Elige la casa rival que perdera {Math.abs(carta.puntos)} puntos</small>
