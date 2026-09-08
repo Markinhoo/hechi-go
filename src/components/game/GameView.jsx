@@ -490,7 +490,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     if (!cartaAbierta || cartaAbierta.tipo !== 'roboMultiple' || !cartaAbierta.pendienteRoboMultiple) return false;
     if (!Array.isArray(objetivoIds) || objetivoIds.length !== 5) {
       setMensaje('Elige exactamente 5 alumnos.');
-      return false;
+      throw new Error('Elige exactamente 5 alumnos.');
     }
     const { data, error } = await db.rpc('morsmordre_robar_puntos', {
       p_token: sesion.token,
@@ -503,7 +503,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     });
     if (error) {
       setMensaje(error.message);
-      return false;
+      throw new Error(error.message);
     }
     setEstado(data);
     marcarFlashAlumnos(objetivoIds);
@@ -1131,7 +1131,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         onConfirm={confirmarAccionMaestro}
       />
 
-      <CardModal
+      {cartaAbierta && <CardModal
         carta={cartaAbierta}
         casasRivales={casas.filter((casa) => casa.id !== alumnoActual?.casaId && casa.id !== estado.casaProtegida)}
         alumnosIntercambio={estado.alumnos.filter((alumno) => alumno.casaId !== estado.casaProtegida)}
@@ -1156,7 +1156,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
           if (cartaAbierta?.pendienteDecisionChiste) return setMensaje('Primero elige si contarás el chiste de Riddikulus.');
           return setCartaAbierta(null);
         }}
-      />
+      />}
     </main>
   );
 }

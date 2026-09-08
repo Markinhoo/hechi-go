@@ -1,43 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { FaXmark } from 'react-icons/fa6';
 import { obtenerCasa } from '../../utils/gameUtils';
-import { detenerHechizo, guardarSonido, prepararAudio, reproducirHechizo, sonidoHabilitado } from '../../utils/spellAudio';
 
 function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [], alumnosPuntos = [], alumnosCompanero = [], alumnosReplica = [], alumnosRobo = [], onSelectRival, onSelectExchange, onSelectPointSwap, onSelectCompanionBonus, onSelectReplica, onSelectRobbery, onSelectJokeDecision }) {
-  const [audioActivo, setAudioActivo] = useState(sonidoHabilitado);
-  const numeroAudio = carta?.numero;
-  const tituloAudio = carta?.titulo;
-
-  useEffect(() => {
-    const preparar = () => { if (audioActivo) prepararAudio(); };
-    document.addEventListener('pointerdown', preparar);
-    document.addEventListener('keydown', preparar);
-    return () => {
-      document.removeEventListener('pointerdown', preparar);
-      document.removeEventListener('keydown', preparar);
-    };
-  }, [audioActivo]);
-
-  useEffect(() => {
-    if (!numeroAudio || !audioActivo) return;
-    const temporizador = setTimeout(() => reproducirHechizo(numeroAudio, tituloAudio), 350);
-    return () => {
-      clearTimeout(temporizador);
-      detenerHechizo();
-    };
-  }, [numeroAudio, tituloAudio, audioActivo]);
-
-  const alternarAudio = () => {
-    const habilitado = !audioActivo;
-    guardarSonido(habilitado);
-    if (habilitado) prepararAudio();
-    else detenerHechizo();
-    setAudioActivo(habilitado);
-  };
   const [companeroId, setCompaneroId] = useState('');
   const [rivalId, setRivalId] = useState('');
   const [roboIds, setRoboIds] = useState([]);
   const [roboProcesando, setRoboProcesando] = useState(false);
+  const [roboError, setRoboError] = useState('');
+  const roboEnCurso = useRef(false);
   const cartaActiva = carta || { casaId: 'gryffindor', tipo: '', puntos: 0, alumnoId: '' };
   const casa = obtenerCasa(cartaActiva.casaId);
   const puntosTexto = cartaActiva.tipo === 'proteccion' ? 'Protección activa' : (cartaActiva.tipo === 'intercambio' ? 'Intercambio mágico' : (cartaActiva.tipo === 'puntosIntercambio' ? 'Intercambio de puntos' : (cartaActiva.tipo === 'companeroBonus' ? 'Bonificación compartida' : (cartaActiva.tipo === 'replicaPuntos' ? 'Réplica de puntos' : (cartaActiva.tipo === 'roboMultiple' ? 'Robo de puntos' : (cartaActiva.tipo === 'decisionChiste' ? 'Decisión de chiste' : (cartaActiva.puntos > 0 ? '+' + cartaActiva.puntos + ' puntos' : String(cartaActiva.puntos) + ' puntos')))))));
@@ -57,28 +28,33 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
   const alumnosParaCompanero = useMemo(() => alumnosCompanero.filter((alumno) => alumno.id !== cartaActiva.alumnoId), [alumnosCompanero, cartaActiva.alumnoId]);
   const alumnosParaReplica = useMemo(() => alumnosReplica.filter((alumno) => alumno.id !== cartaActiva.alumnoId), [alumnosReplica, cartaActiva.alumnoId]);
   const alumnosParaRobo = useMemo(() => alumnosRobo.filter((alumno) => alumno.id !== cartaActiva.alumnoId), [alumnosRobo, cartaActiva.alumnoId]);
-  const alternarRobo = async (alumnoId) => {
-    if (roboProcesando) return;
+  const aplicarRobo = async (objetivoIds) => {
+    if (roboEnCurso.current || objetivoIds.length !== 5) return;
+    roboEnCurso.current = true;
+    setRoboProcesando(true);
+    setRoboError('');
+    try {
+      const resultado = await onSelectRobbery?.(objetivoIds);
+      if (resultado !== true) setRoboError('No se pudo aplicar Morsmordre. Revisa la seleccion e intenta de nuevo.');
+    } catch (error) {
+      setRoboError(error.message || 'No se pudo aplicar Morsmordre. Intenta de nuevo.');
+    } finally {
+      roboEnCurso.current = false;
+      setRoboProcesando(false);
+    }
+  };
+  const alternarRobo = (alumnoId) => {
+    if (roboEnCurso.current) return;
+    setRoboError('');
     if (roboIds.includes(alumnoId)) {
       setRoboIds(roboIds.filter((id) => id !== alumnoId));
       return;
     }
     if (roboIds.length >= 5) return;
-
     const siguientes = [...roboIds, alumnoId];
     setRoboIds(siguientes);
-
-    if (siguientes.length === 5) {
-      setRoboProcesando(true);
-      try {
-        const resultado = await onSelectRobbery?.(siguientes);
-        if (resultado === false) setRoboProcesando(false);
-      } catch {
-        setRoboProcesando(false);
-      }
-    }
+    if (siguientes.length === 5) void aplicarRobo(siguientes);
   };
-
   if (!carta) return null;
 
   return (
@@ -94,10 +70,6 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
         <span>{carta.titulo}</span>
         <h2>{puntosTexto}</h2>
         <p>{carta.descripcion}</p>
-        <div className='spell-audio-controls' aria-label='Sonido del hechizo'>
-          <button type='button' onClick={alternarAudio} aria-pressed={audioActivo}>{audioActivo ? 'Silenciar sonido' : 'Activar sonido'}</button>
-          <button type='button' disabled={!audioActivo} onClick={() => reproducirHechizo(carta.numero, carta.titulo)}>Repetir hechizo</button>
-        </div>
         {esperaRival && (
           <div className='rival-options' aria-label='Selecciona una casa rival'>
             <small>Elige la casa rival que perdera {Math.abs(carta.puntos)} puntos</small>
@@ -209,6 +181,8 @@ function CardModal({ carta, onClose, casasRivales = [], alumnosIntercambio = [],
                 );
               })}
             </div>
+            {roboError && <p role='alert'>{roboError}</p>}
+            {roboError && roboIds.length === 5 && <button type='button' className='exchange-apply' disabled={roboProcesando} onClick={() => aplicarRobo(roboIds)}>Reintentar Morsmordre</button>}
             <span className='morsmordre-counter'>{roboProcesando ? 'Aplicando Morsmordre...' : 'Seleccionados ' + roboIds.length + '/5. Al elegir el quinto se aplica automaticamente.'}</span>
           </div>
         )}
