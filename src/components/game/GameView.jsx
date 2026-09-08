@@ -4,6 +4,7 @@ import { bestiario, bonusGaleonesBestia, precioBestia, RAREZAS_BESTIARIO } from 
 import { CARTAS_ACTIVAS, casas, PLAYER_KEY } from '../../data/gameData';
 import { db } from '../../services/hechiApi';
 import { efectoCarta, elegirCartaAleatoria, guardarLocal, obtenerCasa } from '../../utils/gameUtils';
+import { calcularPuntajeCasa, penalizacionCasa } from '../../utils/houseScores';
 import ActionModal from '../ui/ActionModal';
 import CardModal from './CardModal';
 import KahootPanel from './KahootPanel';
@@ -234,7 +235,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     if (efecto.tipo === 'puntosIntercambio') return alumnosConfundoDisponibles(alumnoBase).length > 0;
     if (efecto.tipo === 'limpiaNegativos') {
       const casaId = alumnoBase?.casaId;
-      return Boolean(casaId && Number(estado.puntajesNegativos?.[casaId] || 0) < 0);
+      return Boolean(casaId && penalizacionCasa(estado, casaId) > 0);
     }
     return true;
   };
@@ -630,12 +631,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const salir = () => { setSesion(null); setEstado(null); setModo('inicio'); setCartaAbierta(null); setMensaje(''); };
   const alumnoActual = sesion.tipo === 'alumno' ? estado.alumnos.find((alumno) => alumno.id === sesion.alumnoId) : null;
   const casaActual = obtenerCasa(alumnoActual?.casaId);
-  const puntajeCasa = (casaId) => {
-    const positivos = estado.puntajesPositivos?.[casaId];
-    const negativos = estado.puntajesNegativos?.[casaId];
-    if (positivos !== undefined || negativos !== undefined) return (positivos ?? 0) - (negativos ?? 0);
-    return estado.puntajes?.[casaId] ?? 0;
-  };
+  const puntajeCasa = (casaId) => calcularPuntajeCasa(estado, casaId);
   const puntajesCasas = casas.map((casa) => ({ ...casa, puntos: puntajeCasa(casa.id) }));
   const maxPuntos = Math.max(...puntajesCasas.map((casa) => casa.puntos));
   const ganadoras = puntajesCasas.filter((casa) => casa.puntos === maxPuntos);
@@ -751,7 +747,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
           <strong>{puntajeCasa(casa.id)} pts</strong>
           <dl className='house-score-breakdown'>
             <div><dt>+</dt><dd>{estado.puntajesPositivos?.[casa.id] ?? estado.puntajes[casa.id]}</dd></div>
-            <div><dt>-</dt><dd>{estado.puntajesNegativos?.[casa.id] ?? 0}</dd></div>
+            <div><dt>-</dt><dd>{penalizacionCasa(estado, casa.id)}</dd></div>
             <div><dt>Total</dt><dd>{puntajeCasa(casa.id)}</dd></div>
           </dl>
           {estado.casaProtegida === casa.id && <em className='house-status protected'>Protegida</em>}
@@ -1037,7 +1033,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
               <div>
                 <span>Casa</span>
                 <h2 id='house-detail-title'>{casaDetalle.nombre}</h2>
-                <p>{alumnosCasaDetalle.length} alumnos - {estado.puntajes[casaDetalle.id] ?? 0} pts</p>
+                <p>{alumnosCasaDetalle.length} alumnos - {puntajeCasa(casaDetalle.id)} pts</p>
               </div>
             </header>
             <div className='house-detail-table-wrap'>
