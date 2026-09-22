@@ -2,7 +2,19 @@ import { useMemo, useRef, useState } from 'react';
 import { FaXmark } from 'react-icons/fa6';
 import { obtenerCasa } from '../../utils/gameUtils';
 
-function CardModal({ carta, onClose, casasRivales = [], casaProtegida = null, alumnosIntercambio = [], alumnosPuntos = [], alumnosCompanero = [], alumnosReplica = [], alumnosRobo = [], onSelectRival, onSelectExchange, onSelectPointSwap, onSelectCompanionBonus, onSelectReplica, onSelectRobbery, onSelectJokeDecision }) {
+function CardModal({ carta, onClose, casasRivales = [], casaProtegida = null, alumnosIntercambio = [], alumnosPuntos = [], alumnosCompanero = [], alumnosReplica = [], alumnosRobo = [], onSelectRival, onSelectExchange, onSelectPointSwap, onSelectCompanionBonus, onSelectReplica, onSelectRobbery }) {
+  const [companeroProcesando, setCompaneroProcesando] = useState(false);
+  const [companeroError, setCompaneroError] = useState('');
+  const companeroEnCurso = useRef(false);
+  const aplicarCompanero = async (id) => {
+    if (companeroEnCurso.current) return;
+    companeroEnCurso.current = true;
+    setCompaneroProcesando(true);
+    setCompaneroError('');
+    try { await onSelectCompanionBonus?.(id); }
+    catch (error) { setCompaneroError(error.message || 'No se pudo aplicar Amortentia.'); }
+    finally { companeroEnCurso.current = false; setCompaneroProcesando(false); }
+  };
   const [modoImperio, setModoImperio] = useState(null);
   const [companeroId, setCompaneroId] = useState('');
   const [rivalId, setRivalId] = useState('');
@@ -147,12 +159,13 @@ function CardModal({ carta, onClose, casasRivales = [], casaProtegida = null, al
         {esperaCompaneroBonus && (
           <div className='companion-bonus-options' aria-label='Elegir compañero'>
             <small>Elige un compañero: ambos ganan +2 puntos.</small>
+            {companeroError && <p role='alert'>{companeroError}</p>}
             {alumnosParaCompanero.length === 0 && <span>No hay otro compañero disponible.</span>}
             <div>
               {alumnosParaCompanero.map((alumno) => {
                 const casaAlumno = obtenerCasa(alumno.casaId);
                 return (
-                  <button key={alumno.id} type='button' className='companion-bonus-choice' style={{ '--house': casaAlumno.color, '--metal': casaAlumno.metal }} onClick={() => onSelectCompanionBonus?.(alumno.id)}>
+                  <button key={alumno.id} type='button' disabled={companeroProcesando} className='companion-bonus-choice' style={{ '--house': casaAlumno.color, '--metal': casaAlumno.metal }} onClick={() => aplicarCompanero(alumno.id)}>
                     {alumno.nombre} - {casaAlumno.nombre} - {alumno.puntos} pts
                   </button>
                 );
@@ -197,12 +210,9 @@ function CardModal({ carta, onClose, casasRivales = [], casaProtegida = null, al
           </div>
         )}
         {esperaDecisionChiste && (
-          <div className='joke-decision-options' aria-label='Decisión de Riddikulus'>
-            <small>Pasa al frente a contar un chiste frente al salón.</small>
-            <div>
-              <button type='button' className='joke-choice accept' onClick={() => onSelectJokeDecision?.(true)}>Sí, contar chiste (+2)</button>
-              <button type='button' className='joke-choice reject' onClick={() => onSelectJokeDecision?.(false)}>No, me niego (-2)</button>
-            </div>
+          <div className='joke-decision-options' aria-label='Revisión de Riddikulus'>
+            <small>Cuenta tu chiste frente al salón. Solo el maestro puede confirmar si lo contaste y asignar los puntos.</small>
+            <button type='button' className='joke-choice' onClick={onClose}>Entendido, esperar al maestro</button>
           </div>
         )}
       </article>

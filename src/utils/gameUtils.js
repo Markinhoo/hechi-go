@@ -1,23 +1,10 @@
-import { CARTAS_PROBABILIDAD, TOTAL_PESO_CARTAS, casas, efectosCartas } from '../data/gameData';
+import { CARTAS_ACTIVAS, casas, efectosCartas } from '../data/gameData';
 
-export function randomEntero(maximo) {
-  const valores = new Uint32Array(1);
-  crypto.getRandomValues(valores);
-  return valores[0] % maximo;
-}
+import { randomEntero, sortearCarta } from './cardRandom';
+export { randomEntero } from './cardRandom';
 
-export function elegirCartaAleatoria(disponibles = null) {
-  const permitidas = disponibles ? new Set(disponibles) : null;
-  const candidatas = permitidas ? CARTAS_PROBABILIDAD.filter((carta) => permitidas.has(carta.numero)) : CARTAS_PROBABILIDAD;
-  const totalPeso = candidatas.reduce((total, carta) => total + carta.peso, 0) || TOTAL_PESO_CARTAS;
-  let tiro = randomEntero(totalPeso);
-
-  for (const carta of candidatas.length ? candidatas : CARTAS_PROBABILIDAD) {
-    if (tiro < carta.peso) return carta.numero;
-    tiro -= carta.peso;
-  }
-
-  return CARTAS_PROBABILIDAD[0].numero;
+export function elegirCartaAleatoria(disponibles = CARTAS_ACTIVAS) {
+  return sortearCarta(CARTAS_ACTIVAS, disponibles ?? CARTAS_ACTIVAS);
 }
 
 export function generarToken() {

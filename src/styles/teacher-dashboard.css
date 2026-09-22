@@ -3652,3 +3652,28 @@ button,
   .card-modal.imperio-modal .exchange-options { max-height: none !important; overflow: visible !important; }
   .card-modal.imperio-modal .exchange-choice { min-height: 44px; }
 }
+
+.teacher-joke-board { margin-bottom: 20px; }
+.teacher-joke-row { display: grid; gap: 10px; padding: 12px; margin: 10px 0; border: 1px solid #c99445; border-radius: 10px; }
+.teacher-joke-row > div { display: flex; gap: 8px; flex-wrap: wrap; }
+.teacher-joke-row button { min-height: 44px; padding: 10px; border-radius: 8px; cursor: pointer; }
+.teacher-joke-row button:disabled { opacity: .5; cursor: wait; }
+@media(max-width:760px) {
+  .teacher-mobile-tabs-area .roster { display: block !important; width: 100%; height: auto; max-height: none; margin-top: 16px; }
+  .teacher-mobile-tabs-area .student-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .teacher-mobile-tabs-area .student-search { display: grid; }
+}
+
+.teacher-points-control { display: grid; gap: 7px; flex: 1 1 100%; min-width: 0; padding: 10px; border: 1px solid var(--metal, #c99445); border-radius: 10px; background: rgba(0,0,0,.15); }
+.teacher-points-control > span { font-weight: 800; }
+.teacher-points-control .teacher-points-stepper { display: grid; grid-template-columns: 44px minmax(60px,1fr) 44px; align-items: stretch; gap: 6px; }
+.teacher-points-control .teacher-points-stepper button, .teacher-points-control .teacher-points-stepper input { min-width: 0; min-height: 44px; width: 100%; margin: 0; padding: 5px; border: 1px solid #c99445; border-radius: 8px; background: #fff4d5; color: #2b160d; text-align: center; font-size: 22px; }
+.teacher-points-control input { appearance: textfield; -moz-appearance: textfield; }
+.teacher-points-control input::-webkit-inner-spin-button, .teacher-points-control input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.teacher-points-control .teacher-points-apply { min-height: 44px; border-radius: 8px; background: #ffd66d; color: #2b160d; font-weight: 800; }
+.teacher-points-control button:disabled { opacity: .45; cursor: not-allowed; }
+.teacher-points-control [role=alert] { color: #ffc4b5; }
+
+.teacher-view .student-carousel-card > .student-actions { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; grid-auto-rows: auto !important; height: auto !important; max-height: none !important; }
+.teacher-view .student-actions > .teacher-points-control { min-height: max-content; height: auto; }
+.teacher-view .teacher-points-control [role=alert] { color: #8f1628; }

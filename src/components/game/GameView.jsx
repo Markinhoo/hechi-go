@@ -8,6 +8,7 @@ import { calcularPuntajeCasa, penalizacionCasa } from '../../utils/houseScores';
 import ActionModal from '../ui/ActionModal';
 import CardModal from './CardModal';
 import KahootPanel from './KahootPanel';
+import TeacherPointsControl from './TeacherPointsControl';
 
 function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setMensaje, onCameraFlash }) {
   const [arrastre, setArrastre] = useState({ activo: false, inicio: 0, inicioY: 0, startPos: 0, lastX: 0, lastTime: 0, velocity: 0 });
@@ -23,6 +24,10 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const [mostrarSelectorCarta, setMostrarSelectorCarta] = useState(false);
   const [selectorCartaProcesando, setSelectorCartaProcesando] = useState(false);
   const [studentTab, setStudentTab] = useState('inicio');
+  const [chistesPendientes, setChistesPendientes] = useState([]);
+  const [errorChistes, setErrorChistes] = useState('');
+  const [chisteProcesando, setChisteProcesando] = useState(null);
+  const chisteEnCurso = useRef(false);
   const [teacherTab, setTeacherTab] = useState('inicio');
   const [accionMaestro, setAccionMaestro] = useState(null);
   const [accionError, setAccionError] = useState('');
@@ -103,22 +108,6 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         setMensaje('Contraseña restablecida para ' + accionMaestro.alumno.nombre + '.');
       }
 
-      if (accionMaestro.tipo === 'quitar-puntos') {
-        const puntos = Math.floor(Number(valores.puntos));
-        if (!Number.isFinite(puntos) || puntos <= 0) {
-          setAccionError('Escribe una cantidad válida mayor a 0.');
-          return;
-        }
-        setMensaje('Quitando ' + puntos + ' puntos a ' + accionMaestro.alumno.nombre + '...');
-        const { data, error } = await db.rpc('quitar_puntos_alumno', { p_token: sesion.token, p_alumno_id: accionMaestro.alumno.id, p_puntos: puntos });
-        if (error) {
-          setAccionError(error.message);
-          return;
-        }
-        setEstado(data);
-        setMensaje('Se quitaron puntos a ' + accionMaestro.alumno.nombre + '.');
-      }
-
       if (accionMaestro.tipo === 'eliminar-alumno') {
         const { data, error } = await db.rpc('eliminar_alumno', { p_token: sesion.token, p_alumno_id: accionMaestro.alumno.id });
         if (error) {
@@ -165,6 +154,16 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     } finally {
       setAccionProcesando(false);
     }
+  };
+
+  const ajustarPuntosAlumno = async (alumno, puntos) => {
+    if (sesion.tipo !== 'maestro') throw new Error('Solo el maestro puede ajustar puntos.');
+    const { data, error } = await db.rpc('ajustar_puntos_alumno', {
+      p_token: sesion.token, p_alumno_id: alumno.id, p_puntos: puntos
+    });
+    if (error) throw new Error(error.message);
+    setEstado(data);
+    setMensaje((puntos > 0 ? '+' : '') + puntos + ' puntos para ' + alumno.nombre + ' y su casa.');
   };
 
   const cambiarPasswordPropia = async (event) => {
@@ -370,8 +369,13 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       return null;
     }
     if (efecto.tipo === 'decisionChiste') {
+      const { data, error } = await db.rpc('riddikulus_solicitar', {
+        p_token: sesion.token, p_alumno_id: sesion.alumnoId, p_password: sesion.password
+      });
+      if (error) return setMensaje(error.message);
+      setEstado(data);
       setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteDecisionChiste: true });
-      setMensaje('Riddikulus: pasa al frente a contar un chiste.');
+      setMensaje('Riddikulus: cuenta tu chiste. El maestro decidirá si corresponde sumar o restar puntos.');
       return null;
     }
     if (efecto.tipo === 'otrasCasas') {
@@ -483,7 +487,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       p_descripcion: cartaAbierta.descripcion,
       p_companero_id: companeroId
     });
-    if (error) return setMensaje(error.message);
+    if (error) throw new Error(error.message);
     const companero = estado.alumnos.find((alumno) => alumno.id === companeroId);
     const puntos = data?.historial?.[0]?.puntos || 2;
     setEstado(data);
@@ -539,22 +543,47 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     return true;
   };
 
-  const seleccionarDecisionChiste = async (acepta) => {
-    if (!cartaAbierta || cartaAbierta.tipo !== 'decisionChiste' || !cartaAbierta.pendienteDecisionChiste) return;
-    const { data, error } = await db.rpc('riddikulus_decision_chiste', {
-      p_token: sesion.token,
-      p_alumno_id: sesion.alumnoId,
-      p_password: sesion.password,
-      p_numero: cartaAbierta.numero,
-      p_titulo: cartaAbierta.titulo,
-      p_descripcion: cartaAbierta.descripcion,
-      p_acepta: acepta
-    });
-    if (error) return setMensaje(error.message);
-    setEstado(data);
-    setCartaAbierta(null);
-    setMensaje(acepta ? 'Riddikulus sumó +2 por contar el chiste.' : 'Riddikulus restó -2 por negarse a contar el chiste.');
+  const seleccionarDecisionChiste = async (alumnoId, acepta) => {
+    if (sesion.tipo !== 'maestro' || chisteEnCurso.current) return;
+    chisteEnCurso.current = true;
+    setChisteProcesando(alumnoId);
+    try {
+      const { data, error } = await db.rpc('riddikulus_decision_chiste', {
+        p_token: sesion.token, p_alumno_id: alumnoId, p_password: null,
+        p_numero: 15, p_titulo: 'Riddikulus', p_descripcion: '', p_acepta: acepta
+      });
+      if (error) throw error;
+      setEstado(data);
+      setChistesPendientes((actuales) => actuales.filter((item) => item.alumnoId !== alumnoId));
+      setErrorChistes('');
+      setMensaje(acepta ? 'Chiste confirmado: +2 puntos.' : 'Chiste no contado: -2 puntos.');
+    } catch (error) {
+      setErrorChistes(error.message || 'No se pudo guardar la decisión.');
+    } finally {
+      chisteEnCurso.current = false;
+      setChisteProcesando(null);
+    }
   };
+
+  useEffect(() => {
+    if (sesion.tipo !== 'maestro') return;
+    let cancelado = false;
+    let temporizador;
+    const actualizar = async () => {
+      try {
+        const { data, error } = await db.rpc('riddikulus_pendientes', { p_token: sesion.token });
+        if (cancelado) return;
+        if (error) setErrorChistes('No se pudieron cargar los chistes pendientes. Verifica la migración de Riddikulus en Supabase.');
+        else if (!chisteEnCurso.current) { setChistesPendientes(data || []); }
+      } catch {
+        if (!cancelado) setErrorChistes('No se pudieron cargar los chistes pendientes.');
+      } finally {
+        if (!cancelado) temporizador = window.setTimeout(actualizar, 1500);
+      }
+    };
+    actualizar();
+    return () => { cancelado = true; window.clearTimeout(temporizador); };
+  }, [sesion.tipo, sesion.token]);
 
   const usarCartaGuardada = async (carta) => {
     if (sesion.tipo !== 'alumno') return;
@@ -811,7 +840,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
             <b>{alumnoCarrusel.puntos} pts</b>
             <div className='student-actions'>
               <button type='button' className='authorize password' onClick={() => abrirAccionMaestro({ tipo: 'password', alumno: alumnoCarrusel })}>Cambiar contraseña</button>
-              <button type='button' className='authorize remove-points' onClick={() => abrirAccionMaestro({ tipo: 'quitar-puntos', alumno: alumnoCarrusel })}>Quitar puntos</button>
+              <TeacherPointsControl key={alumnoCarrusel.id} alumno={alumnoCarrusel} onApply={ajustarPuntosAlumno} />
               <button type='button' className='authorize delete-student' onClick={() => abrirAccionMaestro({ tipo: 'eliminar-alumno', alumno: alumnoCarrusel })}>Eliminar</button>
             </div>
           </div>
@@ -828,6 +857,18 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   );
   const requestsPanel = (
     <section className='pack-stage teacher-requests-stage'>
+      <div className='teacher-joke-board'>
+        <h2>Chistes pendientes · Riddikulus</h2>
+        {errorChistes && <p role='alert'>{errorChistes}</p>}
+        {!chistesPendientes.length && !errorChistes && <p>No hay chistes pendientes.</p>}
+        {chistesPendientes.map((item) => <article className='teacher-joke-row' key={item.alumnoId}>
+          <strong>{item.alumno} · {obtenerCasa(item.casaId).nombre}</strong>
+          <div>
+            <button type='button' disabled={chisteProcesando !== null} onClick={() => seleccionarDecisionChiste(item.alumnoId, true)}>Sí contó el chiste (+2)</button>
+            <button type='button' disabled={chisteProcesando !== null} onClick={() => seleccionarDecisionChiste(item.alumnoId, false)}>No contó el chiste (-2)</button>
+          </div>
+        </article>)}
+      </div>
       <div className='request-board'>
         <span className='eyebrow'><FaWandMagicSparkles /> Solicitudes de carta</span>
         <h2>Permisos pendientes</h2>
@@ -871,16 +912,6 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         description: 'Restablece la contraseña de acceso de este alumno.',
         confirmText: 'Guardar contraseña',
         fields: [{ name: 'password', label: 'Nueva contraseña', type: 'password', defaultValue: '12345', minLength: '3', autoFocus: true, autoComplete: 'new-password' }]
-      };
-    }
-    if (accionMaestro.tipo === 'quitar-puntos') {
-      return {
-        title: 'Quitar puntos',
-        eyebrow: accionMaestro.alumno.nombre,
-        description: 'La cantidad se restará del puntaje del alumno y de su casa.',
-        confirmText: 'Quitar puntos',
-        variant: 'warning',
-        fields: [{ name: 'puntos', label: 'Puntos a quitar', type: 'number', defaultValue: '1', min: '1', autoFocus: true }]
       };
     }
     if (accionMaestro.tipo === 'eliminar-alumno') {
@@ -1043,7 +1074,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
                 </button>
               ))}
             </div>
-            {teacherTab === 'inicio' && requestsPanel}
+            {teacherTab === 'inicio' && <>{requestsPanel}{rosterPanel}</>}
             {teacherTab === 'puntajes' && houseBoard}
             {teacherTab === 'hechizos' && historyPanel}
             {teacherTab === 'kahoot' && kahootPanel}
@@ -1173,7 +1204,6 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         onSelectCompanionBonus={seleccionarCompaneroBonus}
         onSelectReplica={seleccionarReplicaPuntos}
         onSelectRobbery={seleccionarRoboMultiple}
-        onSelectJokeDecision={seleccionarDecisionChiste}
         onClose={() => {
           if (cartaAbierta?.pendienteRival) return setMensaje('Primero elige la casa rival para aplicar la carta.');
           if (cartaAbierta?.pendienteIntercambio) return setMensaje('Primero completa el intercambio de Imperio.');
@@ -1181,7 +1211,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
           if (cartaAbierta?.pendienteCompaneroBonus) return setMensaje('Primero elige el compañero para Amortentia.');
           if (cartaAbierta?.pendienteReplicaPuntos) return setMensaje('Primero elige el alumno para Multijugos.');
           if (cartaAbierta?.pendienteRoboMultiple) return setMensaje('Primero elige 5 alumnos para Morsmordre.');
-          if (cartaAbierta?.pendienteDecisionChiste) return setMensaje('Primero elige si contarás el chiste de Riddikulus.');
+
           return setCartaAbierta(null);
         }}
       />}
