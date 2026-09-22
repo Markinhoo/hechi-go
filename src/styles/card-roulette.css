@@ -1,0 +1,59 @@
+.card-roulette {
+  --spin-color: #b6bfce;
+  --roulette-width: clamp(116px, 34vw, 200px);
+  position: fixed; inset: 0; z-index: 90; isolation: isolate;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: max(28px, env(safe-area-inset-top)) 0 max(22px, env(safe-area-inset-bottom));
+  overflow: auto; color: #fff8e9; background: #0c0914; outline: none;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+.roulette-ambient { position: absolute; z-index: -1; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 48%, color-mix(in srgb, var(--spin-color) 24%, transparent), transparent 64%), linear-gradient(160deg, #20142955, transparent 50%, #05040a); transition: background .3s; }
+.card-roulette::before { content: ''; position: absolute; inset: 14px; border: 1px solid #ffffff12; border-radius: 20px; pointer-events: none; }
+.roulette-heading { text-align: center; padding: 0 24px; z-index: 1; }
+.roulette-eyebrow { display: block; color: #b5a792; font: 600 10px/1.5 system-ui, sans-serif; letter-spacing: .28em; margin-bottom: 14px; }
+.roulette-heading h2 { font-size: clamp(24px, 4vw, 42px); line-height: 1.12; font-weight: 500; margin: 0; color: #fff4dd; }
+.roulette-heading p { font: 13px/1.5 system-ui, sans-serif; color: #b5adbf; margin: 12px 0 0; }
+.roulette-stage { position: relative; flex: 0 0 auto; width: min(100%, 1100px); height: calc(var(--roulette-width) * 4 / 3 + 126px); margin-top: 18px; }
+.roulette-window { position: absolute; inset: 0; overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent); }
+.roulette-track { position: absolute; top: 43px; left: 50%; display: flex; gap: 20px; width: max-content; will-change: transform; }
+.roulette-card { position: relative; flex: 0 0 var(--roulette-width); width: var(--roulette-width); padding: 0; border-radius: 13px; opacity: .65; transform: scale(.94); transition: opacity .12s, filter .12s, transform .12s; }
+.roulette-card img { display: block; width: 100%; aspect-ratio: 3/4; object-fit: cover; border: 2px solid var(--card-glow); border-radius: 13px; box-shadow: 0 0 18px color-mix(in srgb, var(--card-glow) 25%, transparent); background: #211b29; }
+.roulette-card > span { display: block; margin-top: 12px; color: var(--card-glow); font: 600 10px/1 system-ui, sans-serif; text-align: center; letter-spacing: .12em; text-transform: uppercase; }
+.roulette-card.under-pointer { opacity: 1; transform: scale(1); }
+.roulette-card.under-pointer img { box-shadow: 0 0 32px color-mix(in srgb, var(--card-glow) 40%, transparent), 0 16px 30px #0008; }
+.roulette-pointer { position: absolute; left: 50%; top: 5px; transform: translateX(-50%); width: 30px; height: 35px; z-index: 3; filter: drop-shadow(0 0 10px var(--spin-color)); }
+.roulette-pointer svg { width: 100%; height: 100%; fill: #fff4dc; stroke: var(--spin-color); stroke-width: 2; }
+.roulette-center-line { position: absolute; z-index: 2; top: 40px; bottom: 52px; left: 50%; width: 1px; background: linear-gradient(var(--spin-color), transparent 20%, transparent 80%, var(--spin-color)); opacity: .65; pointer-events: none; }
+.roulette-status { position: relative; display: grid; justify-items: center; gap: 10px; text-align: center; padding: 0 22px; min-height: 96px; }
+.roulette-tier { color: var(--spin-color); border: 1px solid color-mix(in srgb, var(--spin-color) 35%, transparent); border-radius: 20px; padding: 6px 14px; font: 600 10px/1 system-ui, sans-serif; letter-spacing: .15em; text-transform: uppercase; }
+.roulette-status strong { font-size: clamp(22px, 4vw, 34px); color: #fff4dd; font-weight: 500; }
+.roulette-result-tier { font: 12px/1.4 system-ui, sans-serif; color: #a9a0b6; }
+.roulette-progress { flex-shrink: 0; width: min(180px, 46vw); height: 2px; background: #ffffff14; margin: 22px 0; overflow: hidden; }
+.roulette-progress span { display: block; height: 100%; width: 100%; transform: scaleX(0); transform-origin: left; background: var(--spin-color); }
+.roulette-footer { text-align: center; padding: 0 16px; }
+.roulette-legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; font: 11px/1.4 system-ui, sans-serif; color: #bcb3c5; }
+.roulette-legend > span { display: flex; align-items: center; gap: 5px; }
+.roulette-legend i { width: 5px; height: 5px; border-radius: 50%; background: var(--legend-color); box-shadow: 0 0 7px var(--legend-color); }
+.roulette-skip { display: inline-block; padding: 12px 18px; min-height: 44px; margin-top: 16px; border: 1px solid #ffffff1c; border-radius: 24px; background: #ffffff06; color: #c9c0d1; font: 12px system-ui, sans-serif; cursor: pointer; }
+.roulette-skip:hover { background: #ffffff12; color: #fff; }
+.roulette-skip:focus-visible { outline: 2px solid #ffd166; outline-offset: 4px; }
+.card-roulette.is-resultado .roulette-card:not(.under-pointer) { opacity: .22; filter: saturate(.4); }
+.card-roulette.is-resultado .roulette-status strong { color: var(--spin-color); text-shadow: 0 0 25px color-mix(in srgb, var(--spin-color) 30%, transparent); }
+.card-modal[data-revealed=true] { background: radial-gradient(ellipse at 50% 35%, color-mix(in srgb, var(--rarity-glow) 23%, transparent), transparent 65%), rgba(6,4,10,.94); }
+.card-modal[data-revealed=true] .modal-card-flip { animation: none !important; transform: none !important; }
+.card-modal[data-revealed=true] .modal-card-front img { border-color: var(--rarity-glow); box-shadow: 0 0 45px color-mix(in srgb, var(--rarity-glow) 40%, transparent); }
+@media (max-height: 700px) {
+  .card-roulette { --roulette-width: min(30vw, 23dvh, 160px); justify-content: flex-start; padding-top: 24px; }
+  .roulette-heading h2 { font-size: 25px; }
+  .roulette-eyebrow { margin-bottom: 8px; }
+  .roulette-stage { margin-top: 10px; height: calc(var(--roulette-width) * 4 / 3 + 105px); }
+  .roulette-progress { margin: 14px 0; }
+  .roulette-status { min-height: 80px; gap: 7px; }
+  .roulette-skip { margin-top: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .roulette-card, .roulette-ambient { transition: none; }
+}
+
+.card-modal[data-revealed=true] .modal-card-back { display: none; animation: none !important; }
+.card-modal[data-revealed=true] .modal-card-front { opacity: 1 !important; transform: none !important; animation: none !important; }

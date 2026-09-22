@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { FaXmark } from 'react-icons/fa6';
+import { brilloCarta } from '../../data/cardVisuals';
 import { obtenerCasa } from '../../utils/gameUtils';
 
 function CardModal({ carta, onClose, casasRivales = [], casaProtegida = null, alumnosIntercambio = [], alumnosPuntos = [], alumnosCompanero = [], alumnosReplica = [], alumnosRobo = [], onSelectRival, onSelectExchange, onSelectPointSwap, onSelectCompanionBonus, onSelectReplica, onSelectRobbery }) {
@@ -71,7 +72,7 @@ function CardModal({ carta, onClose, casasRivales = [], casaProtegida = null, al
   if (!carta) return null;
 
   return (
-    <section className={'card-modal ' + (tieneDecisionPendiente ? 'has-options' : 'simple-card-modal') + (esperaRoboMultiple ? ' morsmordre-modal' : '') + (esperaIntercambio ? ' imperio-modal' : '')} role='dialog' aria-modal='true'>
+    <section className={'card-modal ' + (tieneDecisionPendiente ? 'has-options' : 'simple-card-modal') + (esperaRoboMultiple ? ' morsmordre-modal' : '') + (esperaIntercambio ? ' imperio-modal' : '')} style={{ '--rarity-glow': brilloCarta(carta.numero).color }} data-revealed={carta.revelada ? 'true' : undefined} role='dialog' aria-modal='true'>
       <button type='button' className='modal-close' onClick={onClose} aria-label='Cerrar carta'><FaXmark /></button>
       <div className={'modal-card-wrap ' + (!tieneDecisionPendiente ? 'clickable-card' : '')} onClick={!tieneDecisionPendiente ? onClose : undefined} title={!tieneDecisionPendiente ? 'Toca la carta para cerrar' : undefined}>
         <div className='modal-card-flip'>

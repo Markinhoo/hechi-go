@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FaArrowLeft, FaArrowRight, FaBookOpen, FaHouse, FaScroll, FaTrophy, FaWandMagicSparkles } from 'react-icons/fa6';
 import { bestiario, bonusGaleonesBestia, precioBestia, RAREZAS_BESTIARIO } from '../../data/bestiaryData';
 import { CARTAS_ACTIVAS, casas, PLAYER_KEY } from '../../data/gameData';
@@ -7,6 +7,7 @@ import { efectoCarta, elegirCartaAleatoria, guardarLocal, obtenerCasa } from '..
 import { calcularPuntajeCasa, penalizacionCasa } from '../../utils/houseScores';
 import ActionModal from '../ui/ActionModal';
 import CardModal from './CardModal';
+import CardRoulette from './CardRoulette';
 import KahootPanel from './KahootPanel';
 import TeacherPointsControl from './TeacherPointsControl';
 import { tieneCartaGuardada } from '../../utils/backpackCards';
@@ -15,6 +16,8 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const [arrastre, setArrastre] = useState({ activo: false, inicio: 0, inicioY: 0, startPos: 0, lastX: 0, lastTime: 0, velocity: 0 });
   const [posicionCarrusel, setPosicionCarrusel] = useState(estado.sobreActivo || 0);
   const [cartaAbierta, setCartaAbierta] = useState(null);
+  const [ruleta, setRuleta] = useState(null);
+  const finalizarRuleta = useCallback(() => setRuleta(null), []);
   const [casaDetalleId, setCasaDetalleId] = useState(null);
   const [mostrarCambioPassword, setMostrarCambioPassword] = useState(false);
   const [passwordNuevaAlumno, setPasswordNuevaAlumno] = useState('');
@@ -281,7 +284,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
 
   const abrirCarta = async (numeroElegido = null) => {
     if (sesion.tipo !== 'alumno') return setMensaje('Solo el alumno puede abrir su carta.');
-    if (aperturaEnCurso.current || cartaAbierta) return null;
+    if (aperturaEnCurso.current || cartaAbierta || ruleta) return null;
     aperturaEnCurso.current = true;
     try {
       const { data: vigente, error } = await db.rpc('cargar_clase_vista', {
@@ -320,9 +323,12 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       setMensaje(mensajeCartaInvalida);
       return null;
     }
-    onCameraFlash?.();
+    const revelarCarta = (carta) => {
+      setCartaAbierta({ ...carta, revelada: true });
+      setRuleta({ numero, disponibles: cartasDisponibles, elegida: Boolean(numeroElegido) });
+    };
     if (efecto.tipo === 'rival') {
-      setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteRival: true });
+      revelarCarta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteRival: true });
       setMensaje(efecto.titulo + ': elige una casa rival.');
       return null;
     }
@@ -332,7 +338,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         setMensaje('Confundo se omitio porque no hay alumnos con mas puntos. Vuelve a tocar una carta.');
         return null;
       }
-      setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendientePuntosIntercambio: true });
+      revelarCarta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendientePuntosIntercambio: true });
       setMensaje('Confundo: elige un alumno con mas puntos que tu.');
       return null;
     }
@@ -341,11 +347,11 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       if (!hayCompaneroDisponible) {
         const data = await registrarCarta({ numero, efecto });
         if (!data) return null;
-        setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id });
+        revelarCarta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id });
         setMensaje('Amortentia no encontró otro compañero disponible.');
         return data;
       }
-      setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteCompaneroBonus: true });
+      revelarCarta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteCompaneroBonus: true });
       setMensaje('Amortentia: elige un compañero para sumar puntos a ambos.');
       return null;
     }
@@ -354,11 +360,11 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       if (!hayObjetivoDisponible) {
         const data = await registrarCarta({ numero, efecto });
         if (!data) return null;
-        setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id });
+        revelarCarta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id });
         setMensaje('Multijugos no encontro un alumno disponible para replicar.');
         return data;
       }
-      setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteReplicaPuntos: true });
+      revelarCarta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteReplicaPuntos: true });
       setMensaje('Multijugos: elige el alumno cuyos puntos quieres replicar.');
       return null;
     }
@@ -367,11 +373,11 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       if (objetivosDisponibles.length < 5) {
         const data = await registrarCarta({ numero, efecto });
         if (!data) return null;
-        setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id });
+        revelarCarta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id });
         setMensaje('Morsmordre no encontro 5 alumnos disponibles.');
         return data;
       }
-      setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteRoboMultiple: true });
+      revelarCarta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteRoboMultiple: true });
       setMensaje('Morsmordre: elige 5 alumnos para quitarles 1 punto.');
       return null;
     }
@@ -382,7 +388,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       if (error) return setMensaje(error.message);
       setEstado(data);
       setEsperandoDecisionChiste(true);
-      setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteDecisionChiste: true });
+      revelarCarta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteDecisionChiste: true });
       setMensaje('Riddikulus: cuenta tu chiste. El maestro decidirá si corresponde sumar o restar puntos.');
       return null;
     }
@@ -398,7 +404,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       });
       if (error) return setMensaje(error.message);
       setEstado(data);
-      setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id });
+      revelarCarta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id });
       setMensaje('Sectumsempra quitó 2 puntos a las otras casas disponibles.');
       return data;
     }
@@ -407,18 +413,18 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       if (alumno.casaId === estado.casaProtegida || !hayRivalDisponible) {
         const data = await registrarCarta({ numero, efecto });
         if (!data) return null;
-        setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id });
+        revelarCarta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id });
         setMensaje('Imperio no encontro intercambio valido por la proteccion activa.');
         return data;
       }
-      setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteIntercambio: true });
+      revelarCarta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteIntercambio: true });
       setMensaje('Imperio: elige alumnos para intercambiar casas.');
       return null;
     }
     const data = await registrarCarta({ numero, efecto });
     if (!data) return null;
     const puntosFinales = data?.historial?.[0]?.puntos ?? efecto.puntos;
-    setCartaAbierta({ numero, ...efecto, puntos: puntosFinales, casaId: alumno.casaId, alumnoId: alumno.id });
+    revelarCarta({ numero, ...efecto, puntos: puntosFinales, casaId: alumno.casaId, alumnoId: alumno.id });
     if (efecto.tipo === 'proteccion') {
       setMensaje(obtenerCasa(alumno.casaId).nombre + ' queda protegida y activa x2 para su siguiente acción.');
     } else {
@@ -1222,7 +1228,8 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         onConfirm={confirmarAccionMaestro}
       />
 
-      {cartaAbierta && <CardModal
+      {ruleta && <CardRoulette {...ruleta} onComplete={finalizarRuleta} />}
+      {cartaAbierta && !ruleta && <CardModal
         carta={cartaAbierta}
         casasRivales={casas.filter((casa) => casa.id !== alumnoActual?.casaId && casa.id !== estado.casaProtegida)}
         alumnosIntercambio={estado.alumnos}
