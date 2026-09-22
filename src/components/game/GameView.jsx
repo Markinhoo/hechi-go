@@ -9,6 +9,7 @@ import ActionModal from '../ui/ActionModal';
 import CardModal from './CardModal';
 import KahootPanel from './KahootPanel';
 import TeacherPointsControl from './TeacherPointsControl';
+import { tieneCartaGuardada } from '../../utils/backpackCards';
 
 function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setMensaje, onCameraFlash }) {
   const [arrastre, setArrastre] = useState({ activo: false, inicio: 0, inicioY: 0, startPos: 0, lastX: 0, lastTime: 0, velocity: 0 });
@@ -24,6 +25,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const [mostrarSelectorCarta, setMostrarSelectorCarta] = useState(false);
   const [selectorCartaProcesando, setSelectorCartaProcesando] = useState(false);
   const [studentTab, setStudentTab] = useState('inicio');
+  const [esperandoDecisionChiste, setEsperandoDecisionChiste] = useState(false);
   const [chistesPendientes, setChistesPendientes] = useState([]);
   const [errorChistes, setErrorChistes] = useState('');
   const [chisteProcesando, setChisteProcesando] = useState(null);
@@ -239,6 +241,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
 
   const cartaPuedeSalir = (numero, alumnoBase) => {
     const efecto = efectoCarta(numero);
+    if (efecto.tipo === 'guardable' && tieneCartaGuardada(alumnoBase, numero)) return false;
     if (efecto.tipo === 'puntosIntercambio') return alumnosConfundoDisponibles(alumnoBase).length > 0;
     if (efecto.tipo === 'limpiaNegativos') {
       const casaId = alumnoBase?.casaId;
@@ -252,7 +255,9 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     const alumno = estado.alumnos.find((item) => item.id === sesion.alumnoId);
     if (!cartaPuedeSalir(numero, alumno)) {
       const efecto = efectoCarta(numero);
-      const mensajeCartaInvalida = efecto.tipo === 'limpiaNegativos'
+      const mensajeCartaInvalida = efecto.tipo === 'guardable'
+        ? 'Ya tienes ' + efecto.titulo + ' en la mochila. Úsala antes de obtener otra.'
+        : efecto.tipo === 'limpiaNegativos'
         ? 'Elixir de Vida no puede salir porque tu casa no tiene puntos negativos.'
         : 'Confundo no tiene alumnos con mas puntos disponibles. Elige otra carta.';
       setMensaje(mensajeCartaInvalida);
@@ -307,7 +312,9 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     const numero = numeroElegido || elegirCartaAleatoria(cartasDisponibles);
     const efecto = efectoCarta(numero);
     if (!cartaPuedeSalir(numero, alumno)) {
-      const mensajeCartaInvalida = efecto.tipo === 'limpiaNegativos'
+      const mensajeCartaInvalida = efecto.tipo === 'guardable'
+        ? 'Ya tienes ' + efecto.titulo + ' en la mochila. Úsala antes de obtener otra.'
+        : efecto.tipo === 'limpiaNegativos'
         ? 'Elixir de Vida no puede salir porque tu casa no tiene puntos negativos.'
         : efecto.titulo + ' no tiene objetivos validos ahora. Intenta con otra carta.';
       setMensaje(mensajeCartaInvalida);
@@ -374,6 +381,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       });
       if (error) return setMensaje(error.message);
       setEstado(data);
+      setEsperandoDecisionChiste(true);
       setCartaAbierta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteDecisionChiste: true });
       setMensaje('Riddikulus: cuenta tu chiste. El maestro decidirá si corresponde sumar o restar puntos.');
       return null;
@@ -584,6 +592,31 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     actualizar();
     return () => { cancelado = true; window.clearTimeout(temporizador); };
   }, [sesion.tipo, sesion.token]);
+
+  useEffect(() => {
+    if (sesion.tipo !== 'alumno' || !esperandoDecisionChiste) return;
+    let cancelado = false;
+    let temporizador;
+    const revisarDecision = async () => {
+      try {
+        const { data, error } = await db.rpc('riddikulus_sigue_pendiente', {
+          p_token: sesion.token, p_alumno_id: sesion.alumnoId, p_password: sesion.password
+        });
+        if (cancelado) return;
+        if (!error && data === false) {
+          setEsperandoDecisionChiste(false);
+          setCartaAbierta((actual) => actual?.pendienteDecisionChiste ? null : actual);
+          setMensaje((actual) => actual?.startsWith('Riddikulus: cuenta tu chiste.') ? '' : actual);
+          return;
+        }
+      } catch {
+        // Keep the notice until the server confirms that the teacher decided.
+      }
+      if (!cancelado) temporizador = window.setTimeout(revisarDecision, 900);
+    };
+    revisarDecision();
+    return () => { cancelado = true; window.clearTimeout(temporizador); };
+  }, [esperandoDecisionChiste, sesion.tipo, sesion.token, sesion.alumnoId, sesion.password, setMensaje]);
 
   const usarCartaGuardada = async (carta) => {
     if (sesion.tipo !== 'alumno') return;
