@@ -26,3 +26,12 @@ test('sigue bloqueada mientras quede una copia antigua', () => {
   assert.equal(tieneCartaGuardada(alumno,8),false);
   assert.equal(tieneCartaGuardada(null,8),false);
 });
+
+// Only the known duplicate rejection can trigger a new draw.
+test('solo reintenta duplicados de mochila, no errores de red o permisos', async () => {
+  const { esDuplicadoDeMochila } = await import('./backpackCards.js');
+  assert.equal(esDuplicadoDeMochila({message:'Ya tienes esa carta en la mochila. Usala antes de obtener otra.'},'guardable'),true);
+  assert.equal(esDuplicadoDeMochila({message:'Sin autorizacion'},'guardable'),false);
+  assert.equal(esDuplicadoDeMochila({message:'Network error'},'guardable'),false);
+  assert.equal(esDuplicadoDeMochila({message:'Ya tienes esa carta en la mochila.'},'rival'),false);
+});

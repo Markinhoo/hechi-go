@@ -10,7 +10,7 @@ import CardModal from './CardModal';
 import CardRoulette from './CardRoulette';
 import KahootPanel from './KahootPanel';
 import TeacherPointsControl from './TeacherPointsControl';
-import { tieneCartaGuardada } from '../../utils/backpackCards';
+import { esDuplicadoDeMochila, tieneCartaGuardada } from '../../utils/backpackCards';
 
 function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setMensaje, onCameraFlash }) {
   const [arrastre, setArrastre] = useState({ activo: false, inicio: 0, inicioY: 0, startPos: 0, lastX: 0, lastTime: 0, velocity: 0 });
@@ -38,6 +38,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const [accionError, setAccionError] = useState('');
   const [accionProcesando, setAccionProcesando] = useState(false);
   const aperturaEnCurso = useRef(false);
+  const arrastreDesplazado = useRef(false);
   const autorizacionesEnCurso = useRef(new Set());
   const autoAbrirRef = useRef(false);
   const abrirCartaRef = useRef(null);
@@ -215,6 +216,9 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       p_descripcion: efecto.descripcion,
       p_casa_objetivo: casaObjetivo
     });
+    if (esDuplicadoDeMochila(error, efecto.tipo)) {
+      throw Object.assign(new Error(error.message), { code: 'BACKPACK_DUPLICATE', numero });
+    }
     if (error) {
       setMensaje(error.message);
       return null;
@@ -256,7 +260,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const elegirCartaLegendaria = async (numero) => {
     if (selectorCartaProcesando) return null;
     const alumno = estado.alumnos.find((item) => item.id === sesion.alumnoId);
-    if (!cartaPuedeSalir(numero, alumno)) {
+    if (!cartaPuedeSalir(numero, alumno) && efectoCarta(numero).tipo !== 'guardable') {
       const efecto = efectoCarta(numero);
       const mensajeCartaInvalida = efecto.tipo === 'guardable'
         ? 'Ya tienes ' + efecto.titulo + ' en la mochila. Úsala antes de obtener otra.'
@@ -286,16 +290,28 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     if (sesion.tipo !== 'alumno') return setMensaje('Solo el alumno puede abrir su carta.');
     if (aperturaEnCurso.current || cartaAbierta || ruleta) return null;
     aperturaEnCurso.current = true;
+    const descartadas = new Set();
     try {
-      const { data: vigente, error } = await db.rpc('cargar_clase_vista', {
-        p_token: sesion.token, p_alumno_id: sesion.alumnoId, p_password: sesion.password
-      });
-      if (error) return setMensaje(error.message);
-      const alumno = vigente?.alumnos?.find((item) => item.id === sesion.alumnoId);
-      if (!alumno) return setMensaje('No encuentro tu usuario en esta clase.');
-      setEstado(vigente);
-      if (!(Number(alumno.oportunidades) > 0)) return await solicitarCarta(true, true);
-      return await abrirCartaAutorizada(numeroElegido, alumno);
+      // A rejected duplicate rolls back in the database. Refresh and draw again,
+      // excluding it before any roulette or result is shown.
+      for (let intento = 0; intento <= CARTAS_ACTIVAS.length; intento += 1) {
+        const { data: vigente, error } = await db.rpc('cargar_clase_vista', {
+          p_token: sesion.token, p_alumno_id: sesion.alumnoId, p_password: sesion.password
+        });
+        if (error) throw error;
+        const alumno = vigente?.alumnos?.find((item) => item.id === sesion.alumnoId);
+        if (!alumno) return setMensaje('No encuentro tu usuario en esta clase.');
+        setEstado(vigente);
+        if (!(Number(alumno.oportunidades) > 0)) return await solicitarCarta(true, true);
+        try {
+          return await abrirCartaAutorizada(numeroElegido, alumno, descartadas);
+        } catch (error) {
+          if (error.code !== 'BACKPACK_DUPLICATE') throw error;
+          descartadas.add(error.numero);
+          numeroElegido = null;
+        }
+      }
+      setMensaje('No se pudo completar la apertura. Intenta de nuevo.');
     } catch (error) {
       setMensaje(error.message || 'No se pudo verificar la autorización. Intenta de nuevo.');
       return null;
@@ -304,15 +320,17 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     }
   };
 
-  const abrirCartaAutorizada = async (numeroElegido, alumno) => {
-    if (!numeroElegido && puedeElegirCarta) {
+  const abrirCartaAutorizada = async (numeroElegido, alumno, descartadas = new Set()) => {
+    if (!numeroElegido && puedeElegirCarta && descartadas.size === 0) {
       setMostrarSelectorCarta(true);
       setMensaje('Tu bestia legendaria te permite escoger cualquier carta.');
       return null;
     }
     setMostrarSelectorCarta(false);
-    const cartasDisponibles = CARTAS_ACTIVAS.filter((numeroCarta) => cartaPuedeSalir(numeroCarta, alumno));
-    const numero = numeroElegido || elegirCartaAleatoria(cartasDisponibles);
+    const cartasDisponibles = CARTAS_ACTIVAS.filter((numeroCarta) => !descartadas.has(numeroCarta) && cartaPuedeSalir(numeroCarta, alumno));
+    if (!cartasDisponibles.length) return setMensaje('No hay cartas disponibles en este momento.');
+    const numero = numeroElegido && cartasDisponibles.includes(numeroElegido)
+      ? numeroElegido : elegirCartaAleatoria(cartasDisponibles);
     const efecto = efectoCarta(numero);
     if (!cartaPuedeSalir(numero, alumno)) {
       const mensajeCartaInvalida = efecto.tipo === 'guardable'
@@ -325,7 +343,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     }
     const revelarCarta = (carta) => {
       setCartaAbierta({ ...carta, revelada: true });
-      setRuleta({ numero, disponibles: cartasDisponibles, elegida: Boolean(numeroElegido) });
+      setRuleta({ numero, disponibles: cartasDisponibles, elegida: numero === numeroElegido });
     };
     if (efecto.tipo === 'rival') {
       revelarCarta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteRival: true });
@@ -663,7 +681,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
 
   const iniciarArrastre = (event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
-    event.currentTarget.setPointerCapture?.(event.pointerId);
+    arrastreDesplazado.current = false;
     const ahora = performance.now();
     setArrastre({ activo: true, inicio: event.clientX, inicioY: event.clientY, startPos: posicionCarrusel, lastX: event.clientX, lastTime: ahora, velocity: 0 });
   };
@@ -674,6 +692,9 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     const delta = event.clientX - arrastre.inicio;
     const deltaY = event.clientY - arrastre.inicioY;
     if (event.pointerType !== 'mouse' && Math.abs(delta) < Math.abs(deltaY) * 0.75) return;
+    if (!arrastreDesplazado.current && Math.abs(delta) < 8) return;
+    arrastreDesplazado.current = true;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
     event.preventDefault?.();
     const siguiente = arrastre.startPos - delta / 118;
     const dt = Math.max(1, ahora - arrastre.lastTime);
@@ -1040,7 +1061,11 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
                       const cartaId = ((centro + offset) % sobres.length + sobres.length) % sobres.length;
                       const distancia = Math.min(3.4, Math.abs(visualOffset));
                       return (
-                        <button type='button' key={centro + '-' + offset} className={'pack-card ' + (Math.abs(visualOffset) < 0.45 ? 'active' : '')} style={{ '--offset': visualOffset, '--distance': distancia }} onClick={() => Math.abs(visualOffset) < 0.45 ? abrirCarta() : setPosicionCarrusel(centro + offset)}>
+                        <button type='button' key={centro + '-' + offset} className={'pack-card ' + (Math.abs(visualOffset) < 0.45 ? 'active' : '')} style={{ '--offset': visualOffset, '--distance': distancia }} onClick={() => {
+                          if (arrastreDesplazado.current) return;
+                          if (Math.abs(visualOffset) < 0.45) abrirCarta();
+                          else setPosicionCarrusel(centro + offset);
+                        }}>
                           <img src='/hechi/card-back.png' alt={'Carta ' + (cartaId + 1)} draggable='false' />
                         </button>
                       );
