@@ -331,7 +331,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     const cartasDisponibles = CARTAS_ACTIVAS.filter((numeroCarta) => !descartadas.has(numeroCarta) && cartaPuedeSalir(numeroCarta, alumno));
     if (!cartasDisponibles.length) return setMensaje('No hay cartas disponibles en este momento.');
     const numero = numeroElegido && cartasDisponibles.includes(numeroElegido)
-      ? numeroElegido : elegirCartaAleatoria(cartasDisponibles);
+      ? numeroElegido : elegirCartaAleatoria(cartasDisponibles, alumno.cartas ?? []);
     const efecto = efectoCarta(numero);
     if (!cartaPuedeSalir(numero, alumno)) {
       const mensajeCartaInvalida = efecto.tipo === 'guardable'

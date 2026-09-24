@@ -3,8 +3,8 @@ import { CARTAS_ACTIVAS, casas, efectosCartas } from '../data/gameData';
 import { randomEntero, sortearCarta } from './cardRandom';
 export { randomEntero } from './cardRandom';
 
-export function elegirCartaAleatoria(disponibles = CARTAS_ACTIVAS) {
-  return sortearCarta(CARTAS_ACTIVAS, disponibles ?? CARTAS_ACTIVAS);
+export function elegirCartaAleatoria(disponibles = CARTAS_ACTIVAS, historial = []) {
+  return sortearCarta(CARTAS_ACTIVAS, disponibles ?? CARTAS_ACTIVAS, historial);
 }
 
 export function generarToken() {
