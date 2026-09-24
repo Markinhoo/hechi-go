@@ -11,6 +11,7 @@ import CardRoulette from './CardRoulette';
 import KahootPanel from './KahootPanel';
 import TeacherPointsControl from './TeacherPointsControl';
 import HouseScoresTable from './HouseScoresTable';
+import ScoreHistory from './ScoreHistory';
 import { esDuplicadoDeMochila, tieneCartaGuardada } from '../../utils/backpackCards';
 
 function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setMensaje, onCameraFlash }) {
@@ -36,6 +37,8 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const chisteEnCurso = useRef(false);
   const [teacherTab, setTeacherTab] = useState('inicio');
   const [accionMaestro, setAccionMaestro] = useState(null);
+  const [deshaciendo, setDeshaciendo] = useState(false);
+  const deshacerEnCurso = useRef(false);
   const [accionError, setAccionError] = useState('');
   const [accionProcesando, setAccionProcesando] = useState(false);
   const aperturaEnCurso = useRef(false);
@@ -163,6 +166,24 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     }
   };
 
+  const deshacerAjuste = async (operacionId) => {
+    if (sesion.tipo !== 'maestro' || deshacerEnCurso.current) return;
+    deshacerEnCurso.current = true;
+    setDeshaciendo(true);
+    try {
+      const { data,error } = await db.rpc('deshacer_ultimo_ajuste', {
+        p_token:sesion.token,p_operacion_id:operacionId
+      });
+      if (error) throw new Error(error.message);
+      setEstado(data);
+      setMensaje('Ajuste deshecho. La reversión quedó registrada en el historial.');
+    } catch (error) {
+      setMensaje(error.message || 'No se pudo deshacer el ajuste.');
+    } finally {
+      deshacerEnCurso.current = false;
+      setDeshaciendo(false);
+    }
+  };
   const ajustarPuntosAlumno = async (alumno, puntos) => {
     if (sesion.tipo !== 'maestro') throw new Error('Solo el maestro puede ajustar puntos.');
     const { data, error } = await db.rpc('ajustar_puntos_alumno', {
@@ -876,6 +897,12 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         <h2>Gran salón</h2>
         <span>{alumnosFiltrados.length}/{estado.alumnos.length}</span>
       </div>
+      {estado.historialPuntajes?.find((op) => op.puedeDeshacer) && (
+        <button type='button' className='authorize' disabled={deshaciendo}
+          onClick={() => deshacerAjuste(estado.historialPuntajes.find((op) => op.puedeDeshacer).id)}>
+          {deshaciendo ? 'Deshaciendo…' : 'Deshacer último ajuste'}
+        </button>
+      )}
       <label className='student-search'>
         <span>Buscar alumno</span>
         <input
@@ -950,17 +977,8 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       <p className='message'>{mensaje}</p>
     </section>
   );
-  const historyPanel = (
-    <aside className='panel history parchment-panel'>
-      <h2>Últimos hechizos</h2>
-      {estado.historial.length === 0 && <p className='empty'>Aún no se abre ninguna carta.</p>}
-      {estado.historial.map((item) => {
-        const casaHistorial = obtenerCasa(item.casaId);
-        const puntosHistorial = item.puntos > 0 ? '+' + item.puntos : String(item.puntos);
-        return <div className='history-row' key={item.id} style={{ '--house': casaHistorial.color, '--metal': casaHistorial.metal }}><strong>{item.alumno}</strong><span>{casaHistorial.nombre} {puntosHistorial}</span></div>;
-      })}
-    </aside>
-  );
+  const historyPanel = <ScoreHistory estado={estado} maestro={sesion.tipo==='maestro'}
+    onUndo={deshacerAjuste} deshaciendo={deshaciendo} />;
   const accionMaestroModal = (() => {
     if (!accionMaestro) return null;
     if (accionMaestro.tipo === 'password') {
@@ -1083,17 +1101,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
 
           {studentTab === 'puntaje' && houseBoard}
 
-          {studentTab === 'hechizos' && (
-            <aside className='panel history parchment-panel student-tab-panel'>
-              <h2>Últimos hechizos</h2>
-              {estado.historial.length === 0 && <p className='empty'>Aún no se abre ninguna carta.</p>}
-              {estado.historial.map((item) => {
-                const casaHistorial = obtenerCasa(item.casaId);
-                const puntosHistorial = item.puntos > 0 ? '+' + item.puntos : String(item.puntos);
-                return <div className='history-row' key={item.id} style={{ '--house': casaHistorial.color, '--metal': casaHistorial.metal }}><strong>{item.alumno}</strong><span>{casaHistorial.nombre} {puntosHistorial}</span></div>;
-              })}
-            </aside>
-          )}
+          {studentTab === 'hechizos' && <ScoreHistory estado={estado} className='student-tab-panel' />}
 
           {studentTab === 'kahoot' && kahootPanel}
 

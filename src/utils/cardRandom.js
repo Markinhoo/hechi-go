@@ -8,23 +8,53 @@ export function randomEntero(maximo) {
   return valores[0] % maximo;
 }
 
-export function sortearCarta(activas, disponibles = activas, historial = []) {
+const categoria = (numero) => {
+  const rareza = CARTAS_PROBABILIDAD.find((c) => c.numero === numero)?.rareza;
+  return ['poco_comun','rara'].includes(rareza) ? 'especial' : rareza;
+};
+
+export function probabilidadesPorRacha(historial = []) {
+  let comunes = 0;
+  let sinAlta = 0;
+  let sinLegendaria = 0;
+  for (let i=historial.length-1; i>=0 && categoria(historial[i])==='comun'; i-=1) comunes+=1;
+  for (let i=historial.length-1; i>=0 && !['epica','legendaria'].includes(categoria(historial[i])); i-=1) sinAlta+=1;
+  for (let i=historial.length-1; i>=0 && categoria(historial[i])!=='legendaria'; i-=1) sinLegendaria+=1;
+  const racha = Math.min(comunes,5);
+  const bonusEpica = Math.min(10,Math.max(0,sinAlta-3)*2);
+  const bonusLegendaria = Math.min(15,Math.max(0,sinLegendaria-5)*1.5);
+  return {
+    comun:45-3*racha-bonusEpica-bonusLegendaria,
+    especial:30+racha,
+    epica:15+racha+bonusEpica,
+    legendaria:10+racha+bonusLegendaria
+  };
+}
+
+export function pesosDisponibles(activas, disponibles = activas, historial = []) {
   const permitidas = new Set(disponibles);
   let candidatas = [...new Set(activas)].filter((numero) => permitidas.has(numero));
   if (!candidatas.length) throw new Error('No hay cartas disponibles');
-  // The persisted student's cards are appended in chronological order.
   const recientes = historial.slice(-3);
   const ultima = recientes.at(-1);
   if (candidatas.length > 1) candidatas = candidatas.filter((numero) => numero !== ultima);
-  const pesos = candidatas.map((numero) => {
-    const configuracion = CARTAS_PROBABILIDAD.find((carta) => carta.numero === numero);
-    if (!configuracion) throw new Error('Carta sin probabilidad configurada: ' + numero);
-    return configuracion.peso * (recientes.includes(numero) ? 0.5 : 1);
+  const probabilidades = probabilidadesPorRacha(historial);
+  return candidatas.map((numero) => {
+    const grupo = categoria(numero);
+    if (!grupo) throw new Error('Carta sin probabilidad configurada: ' + numero);
+    const cantidad = CARTAS_PROBABILIDAD.filter((c) => categoria(c.numero)===grupo).length;
+    // 120 keeps every ticket count integral, including half-point bonuses and recency.
+    const peso = probabilidades[grupo]*120/cantidad*(recientes.includes(numero)?0.5:1);
+    return { numero, peso };
   });
-  let boleto = randomEntero(pesos.reduce((total, peso) => total + peso, 0));
-  for (let i = 0; i < candidatas.length; i += 1) {
-    if (boleto < pesos[i]) return candidatas[i];
-    boleto -= pesos[i];
+}
+
+export function sortearCarta(activas, disponibles = activas, historial = []) {
+  const candidatas = pesosDisponibles(activas,disponibles,historial);
+  let boleto = randomEntero(candidatas.reduce((total,carta) => total+carta.peso,0));
+  for (const carta of candidatas) {
+    if (boleto<carta.peso) return carta.numero;
+    boleto-=carta.peso;
   }
   throw new Error('No se pudo seleccionar una carta');
 }

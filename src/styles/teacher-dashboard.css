@@ -3768,3 +3768,18 @@ button,
   .house-detail-card header h2 { font-size: 30px; }
   .house-score-editor-actions { padding-top: 6px; gap: 4px; }
 }
+
+
+.score-history-operation { padding: 12px 0; border-bottom: 1px solid #6b472f55; }
+.score-history-operation > strong, .score-history-operation > time { display: block; }
+.score-history-operation > time { font: 11px/1.4 Arial,sans-serif; opacity: .8; margin-top: 4px; }
+.score-history-operation ul { padding: 0; margin: 8px 0; list-style: none; }
+.score-history-operation li { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-bottom: 8px; }
+.score-history-operation li span { flex: 1 1 55%; overflow-wrap: anywhere; }
+.score-history-operation li small { flex-basis: 100%; font: 12px/1.4 Arial,sans-serif; }
+.score-history-operation button { min-height: 44px; padding: 8px 12px; border-radius: 8px; }
+.score-history-reverted { display: inline-block; padding: 3px 6px; font-size: 12px; border: 1px solid currentColor; }
+.score-history-legacy { margin-top: 12px; }
+.score-history-legacy summary { cursor: pointer; }
+.score-history-legacy div { padding: 8px 0; }
+.score-history-legacy strong, .score-history-legacy small { display: block; }
