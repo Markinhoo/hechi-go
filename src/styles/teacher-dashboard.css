@@ -3723,3 +3723,17 @@ button,
   .house-detail-table th,
   .house-detail-table td { padding: 7px 4px; }
 }
+
+
+.house-detail-table input {
+  width: 100%; min-width: 0; box-sizing: border-box; padding: 6px 2px;
+  border: 1px solid #ffffff55; border-radius: 3px; background: #0003; color: #fff;
+  font: inherit; text-align: right; appearance: textfield;
+}
+.house-detail-table input::-webkit-inner-spin-button { appearance: none; }
+.house-detail-table input:focus { outline: 2px solid #ffd66d; background: #0006; }
+.house-general-score { background: #0002; }
+.house-score-editor-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.house-score-editor-actions p { flex-basis: 100%; }
+.house-score-editor-actions button { min-height: 44px; padding: 8px 14px; border-radius: 8px; background: #ffd66d; color: #21130d; }
+.house-score-editor-actions button:disabled { opacity: .5; cursor: not-allowed; }

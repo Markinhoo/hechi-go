@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { calcularPuntajeCasa, penalizacionCasa, desgloseAlumno, desgloseCasa } from './houseScores.js';
+import { calcularPuntajeCasa, penalizacionCasa, desgloseAlumno, desgloseCasa, tablaPuntajesCasa, validarTablaPuntajes } from './houseScores.js';
 
 for (const negativos of [5, -5, '5', '-5']) {
   test(`19 positivos y ${negativos} de penalizacion dan 14`, () => {
@@ -64,4 +64,31 @@ test('el pie usa el marcador general aunque existan efectos exclusivos de casa',
 test('el pie admite el formato anterior sin desglose', () => {
   assert.deepEqual(desgloseCasa({ puntajes: { casa: 14 } }, 'casa'),
     { positivos: 14, negativos: 0, total: 14 });
+});
+
+
+test('la tabla mantiene 10 positivos y 2 negativos con total 8', () => {
+  const estado = { alumnos: [{id:'a',casaId:'casa',puntos:8,puntosPositivos:10,puntosNegativos:2}],
+    puntajesPositivos:{casa:10},puntajesNegativos:{casa:5},
+    puntajesGeneralesPositivos:{casa:0},puntajesGeneralesNegativos:{casa:3} };
+  const tabla=tablaPuntajesCasa(estado,'casa');
+  assert.deepEqual(tabla,{alumnos:[{id:'a',positivos:10,negativos:2}],generalNegativo:3,generalPositivo:0});
+  assert.equal(tabla.alumnos[0].positivos-tabla.alumnos[0].negativos,8);
+});
+
+test('la tabla separa efectos generales sin duplicar penalizaciones individuales', () => {
+  const estado={alumnos:[{id:'a',casaId:'casa',puntos:8,puntosPositivos:10,puntosNegativos:2}],
+    puntajesPositivos:{casa:12},puntajesNegativos:{casa:5}};
+  assert.deepEqual(tablaPuntajesCasa(estado,'casa'),
+    {alumnos:[{id:'a',positivos:10,negativos:2}],generalNegativo:3,generalPositivo:2});
+});
+
+test('valida las celdas antes de guardar', () => {
+  const tabla={alumnos:[{id:'a',positivos:'10',negativos:'2'}],generalNegativo:'3',generalPositivo:0};
+  assert.deepEqual(validarTablaPuntajes(tabla),
+    {alumnos:[{id:'a',positivos:10,negativos:2}],generalNegativo:3,generalPositivo:0});
+  for(const invalido of ['',-1,1.5,'abc',Infinity,2147483648]) {
+    assert.throws(()=>validarTablaPuntajes({...tabla,generalNegativo:invalido}));
+  }
+  assert.throws(()=>validarTablaPuntajes({...tabla,generalPositivo:2147483647}),/demasiado grande/);
 });
