@@ -6,7 +6,7 @@ import { crearTiraRuleta, posicionRuleta } from '../../utils/cardRoulette';
 function CardRoulette({ numero, disponibles, elegida = false, onComplete }) {
   const [tira] = useState(() => crearTiraRuleta(disponibles, numero));
   const [fase, setFase] = useState('cargando');
-  const dialogo = useRef(null);
+  const contenedor = useRef(null);
   const carril = useRef(null);
   const brilloActual = useRef(null);
   const progresoBarra = useRef(null);
@@ -14,12 +14,10 @@ function CardRoulette({ numero, disponibles, elegida = false, onComplete }) {
   const resultado = brilloCarta(numero);
 
   useEffect(() => {
-    const root = dialogo.current;
+    const root = contenedor.current;
     const track = carril.current;
     const focoAnterior = document.activeElement;
     root.focus();
-    const overflowAnterior = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
     let cancelado = false;
     let terminado = false;
     let entregado = false;
@@ -100,14 +98,12 @@ function CardRoulette({ numero, disponibles, elegida = false, onComplete }) {
       clearTimeout(limiteCarga);
       observador.disconnect();
       saltar.current = null;
-      document.body.style.overflow = overflowAnterior;
       if (focoAnterior?.isConnected) focoAnterior.focus();
     };
   }, [tira, onComplete]);
 
   return (
-    <section ref={dialogo} className={'card-roulette is-' + fase} role='dialog' aria-modal='true' aria-labelledby='roulette-title' tabIndex={-1}
-      onKeyDown={(event) => { if (event.key === 'Tab') { event.preventDefault(); event.currentTarget.querySelector('button')?.focus(); } }}>
+    <section ref={contenedor} className={'card-roulette is-' + fase} role='region' aria-labelledby='roulette-title' tabIndex={-1}>
       <div className='roulette-ambient' aria-hidden='true' />
       <header className='roulette-heading'>
         <span className='roulette-eyebrow'>LA COPA DE LAS CASAS</span>

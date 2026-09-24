@@ -1,10 +1,10 @@
 .card-roulette {
   --spin-color: #b6bfce;
   --roulette-width: clamp(116px, 34vw, 200px);
-  position: fixed; inset: 0; z-index: 90; isolation: isolate;
+  position: relative; width: 100%; min-width: 0; isolation: isolate;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: max(28px, env(safe-area-inset-top)) 0 max(22px, env(safe-area-inset-bottom));
-  overflow: auto; color: #fff8e9; background: #0c0914; outline: none;
+  padding: 12px 0;
+  overflow: hidden; color: #fff8e9; background: transparent; border-radius: 16px; outline: none;
   font-family: Georgia, 'Times New Roman', serif;
 }
 .roulette-ambient { position: absolute; z-index: -1; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 48%, color-mix(in srgb, var(--spin-color) 24%, transparent), transparent 64%), linear-gradient(160deg, #20142955, transparent 50%, #05040a); transition: background .3s; }
@@ -57,3 +57,19 @@
 
 .card-modal[data-revealed=true] .modal-card-back { display: none; animation: none !important; }
 .card-modal[data-revealed=true] .modal-card-front { opacity: 1 !important; transform: none !important; animation: none !important; }
+
+
+/* Compact reveal inside the same panel as the face-down cards. */
+.student-home-tab .card-roulette { --roulette-width: clamp(100px, 22vw, 150px); padding: 8px 0; }
+.student-home-tab .roulette-eyebrow,
+.student-home-tab .roulette-heading p,
+.student-home-tab .roulette-result-tier,
+.student-home-tab .roulette-legend { display: none; }
+.student-home-tab .roulette-heading { padding: 0 12px; }
+.student-home-tab .roulette-heading h2 { font-size: clamp(18px, 3vw, 25px); }
+.student-home-tab .roulette-stage { margin-top: 4px; height: calc(var(--roulette-width) * 4 / 3 + 76px); }
+.student-home-tab .roulette-card > span { margin-top: 8px; }
+.student-home-tab .roulette-status { min-height: 0; gap: 6px; }
+.student-home-tab .roulette-status strong { font-size: 20px; }
+.student-home-tab .roulette-progress { margin: 10px 0 0; }
+.student-home-tab .roulette-skip { margin-top: 8px; }

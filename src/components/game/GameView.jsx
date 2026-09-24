@@ -342,6 +342,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       return null;
     }
     const revelarCarta = (carta) => {
+      setStudentTab('inicio');
       setCartaAbierta({ ...carta, revelada: true });
       setRuleta({ numero, disponibles: cartasDisponibles, elegida: numero === numeroElegido });
     };
@@ -1035,7 +1036,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         <section className='student-tabs-area'>
           <div className='student-tab-switcher'>
             {studentTabs.map((tab) => (
-              <button key={tab.id} type='button' className={studentTab === tab.id ? 'active' : ''} onClick={() => setStudentTab(tab.id)}>
+              <button key={tab.id} type='button' className={studentTab === tab.id ? 'active' : ''} disabled={Boolean(ruleta)} onClick={() => setStudentTab(tab.id)}>
                 {tab.icon}<span>{tab.label}</span>
               </button>
             ))}
@@ -1044,6 +1045,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
           {studentTab === 'inicio' && (
             <section className='student-home-tab'>
               <section className='pack-stage'>
+                {ruleta ? <CardRoulette {...ruleta} onComplete={finalizarRuleta} /> : <>
                 <div className='carousel-shell'>
                   <button className='carousel-nav' type='button' onClick={(event) => moverSobre(-1, event)} aria-label='Carta anterior'><FaArrowLeft /></button>
                   <div
@@ -1074,6 +1076,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
                   <button className='carousel-nav' type='button' onClick={(event) => moverSobre(1, event)} aria-label='Carta siguiente'><FaArrowRight /></button>
                 </div>
                 <p className='message'>{mensaje || textoInicioAlumno}</p>
+                </>}
               </section>
               {panelAlumno}
             </section>
@@ -1099,7 +1102,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
 
           <nav className='student-bottom-nav' aria-label='Navegacion de alumno'>
             {studentTabs.map((tab) => (
-              <button key={tab.id} type='button' className={studentTab === tab.id ? 'active' : ''} onClick={() => setStudentTab(tab.id)} aria-label={tab.label}>
+              <button key={tab.id} type='button' className={studentTab === tab.id ? 'active' : ''} disabled={Boolean(ruleta)} onClick={() => setStudentTab(tab.id)} aria-label={tab.label}>
                 {tab.icon}<span>{tab.label}</span>
               </button>
             ))}
@@ -1253,7 +1256,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         onConfirm={confirmarAccionMaestro}
       />
 
-      {ruleta && <CardRoulette {...ruleta} onComplete={finalizarRuleta} />}
+
       {cartaAbierta && !ruleta && <CardModal
         carta={cartaAbierta}
         casasRivales={casas.filter((casa) => casa.id !== alumnoActual?.casaId && casa.id !== estado.casaProtegida)}

@@ -37,3 +37,25 @@ test('las categorias visuales tienen los cuatro colores esperados', () => {
   assert.equal(brilloCarta(8).nivel,'legendaria');
   assert.ok(CARTAS_ACTIVAS.every((n) => brilloCarta(n).color));
 });
+
+
+test('no hay cartas iguales juntas, tampoco junto a la ganadora', () => {
+  for (const opciones of [[1, 7], [1, 7, 15], CARTAS_ACTIVAS]) {
+    for (const ganadora of opciones) {
+      for (let intento = 0; intento < 40; intento += 1) {
+        const tira = crearTiraRuleta(opciones, ganadora);
+        assert.equal(tira.cartas[tira.indiceGanador], ganadora);
+        for (let i = 1; i < tira.cartas.length; i += 1) {
+          assert.notEqual(tira.cartas[i], tira.cartas[i - 1]);
+        }
+      }
+    }
+  }
+});
+
+test('una sola carta disponible se muestra una sola vez', () => {
+  const tira = crearTiraRuleta([18, 18], 18);
+  assert.deepEqual(tira.cartas, [18]);
+  assert.equal(tira.indiceInicial, 0);
+  assert.equal(tira.indiceGanador, 0);
+});
