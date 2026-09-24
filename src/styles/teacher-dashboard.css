@@ -3737,3 +3737,34 @@ button,
 .house-score-editor-actions p { flex-basis: 100%; }
 .house-score-editor-actions button { min-height: 44px; padding: 8px 14px; border-radius: 8px; background: #ffd66d; color: #21130d; }
 .house-score-editor-actions button:disabled { opacity: .5; cursor: not-allowed; }
+
+
+/* Scroll only the score rows; keep the save controls inside the visible dialog. */
+.house-detail-card {
+  grid-template-rows: auto minmax(0, 1fr);
+  max-height: min(86dvh, 720px);
+}
+.house-detail-table-wrap {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  min-height: 0;
+  overflow: hidden;
+}
+.house-score-table-scroll {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.house-score-editor-actions {
+  margin-top: 0;
+  padding-top: 10px;
+}
+.house-score-editor-actions .house-detail-note { margin-top: 0; }
+@media (max-height: 500px) {
+  .house-detail-modal { padding: 8px; }
+  .house-detail-card { max-height: calc(100dvh - 16px); gap: 6px; }
+  .house-detail-card header { padding-top: 8px; padding-bottom: 8px; }
+  .house-detail-card header img { width: 44px; }
+  .house-detail-card header h2 { font-size: 30px; }
+  .house-score-editor-actions { padding-top: 6px; gap: 4px; }
+}

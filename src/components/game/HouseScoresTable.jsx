@@ -56,6 +56,7 @@ function HouseScoresTable({ estado, casaId, editable, onSave }) {
     }
   };
   return <form className='house-detail-table-wrap' onSubmit={guardar}>
+    <div className='house-score-table-scroll'>
     <table className='house-detail-table' onKeyDown={navegarCelda}>
       <thead><tr><th scope='col'>Nombre</th><th scope='col'>Puntos positivos</th><th scope='col'>Puntos negativos</th><th scope='col'>Total</th></tr></thead>
       <tbody>
@@ -78,6 +79,7 @@ function HouseScoresTable({ estado, casaId, editable, onSave }) {
       </tbody>
       <tfoot><tr className='house-detail-total'><td>Total de casa</td><td>{positivos}</td><td>{negativos}</td><td>{positivos-negativos}</td></tr></tfoot>
     </table>
+    </div>
     {editable && <div className='house-score-editor-actions'>
       <p className='house-detail-note'>Edita positivos y negativos. Los totales se calculan automáticamente.</p>
       <button type='submit' disabled={!edicion || guardando}>{guardando ? 'Actualizando…' : 'Actualizar puntajes'}</button>
