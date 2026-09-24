@@ -119,3 +119,45 @@ La prueba de interfaz usa Playwright temporal (PLAYWRIGHT_MODULE: ruta a su
 index.mjs; EDGE_PATH: ejecutable local de Edge) y un fixture sin datos reales:
 
     node --test tests/ui/scores.test.mjs
+
+## Arena del bestiario
+
+Aplicar, después de las migraciones de puntajes, auditoría y respaldos:
+
+1. supabase/migrations/20260924_zzz_duel_arena.sql
+2. supabase/migrations/20260924_zzz_duel_catalog.sql
+
+Publicar después el frontend. En la pestaña Arena, el maestro abre o cierra los
+retos. Los alumnos usan todas las criaturas sin comprarlas. Cada jugador recibe
+un mazo independiente de 61 cartas: 4 copias por común, 3 por especial (rareza
+interna rara), 2 por épica y 1 por legendaria. Puede haber duplicados en la mano.
+
+Reglas de esta primera versión: 4,000 de vida, cinco espacios, mano de cinco
+que se repone al iniciar turno, una invocación o fusión de dos cartas de la mano
+por turno, ataque/defensa, cartas ocultas y seis afinidades con ventaja de 300.
+No se ataca en el primer turno. Las recetas están visibles en la guía.
+Gana quien agota la vida rival o impide que complete su mano; tras 60 turnos
+hay empate. No se incluyen trampas ni equipos.
+
+Victoria: +3 puntos personales y para la casa, sin modificar compras, galeones,
+oportunidades ni historial de sorteos. Tres partidas con recompensa por alumno
+al día y una por pareja de rivales; cuentan desde que se acepta, gane o pierda.
+Los límites usan la fecha de Ciudad de México. Si cualquiera no tiene cupo,
+ambos juegan práctica. Rendición/inactividad cancelan sin premio y no devuelven
+cupos. Tras 90 segundos sin acciones se puede cancelar; después de 10 minutos
+se cancela al consultar la arena. Cerrar la arena permite terminar partidas
+activas; reiniciar el parcial las cancela.
+
+El servidor valida credenciales, clase, versión, turnos, cartas y objetivos.
+Las manos/mazos rivales y cartas ocultas no se devuelven al navegador.
+Las escrituras bloquean la clase para reservar cupos y entregar premios
+atómicamente. Las tablas internas no están expuestas a anon/authenticated.
+
+Balance: src/data/duelCatalog.json es la fuente del catálogo; ejecutar
+node scripts/generate-duel-catalog.mjs para regenerar su SQL antes del primer
+despliegue. Para cambios posteriores crear una nueva migración.
+
+Pruebas (mismos PGLITE_MODULE, PLAYWRIGHT_MODULE y EDGE_PATH descritos arriba):
+
+    node --test supabase/tests/duel_arena.test.mjs
+    node --test tests/ui/arena.test.mjs

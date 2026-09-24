@@ -9,6 +9,7 @@ import ActionModal from '../ui/ActionModal';
 import CardModal from './CardModal';
 import CardRoulette from './CardRoulette';
 import KahootPanel from './KahootPanel';
+import DuelArena from './DuelArena';
 import TeacherPointsControl from './TeacherPointsControl';
 import HouseScoresTable from './HouseScoresTable';
 import ScoreHistory from './ScoreHistory';
@@ -47,6 +48,13 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const [chisteProcesando, setChisteProcesando] = useState(null);
   const chisteEnCurso = useRef(false);
   const [teacherTab, setTeacherTab] = useState('inicio');
+  const [arenaMobile, setArenaMobile] = useState(() => window.matchMedia('(max-width: 760px)').matches);
+  useEffect(() => {
+    const screen = window.matchMedia('(max-width: 760px)');
+    const update = () => setArenaMobile(screen.matches);
+    screen.addEventListener('change', update);
+    return () => screen.removeEventListener('change', update);
+  }, []);
   const [accionMaestro, setAccionMaestro] = useState(null);
   const [deshaciendo, setDeshaciendo] = useState(false);
   const deshacerEnCurso = useRef(false);
@@ -889,13 +897,15 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     { id: 'puntaje', label: 'Puntaje', icon: <FaTrophy /> },
     { id: 'bestiario', label: 'Bestiario', icon: <FaBookOpen /> },
     { id: 'hechizos', label: 'Hechizos', icon: <FaScroll /> },
-    { id: 'kahoot', label: 'Kahoot', icon: <FaTrophy /> }
+    { id: 'kahoot', label: 'Kahoot', icon: <FaTrophy /> },
+    { id: 'arena', label: 'Arena', icon: <FaWandMagicSparkles /> }
   ];
   const teacherTabs = [
     { id: 'inicio', label: 'Inicio', icon: <FaWandMagicSparkles /> },
     { id: 'puntajes', label: 'Puntajes', icon: <FaTrophy /> },
     { id: 'hechizos', label: 'Hechizos', icon: <FaScroll /> },
-    { id: 'kahoot', label: 'Kahoot', icon: <FaTrophy /> }
+    { id: 'kahoot', label: 'Kahoot', icon: <FaTrophy /> },
+    { id: 'arena', label: 'Arena', icon: <FaWandMagicSparkles /> }
   ];
   const houseBoard = (
     <section className='house-board student-score-view'>
@@ -1131,6 +1141,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
           {studentTab === 'hechizos' && <ScoreHistory estado={estado} className='student-tab-panel' />}
 
           {studentTab === 'kahoot' && kahootPanel}
+          {studentTab === 'arena' && <DuelArena sesion={sesion} />}
 
           <nav className='student-bottom-nav' aria-label='Navegacion de alumno'>
             {studentTabs.map((tab) => (
@@ -1144,7 +1155,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         <>
           <section className='teacher-desktop-tabs-area'>
             <div className='student-tab-switcher teacher-desktop-tab-switcher'>
-              {teacherTabs.filter((tab) => tab.id === 'inicio' || tab.id === 'kahoot').map((tab) => (
+              {teacherTabs.filter((tab) => tab.id === 'inicio' || tab.id === 'kahoot' || tab.id === 'arena').map((tab) => (
                 <button key={tab.id} type='button' className={teacherTab === tab.id ? 'active' : ''} onClick={() => setTeacherTab(tab.id)}>
                   {tab.icon}<span>{tab.label}</span>
                 </button>
@@ -1163,6 +1174,8 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
             {teacherTab === 'puntajes' && houseBoard}
             {teacherTab === 'hechizos' && historyPanel}
             {teacherTab === 'kahoot' && kahootPanel}
+            {teacherTab === 'arena' && !arenaMobile && <DuelArena sesion={sesion} />}
+
           </section>
 
           <section className='teacher-mobile-tabs-area'>
@@ -1177,7 +1190,10 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
             {teacherTab === 'puntajes' && houseBoard}
             {teacherTab === 'hechizos' && historyPanel}
             {teacherTab === 'kahoot' && kahootPanel}
+            {teacherTab === 'arena' && arenaMobile && <DuelArena sesion={sesion} />}
+
           </section>
+
         </>
       )}
 

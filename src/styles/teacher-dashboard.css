@@ -3794,3 +3794,24 @@ button,
 .unsaved-card button:disabled { opacity: .5; cursor: wait; }
 .backups-card article { padding: 12px 0; border-bottom: 1px solid #ffffff33; }
 .backups-card strong { display: block; }
+
+/* Arena adds one destination to each role's navigation. */
+.student-tab-switcher { grid-template-columns:repeat(6,minmax(0,1fr)) !important; }
+.student-bottom-nav { grid-template-columns:repeat(6,minmax(0,1fr)) !important; }
+.teacher-tab-switcher { grid-template-columns:repeat(5,minmax(0,1fr)) !important; }
+.teacher-desktop-tab-switcher { grid-template-columns:repeat(3,minmax(0,1fr)) !important; width:min(100%,540px) !important; }
+.student-tab-panel.duel-arena { min-height:0 !important; overflow:auto !important; }
+.student-view .student-tab-switcher,
+.student-view .student-bottom-nav { grid-template-columns:repeat(6,minmax(0,1fr)) !important; }
+.teacher-view .teacher-tab-switcher { grid-template-columns:repeat(5,minmax(0,1fr)) !important; }
+.teacher-view .teacher-desktop-tab-switcher { grid-template-columns:repeat(3,minmax(0,1fr)) !important; }
+.teacher-view .teacher-desktop-tab-switcher.student-tab-switcher {
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  width:min(100%,540px) !important;
+}
+.teacher-desktop-tabs-area:has(> .duel-arena) {
+  grid-template-rows:auto minmax(0,1fr);
+  min-height:0;
+  overflow:hidden;
+}
+.teacher-desktop-tabs-area > .duel-arena { height:100%; max-height:100%; }
