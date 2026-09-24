@@ -542,11 +542,11 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     });
     if (error) return setMensaje(error.message);
     const objetivo = estado.alumnos.find((alumno) => alumno.id === objetivoId);
-    const puntos = data?.historial?.[0]?.puntos ?? objetivo?.puntos ?? 0;
+    const puntos = data?.alumnos?.find((alumno) => alumno.id === sesion.alumnoId)?.puntos ?? objetivo?.puntos ?? 0;
     setEstado(data);
     marcarFlashAlumnos([objetivoId]);
     setCartaAbierta(null);
-    setMensaje('Multijugos replicó +' + puntos + ' puntos de ' + (objetivo?.nombre || 'otro alumno') + '.');
+    setMensaje('Multijugos: ahora tienes ' + puntos + ' puntos, igual que ' + (objetivo?.nombre || 'el alumno elegido') + '.');
   };
 
   const seleccionarRoboMultiple = async (objetivoIds) => {
@@ -1138,7 +1138,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
                 </button>
               ))}
             </div>
-            {teacherTab === 'inicio' && <>{requestsPanel}{rosterPanel}</>}
+            {teacherTab === 'inicio' && <div className='teacher-mobile-home-content'>{requestsPanel}{rosterPanel}</div>}
             {teacherTab === 'puntajes' && houseBoard}
             {teacherTab === 'hechizos' && historyPanel}
             {teacherTab === 'kahoot' && kahootPanel}

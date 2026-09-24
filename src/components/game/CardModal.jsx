@@ -176,7 +176,7 @@ function CardModal({ carta, onClose, casasRivales = [], casaProtegida = null, al
         )}
         {esperaReplicaPuntos && (
           <div className='point-swap-options' aria-label='Réplica de puntos'>
-            <small>Elige un alumno disponible. Puede ser de tu casa, pero no de una casa protegida.</small>
+            <small>Tu total quedará igual al del alumno elegido, aunque tengas que perder puntos. Puede ser de tu casa, pero no de una casa protegida.</small>
             {alumnosParaReplica.length === 0 && <span>No hay alumnos disponibles para replicar.</span>}
             <div>
               {alumnosParaReplica.map((alumno) => {

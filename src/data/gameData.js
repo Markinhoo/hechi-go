@@ -57,7 +57,7 @@ export const efectosCartas = Array.from({ length: MAX_CARTA }, (_, index) => {
   if (numero === 19) return { puntos: 0, titulo: 'Invisibilidad', descripcion: 'SE PROTEGE CONTRA CUALQUIER HECHIZO', tipo: 'guardable' };
   if ([21, 28].includes(numero)) return { puntos: 40, titulo: 'Hechizo supremo', descripcion: 'La casa recibe una gran recompensa por una participacion brillante.' };
   if (numero === 22) return { puntos: 0, titulo: 'Vigorizante', descripcion: 'JUSTIFICA TODAS SUS FALTAS', tipo: 'guardable' };
-  if (numero === 26) return { puntos: 0, titulo: 'Multijugos', descripcion: 'REPLICA LOS PUNTOS DE OTRO ALUMNO DISPONIBLE', tipo: 'replicaPuntos' };
+  if (numero === 26) return { puntos: 0, titulo: 'Multijugos', descripcion: 'IGUALA TU TOTAL DE PUNTOS AL DE OTRO ALUMNO, SEAN MÁS O MENOS', tipo: 'replicaPuntos' };
   if ([14, 23].includes(numero)) return { puntos: 30, titulo: 'Reliquia poderosa', descripcion: 'La casa sube con fuerza en el marcador.' };
   if ([20, 25].includes(numero)) return { puntos: 20, titulo: 'Encantamiento mayor', descripcion: 'La participacion suma una ventaja importante.' };
   if (numero % 2 === 0) return { puntos: 15, titulo: 'Carta especial', descripcion: 'Buen aporte para la casa.' };

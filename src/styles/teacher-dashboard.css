@@ -3677,3 +3677,36 @@ button,
 .teacher-view .student-carousel-card > .student-actions { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; grid-auto-rows: auto !important; height: auto !important; max-height: none !important; }
 .teacher-view .student-actions > .teacher-points-control { min-height: max-content; height: auto; }
 .teacher-view .teacher-points-control [role=alert] { color: #8f1628; }
+
+
+/* Keep both home panels in the content row above the mobile navigation. */
+@media (max-width: 760px) {
+  .teacher-view .teacher-mobile-home-content {
+    grid-row: 1;
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .teacher-view .teacher-mobile-home-content > .teacher-requests-stage,
+  .teacher-view .teacher-mobile-home-content > .roster {
+    flex: 0 0 auto;
+    width: 100%;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  .teacher-view .teacher-mobile-home-content .request-board,
+  .teacher-view .teacher-mobile-home-content .request-list {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}
