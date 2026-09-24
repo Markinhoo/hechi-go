@@ -11,3 +11,18 @@ export function calcularPuntajeCasa(estado, casaId) {
   }
   return Number(estado.puntajes?.[casaId] ?? 0);
 }
+
+
+export function desgloseAlumno(alumno) {
+  const total = Number(alumno.puntos ?? 0);
+  // Spell history also records attacks made by this student. Those negative
+  // entries are not losses: reconcile earned points with their actual balance.
+  const positivos = Math.max(Number(alumno.puntosPositivos ?? 0), total, 0);
+  return { positivos, negativos: positivos - total, total };
+}
+
+export function desgloseCasa(estado, casaId) {
+  const negativos = penalizacionCasa(estado, casaId);
+  const total = calcularPuntajeCasa(estado, casaId);
+  return { positivos: Number(estado.puntajesPositivos?.[casaId] ?? total + negativos), negativos, total };
+}

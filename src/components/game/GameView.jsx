@@ -4,7 +4,7 @@ import { bestiario, bonusGaleonesBestia, precioBestia, RAREZAS_BESTIARIO } from 
 import { CARTAS_ACTIVAS, casas, PLAYER_KEY } from '../../data/gameData';
 import { db } from '../../services/hechiApi';
 import { efectoCarta, elegirCartaAleatoria, guardarLocal, obtenerCasa } from '../../utils/gameUtils';
-import { calcularPuntajeCasa, penalizacionCasa } from '../../utils/houseScores';
+import { calcularPuntajeCasa, penalizacionCasa, desgloseAlumno, desgloseCasa } from '../../utils/houseScores';
 import ActionModal from '../ui/ActionModal';
 import CardModal from './CardModal';
 import CardRoulette from './CardRoulette';
@@ -756,11 +756,8 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const heroStyle = { '--winner-house': casaGanadora?.color || '#2f4f3d', '--winner-metal': casaGanadora?.metal || '#ffd66d' };
   const tituloClase = 'Copa de las Casas - ' + (estado.nombre || 'Clase');
   const casaDetalle = casas.find((casa) => casa.id === casaDetalleId);
-  const alumnosCasaDetalle = casaDetalle ? estado.alumnos.filter((alumno) => alumno.casaId === casaDetalle.id) : [];
-  const resumenCasaDetalle = alumnosCasaDetalle.reduce((resumen, alumno) => ({
-    positivos: resumen.positivos + (alumno.puntosPositivos ?? Math.max(alumno.puntos, 0)),
-    negativos: resumen.negativos + (alumno.puntosNegativos ?? 0)
-  }), { positivos: 0, negativos: 0 });
+  const alumnosCasaDetalle = casaDetalle ? estado.alumnos.filter((alumno) => alumno.casaId === casaDetalle.id).map((alumno) => ({ ...alumno, desglose: desgloseAlumno(alumno) })) : [];
+  const resumenCasaDetalle = casaDetalle ? desgloseCasa(estado, casaDetalle.id) : null;
   const alumnosOrdenados = [...estado.alumnos].sort((a, b) => b.puntos - a.puntos);
   const busquedaNormalizada = busquedaAlumno.trim().toLowerCase();
   const alumnosFiltrados = busquedaNormalizada ? alumnosOrdenados.filter((alumno) => alumno.nombre.toLowerCase().includes(busquedaNormalizada)) : alumnosOrdenados;
@@ -1165,26 +1162,32 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
               <table className='house-detail-table'>
                 <thead>
                   <tr>
-                    <th>Nombres</th>
-                    <th>Positivos</th>
-                    <th>Negativos</th>
+                    <th scope='col'>Nombre</th>
+                    <th scope='col'>Puntos positivos</th>
+                    <th scope='col'>Puntos negativos</th>
+                    <th scope='col'>Total</th>
                   </tr>
                 </thead>
                 <tbody>
                   {alumnosCasaDetalle.map((alumno) => (
                     <tr key={alumno.id}>
                       <td>{alumno.nombre}</td>
-                      <td>{alumno.puntosPositivos ?? Math.max(alumno.puntos, 0)}</td>
-                      <td>{alumno.puntosNegativos ?? 0}</td>
+                      <td>{alumno.desglose.positivos}</td>
+                      <td>{alumno.desglose.negativos}</td>
+                      <td>{alumno.desglose.total}</td>
                     </tr>
                   ))}
+                </tbody>
+                <tfoot>
                   <tr className='house-detail-total'>
-                    <td>Total</td>
+                    <td>Total de casa</td>
                     <td>{resumenCasaDetalle.positivos}</td>
                     <td>{resumenCasaDetalle.negativos}</td>
+                    <td>{resumenCasaDetalle.total}</td>
                   </tr>
-                </tbody>
+                </tfoot>
               </table>
+              <p className='house-detail-note'>El total de casa incluye los efectos sobre la casa completa, además de los puntos individuales.</p>
             </div>
           </div>
         </div>

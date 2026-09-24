@@ -3710,3 +3710,16 @@ button,
     overflow: visible !important;
   }
 }
+
+
+.house-detail-table { table-layout: fixed; }
+.house-detail-table th:first-child,
+.house-detail-table td:first-child { width: 46%; overflow-wrap: anywhere; }
+.house-detail-table th:not(:first-child),
+.house-detail-table td:not(:first-child) { width: 18%; overflow-wrap: anywhere; }
+.house-detail-note { margin: 10px 0 0; color: #fff7df; font: 12px/1.4 Arial, sans-serif; }
+@media (max-width: 760px) {
+  .house-detail-table-wrap { padding: 0 8px 12px; }
+  .house-detail-table th,
+  .house-detail-table td { padding: 7px 4px; }
+}
