@@ -1,10 +1,11 @@
-import { useRef, useState } from 'react';
+import { useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { tablaPuntajesCasa, validarTablaPuntajes } from '../../utils/houseScores';
 
-function HouseScoresTable({ estado, casaId, editable, onSave }) {
+function HouseScoresTable({ estado, casaId, editable, onSave, ref }) {
   const [edicion, setEdicion] = useState(null);
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState('');
+  const [salidaPendiente, setSalidaPendiente] = useState(null);
   const enCurso = useRef(false);
   const actual = tablaPuntajesCasa(estado,casaId);
   const tabla = edicion?.tabla ?? actual;
@@ -25,8 +26,8 @@ function HouseScoresTable({ estado, casaId, editable, onSave }) {
       onFocus={(e) => e.target.select()} /> : valor;
   const positivos = tabla.alumnos.reduce((s,a) => s+Number(a.positivos),Number(tabla.generalPositivo));
   const negativos = tabla.alumnos.reduce((s,a) => s+Number(a.negativos),Number(tabla.generalNegativo));
-  const guardar = async (event) => {
-    event.preventDefault();
+  const guardar = async (event, salirDespues = false) => {
+    event?.preventDefault();
     if (!edicion || enCurso.current) return;
     enCurso.current = true;
     setGuardando(true);
@@ -36,6 +37,7 @@ function HouseScoresTable({ estado, casaId, editable, onSave }) {
       await onSave(validada,edicion.original);
       setEdicion(null);
       setMensaje('Puntajes actualizados.');
+      if (salirDespues) { setSalidaPendiente(null); salidaPendiente?.(); }
     } catch (error) {
       setMensaje(error.message || 'No se pudieron guardar los puntajes.');
     } finally {
@@ -45,7 +47,7 @@ function HouseScoresTable({ estado, casaId, editable, onSave }) {
   };
   const navegarCelda = (event) => {
     if (event.target.tagName !== 'INPUT' || !['Enter','ArrowUp','ArrowDown'].includes(event.key)) return;
-    event.preventDefault();
+    event?.preventDefault();
     const celdaActual = event.target.closest('td');
     const fila = celdaActual.parentElement;
     const filas = [...fila.parentElement.rows];
@@ -55,7 +57,20 @@ function HouseScoresTable({ estado, casaId, editable, onSave }) {
       if (input) { input.focus(); break; }
     }
   };
-  return <form className='house-detail-table-wrap' onSubmit={guardar}>
+  useEffect(() => {
+    if (!edicion && !guardando) return undefined;
+    const avisar = (event) => { event.preventDefault(); event.returnValue = ''; };
+    window.addEventListener('beforeunload',avisar);
+    return () => window.removeEventListener('beforeunload',avisar);
+  }, [edicion,guardando]);
+  useImperativeHandle(ref, () => ({
+    requestClose(continuar) {
+      if (enCurso.current) return;
+      if (edicion) setSalidaPendiente(() => continuar);
+      else continuar();
+    }
+  }));
+  return <><form className='house-detail-table-wrap' onSubmit={guardar}>
     <div className='house-score-table-scroll'>
     <table className='house-detail-table' onKeyDown={navegarCelda}>
       <thead><tr><th scope='col'>Nombre</th><th scope='col'>Puntos positivos</th><th scope='col'>Puntos negativos</th><th scope='col'>Total</th></tr></thead>
@@ -86,6 +101,16 @@ function HouseScoresTable({ estado, casaId, editable, onSave }) {
       {edicion && <button type='button' disabled={guardando} onClick={() => { setEdicion(null); setMensaje(''); }}>Descartar cambios</button>}
     </div>}
     {mensaje && <p role='status' className='house-detail-note'>{mensaje}</p>}
-  </form>;
+  </form>
+  {salidaPendiente && <div className='unsaved-overlay' role='alertdialog' aria-modal='true' aria-labelledby='unsaved-title'>
+    <div className='unsaved-card'>
+      <h2 id='unsaved-title'>Tienes cambios sin guardar</h2>
+      <p>Guarda los puntajes antes de salir o descarta los cambios.</p>
+      {mensaje && <p role='alert'>{mensaje}</p>}
+      <button type='button' autoFocus disabled={guardando} onClick={() => setSalidaPendiente(null)}>Seguir editando</button>
+      <button type='button' disabled={guardando} onClick={() => { setEdicion(null); setSalidaPendiente(null); salidaPendiente(); }}>Descartar y salir</button>
+      <button type='button' disabled={guardando} onClick={() => guardar(null,true)}>{guardando ? 'Guardando…' : 'Guardar y salir'}</button>
+    </div>
+  </div>}</>;
 }
 export default HouseScoresTable;

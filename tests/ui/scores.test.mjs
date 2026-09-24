@@ -1,0 +1,43 @@
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import { pathToFileURL } from 'node:url';
+import { createServer } from 'vite';
+const { chromium }=await import(process.env.PLAYWRIGHT_MODULE?pathToFileURL(process.env.PLAYWRIGHT_MODULE).href:'playwright');
+test('unsaved table: continue, failed save, save-and-close, discard, mobile button and offline indicator',async()=>{
+ const server=await createServer({server:{host:'127.0.0.1',port:0}});
+ let browser;
+ try{
+  await server.listen();
+  const port=server.httpServer.address().port;
+  browser=await chromium.launch({headless:true,executablePath:process.env.EDGE_PATH});
+  const page=await browser.newPage({viewport:{width:390,height:660}});
+  const url='http://127.0.0.1:'+port+'/tests/ui/scores.html';
+  await page.goto(url);
+  await page.getByLabel('Puntos positivos de Alumno').fill('12');
+  await page.getByRole('button',{name:'Cerrar',exact:true}).click();
+  await page.getByRole('alertdialog').waitFor();
+  await page.getByRole('button',{name:'Seguir editando'}).click();
+  assert.equal(await page.getByLabel('Puntos positivos de Alumno').inputValue(),'12');
+  await page.evaluate(()=>window.testShouldFail=true);
+  await page.getByRole('button',{name:'Cerrar',exact:true}).click();
+  await page.getByRole('button',{name:'Guardar y salir'}).click();
+  await page.getByText('Fallo de guardado de prueba').first().waitFor();
+  assert.equal(await page.locator('#closed').textContent(),'Abierto');
+  await page.evaluate(()=>window.testShouldFail=false);
+  await page.getByRole('button',{name:'Guardar y salir'}).click();
+  await page.getByText('Cerrado',{exact:true}).waitFor();
+  assert.equal(await page.evaluate(()=>window.testSaved.alumnos[0].positivos),12);
+  await page.reload();
+  const button=await page.getByRole('button',{name:'Actualizar puntajes'}).boundingBox();
+  assert.ok(button.y>=0 && button.y+button.height<=660,'save button remains visible on mobile');
+  await page.getByLabel('Puntos negativos de Alumno').fill('3');
+  await page.getByRole('button',{name:'Cerrar',exact:true}).click();
+  await page.getByRole('button',{name:'Descartar y salir'}).click();
+  await page.getByText('Cerrado',{exact:true}).waitFor();
+  assert.equal(await page.evaluate(()=>window.testSaved),undefined);
+  await page.context().setOffline(true);
+  await page.getByText('Sin conexión',{exact:true}).waitFor();
+  await page.context().setOffline(false);
+  await page.getByText('Reconectando…',{exact:true}).waitFor();
+ }finally{await browser?.close();await server.close();}
+});

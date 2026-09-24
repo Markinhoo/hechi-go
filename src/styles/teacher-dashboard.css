@@ -3783,3 +3783,14 @@ button,
 .score-history-legacy summary { cursor: pointer; }
 .score-history-legacy div { padding: 8px 0; }
 .score-history-legacy strong, .score-history-legacy small { display: block; }
+
+
+.connection-status { display: inline-block; font: 12px/1.3 Arial,sans-serif; padding: 4px 8px; border: 1px solid #bbddc766; border-radius: 8px; background: #14291d; color: #e6ffed; }
+.connection-status[data-warning=true] { background: #653618; color: #fff0cf; }
+.unsaved-overlay { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 12px; background: #08050cbb; }
+.unsaved-card { width: min(100%,560px); max-height: calc(100dvh - 24px); overflow: auto; padding: 20px; border: 1px solid #c99445; border-radius: 12px; background: #241727; color: #fff4d5; }
+.unsaved-card h2 { margin-top: 0; }
+.unsaved-card button { min-height: 44px; padding: 8px 12px; margin: 5px; border-radius: 8px; background: #ffd66d; color: #21130d; }
+.unsaved-card button:disabled { opacity: .5; cursor: wait; }
+.backups-card article { padding: 12px 0; border-bottom: 1px solid #ffffff33; }
+.backups-card strong { display: block; }

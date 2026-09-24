@@ -12,6 +12,10 @@ import KahootPanel from './KahootPanel';
 import TeacherPointsControl from './TeacherPointsControl';
 import HouseScoresTable from './HouseScoresTable';
 import ScoreHistory from './ScoreHistory';
+import PeriodBackups from './PeriodBackups';
+import ConnectionStatus from '../ui/ConnectionStatus';
+import { leerConexion } from '../../services/connectionStore';
+import { descargarRespaldo } from '../../utils/periodBackup';
 import { esDuplicadoDeMochila, tieneCartaGuardada } from '../../utils/backpackCards';
 
 function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setMensaje, onCameraFlash }) {
@@ -21,6 +25,13 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const [ruleta, setRuleta] = useState(null);
   const finalizarRuleta = useCallback(() => setRuleta(null), []);
   const [casaDetalleId, setCasaDetalleId] = useState(null);
+  const tablaPuntajesRef = useRef(null);
+  const reinicioSolicitud = useRef(null);
+  const [mostrarRespaldos,setMostrarRespaldos] = useState(false);
+  const protegerSalidaTabla = (continuar) => {
+    if (tablaPuntajesRef.current) tablaPuntajesRef.current.requestClose(continuar);
+    else continuar();
+  };
   const [mostrarCambioPassword, setMostrarCambioPassword] = useState(false);
   const [passwordNuevaAlumno, setPasswordNuevaAlumno] = useState('');
   const [passwordConfirmacionAlumno, setPasswordConfirmacionAlumno] = useState('');
@@ -86,8 +97,10 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
 
   const abrirAccionMaestro = (accion) => {
     if (sesion.tipo !== 'maestro') return;
-    setAccionError('');
-    setAccionMaestro(accion);
+    protegerSalidaTabla(() => {
+      setAccionError('');
+      setAccionMaestro(accion);
+    });
   };
 
   const cerrarAccionMaestro = () => {
@@ -129,15 +142,16 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       }
 
       if (accionMaestro.tipo === 'nuevo-parcial') {
-        const { data, error } = await db.rpc('reiniciar_clase', { p_token: sesion.token });
-        if (error) {
-          setAccionError(error.message);
-          return;
-        }
-        setEstado(data);
-        setMensaje('Nuevo parcial listo. Se conservaron casas, galeones y bestiario.');
+        reinicioSolicitud.current ??= crypto.randomUUID();
+        const { data,error } = await db.rpc('reiniciar_clase_con_respaldo', {
+          p_token:sesion.token,p_solicitud:reinicioSolicitud.current
+        });
+        if (error) { setAccionError(error.message); return; }
+        setEstado(data.estado);
+        reinicioSolicitud.current = null;
+        try { descargarRespaldo(data.respaldo); } catch { /* Durable copy remains in Respaldos. */ }
+        setMensaje('Nuevo parcial listo. Respaldo guardado; puedes volver a descargarlo desde Respaldos.');
       }
-
       if (accionMaestro.tipo === 'reiniciar-bestiario') {
         const { data, error } = await db.rpc('reiniciar_bestiario_galeones', { p_token: sesion.token });
         if (error) {
@@ -161,6 +175,8 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       }
 
       setAccionMaestro(null);
+    } catch (error) {
+      setAccionError(error.message || 'No se pudo completar la acción.');
     } finally {
       setAccionProcesando(false);
     }
@@ -735,16 +751,25 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
 
   useEffect(() => {
     if (!sesion?.token || !estado?.token) return undefined;
-    const id = window.setInterval(async () => {
-      const { data, error } = await db.rpc('cargar_clase_vista', {
-        p_token: sesion.token,
-        p_alumno_id: sesion.tipo === 'alumno' ? sesion.alumnoId : null,
-        p_password: sesion.tipo === 'alumno' ? sesion.password : null
-      });
-      if (error) return;
-      if (data) setEstado(data);
-    }, 900);
-    return () => window.clearInterval(id);
+    let activo=true;
+    let cargando=false;
+    const sincronizar=async()=>{
+      if(cargando || !navigator.onLine || leerConexion().pendientes) return;
+      cargando=true;
+      const revision=leerConexion().revision;
+      try {
+        const {data,error}=await db.rpc('cargar_clase_vista',{
+          p_token:sesion.token,
+          p_alumno_id:sesion.tipo==='alumno'?sesion.alumnoId:null,
+          p_password:sesion.tipo==='alumno'?sesion.password:null
+        });
+        if(activo && !error && data && revision===leerConexion().revision && !leerConexion().pendientes) setEstado(data);
+      } finally {cargando=false;}
+    };
+    const id=window.setInterval(sincronizar,900);
+    window.addEventListener('online',sincronizar);
+    sincronizar();
+    return ()=>{activo=false;window.clearInterval(id);window.removeEventListener('online',sincronizar);};
   }, [sesion?.alumnoId, sesion?.password, sesion?.tipo, sesion?.token, estado?.token, setEstado]);
 
   useEffect(() => {
@@ -767,7 +792,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     flashSignalRef.current = signal;
   }, [estado.alumnos, onCameraFlash, sesion.alumnoId, sesion.tipo]);
 
-  const salir = () => { setSesion(null); setEstado(null); setModo('inicio'); setCartaAbierta(null); setMensaje(''); };
+  const salir = () => protegerSalidaTabla(() => { setSesion(null); setEstado(null); setModo('inicio'); setCartaAbierta(null); setMensaje(''); });
   const alumnoActual = sesion.tipo === 'alumno' ? estado.alumnos.find((alumno) => alumno.id === sesion.alumnoId) : null;
   const casaActual = obtenerCasa(alumnoActual?.casaId);
   const puntajeCasa = (casaId) => calcularPuntajeCasa(estado, casaId);
@@ -875,7 +900,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const houseBoard = (
     <section className='house-board student-score-view'>
       {casas.map((casa) => (
-        <button key={casa.id} type='button' className='house-card' style={{ '--house': casa.color, '--metal': casa.metal }} onClick={() => setCasaDetalleId(casa.id)}>
+        <button key={casa.id} type='button' className='house-card' style={{ '--house': casa.color, '--metal': casa.metal }} onClick={() => protegerSalidaTabla(() => setCasaDetalleId(casa.id))}>
           <img className='house-crest' src={casa.escudo} alt='' />
           <span>{estado.conteos[casa.id]}/{estado.objetivos[casa.id]} aprendices</span>
           <h2>{casa.nombre}</h2>
@@ -1003,8 +1028,8 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       return {
         title: 'Nuevo parcial',
         eyebrow: estado.nombre || 'Clase',
-        description: 'Se borrarán puntos, cartas del parcial, solicitudes e historial. Se conservan alumnos, casas, galeones y bestiario.',
-        confirmText: 'Iniciar parcial',
+        description: 'Primero se guardará un respaldo descargable. Después se reiniciarán puntos, cartas y solicitudes del parcial. Se conservan alumnos, casas, galeones y bestiario.',
+        confirmText: 'Respaldar e iniciar parcial',
         variant: 'warning'
       };
     }
@@ -1035,12 +1060,14 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         <div>
           <span className='eyebrow'><FaWandMagicSparkles /> {sesion.tipo === 'maestro' ? 'Vista maestro' : 'Vista alumno'}</span>
           <h1>{tituloClase}</h1>
+          <ConnectionStatus />
           <p className={sesion.tipo === 'alumno' ? 'student-token-hint' : ''}>{sesion.tipo === 'maestro' ? ('Token de clase: ' + estado.token + (casaGanadora ? ' - Va ganando ' + casaGanadora.nombre : '')) : ('Token ' + estado.token + ' - espera autorización para abrir carta.')}</p>
         </div>
         <div className='hero-actions'>
           {sesion.tipo === 'alumno' && <span className='player-badge' style={{ '--house': casaActual.color, '--metal': casaActual.metal }}>{alumnoActual?.nombre} - {casaActual.nombre} - {alumnoActual?.oportunidades || 0} oportunidades</span>}
           {sesion.tipo === 'alumno' && <button type='button' className='ghost change-own-password' onClick={() => setMostrarCambioPassword(true)}>Cambiar contraseña</button>}
           {sesion.tipo === 'maestro' && <button type='button' className='ghost' onClick={() => abrirAccionMaestro({ tipo: 'nuevo-parcial' })}>Nuevo parcial</button>}
+          {sesion.tipo === 'maestro' && <button type='button' className='ghost' onClick={() => setMostrarRespaldos(true)}>Respaldos</button>}
           {sesion.tipo === 'maestro' && <button type='button' className='ghost' onClick={() => abrirAccionMaestro({ tipo: 'reiniciar-bestiario' })}>Reiniciar bestiario</button>}
           {sesion.tipo === 'maestro' && <button type='button' className='ghost danger-soft' onClick={() => abrirAccionMaestro({ tipo: 'eliminar-clase' })}>Eliminar clase</button>}
           <button type='button' className='ghost' onClick={salir}>Salir</button>
@@ -1154,10 +1181,12 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         </>
       )}
 
+      {mostrarRespaldos && <PeriodBackups token={sesion.token} onClose={() => setMostrarRespaldos(false)} />}
+
       {casaDetalle && (
         <div className='house-detail-modal' role='dialog' aria-modal='true' aria-labelledby='house-detail-title'>
           <div className='house-detail-card' style={{ '--house': casaDetalle.color, '--metal': casaDetalle.metal }}>
-            <button type='button' className='house-detail-close' onClick={() => setCasaDetalleId(null)} aria-label='Cerrar detalle'>x</button>
+            <button type='button' className='house-detail-close' onClick={() => protegerSalidaTabla(() => setCasaDetalleId(null))} aria-label='Cerrar detalle'>x</button>
             <header>
               <img src={casaDetalle.escudo} alt='' />
               <div>
@@ -1166,7 +1195,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
                 <p>{alumnosCasaDetalle.length} alumnos - {puntajeCasa(casaDetalle.id)} pts</p>
               </div>
             </header>
-            <HouseScoresTable key={casaDetalle.id} estado={estado} casaId={casaDetalle.id}
+            <HouseScoresTable ref={tablaPuntajesRef} key={casaDetalle.id} estado={estado} casaId={casaDetalle.id}
               editable={sesion.tipo === 'maestro'} onSave={async (tabla, original) => {
                 const { data, error } = await db.rpc('actualizar_tabla_puntajes', {
                   p_token: sesion.token, p_casa_id: casaDetalle.id, p_alumnos: tabla.alumnos,

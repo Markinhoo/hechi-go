@@ -87,3 +87,35 @@ con la ruta absoluta de su dist/index.js. Luego ejecuta:
 
     node --test supabase/tests/score_ledger.test.mjs supabase/tests/score_audit.test.mjs
     node --test src/utils/cardRandom.test.js src/utils/cardRoulette.test.js src/utils/backpackCards.test.js
+
+
+## Cierre seguro y respaldo del parcial
+
+Aplica 20260924_zz_period_backups.sql después de la migración de auditoría.
+El reinicio guarda primero una copia en Supabase con puntajes, alumnos, cartas
+e historial completo. Ambas operaciones están en la misma transacción. Una
+solicitud repetida con el mismo identificador devuelve el respaldo anterior sin
+reiniciar otra vez. Solo el maestro propietario puede listar o descargar copias.
+
+Respaldos permite descargar un resumen HTML imprimible o los datos completos en
+JSON. El resumen se intenta descargar al terminar el reinicio; si el navegador
+bloquea la descarga automática, la copia sigue disponible desde Respaldos.
+
+Las tablas editadas avisan antes de cerrar, cambiar de casa o salir. Guardar y
+salir conserva la tabla abierta si falla el guardado. La recarga/cierre del
+navegador usa el aviso nativo de cambios pendientes cuando el navegador lo permite.
+
+La cabecera distingue conexión, reconexión, guardado en curso y guardado confirmado.
+Las escrituras idénticas simultáneas comparten una solicitud; no se reintentan
+escrituras automáticamente. Los sondeos viejos no reemplazan respuestas de cambios
+más recientes.
+
+Pruebas adicionales:
+
+    node --test supabase/tests/period_backup.test.mjs
+    node --test src/utils/periodBackup.test.js src/services/connectionStore.test.js
+
+La prueba de interfaz usa Playwright temporal (PLAYWRIGHT_MODULE: ruta a su
+index.mjs; EDGE_PATH: ejecutable local de Edge) y un fixture sin datos reales:
+
+    node --test tests/ui/scores.test.mjs
