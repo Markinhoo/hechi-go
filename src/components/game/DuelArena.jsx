@@ -14,9 +14,9 @@ function Card({ card, selected, onClick, disabled, label }) {
   return <button type="button" className={'duel-card ' + (selected ? 'is-selected' : '')}
     data-rarity={c?.rareza} disabled={disabled} onClick={onClick} aria-pressed={Boolean(selected)}
     aria-label={label || (c ? c.nombre + ', ataque ' + c.atk + ', defensa ' + c.def : 'Carta oculta')}>
-    {c ? <><img src={c.imagen} alt="" /><strong>{c.nombre}</strong><small>{c.atk} ATQ · {c.def} DEF</small>
+    {c && !card.oculta ? <><img src={c.imagen} alt="" /><small>{c.atk} ATQ · {c.def} DEF</small>
       {card.posicion && <small>{card.posicion === 'ataque' ? 'Ataque' : 'Defensa'} · {card.afinidad}{card.oculta ? ' · Oculta' : ''}</small>}
-    </> : <><span className="duel-card-back">✦</span><strong>Boca abajo</strong><small>{card?.posicion}</small></>}
+    </> : <><img className="duel-card-back" src="/hechi/card-back.png" alt="Carta boca abajo" /><small>{card?.posicion}</small></>}
   </button>;
 }
 
@@ -65,6 +65,9 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
   const playing = duel?.estado === 'activo';
   const mine = playing && duel.turno === duel.lado;
   const remaining = duel ? Math.max(0, Math.ceil((Date.parse(duel.venceEn) - clock) / 1000)) : 0;
+  useEffect(() => {
+    if (playing && remaining === 0 && !request.current) void refresh();
+  }, [playing, remaining, refresh]);
   const hand = duel?.yo?.mano || [];
   const chosen = selected.map(uid => hand.find(c => c.uid === uid)).filter(Boolean);
   const fusion = chosen.length === 2 ? catalog.fusions.find(([a, b]) =>
@@ -116,6 +119,10 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
         {duel.jugador1 === sesion.alumnoId ? 'Cancelar reto' : 'Rechazar'}</button>
     </article>}
     {!teacher && playing && <>
+      <div className="duel-turn-toast" key={duel.id + ':' + duel.ronda} role="status" aria-live="polite">
+        <small>{mine ? 'INICIO DE TURNO' : 'FIN DE TU TURNO'}</small>
+        <strong>{mine ? '¡Te toca jugar!' : 'Ahora juega tu rival'}</strong>
+      </div>
       <div className="duel-scoreboard">
         <div><small>TÚ</small><strong>{duel.yo.vida} / 4000</strong><span>Mazo: {duel.yo.restantes}</span></div>
         <div><strong>Turno {duel.ronda}</strong><span>{mine ? 'Tu turno' : 'Turno rival'}</span><small>{duel.recompensa ? 'Con recompensa' : 'Práctica'}</small></div>
@@ -128,7 +135,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
           onClick={() => action('atacar', { casilla: slot, objetivo: i })} /> :
           <div className="duel-empty" key={i}>Vacío</div>)}
       </div>
-      <p className="duel-hint">{canAttack ? 'Elige una criatura rival para atacar.' : 'Selecciona una criatura de tu campo o cartas de tu mano.'}</p>
+      <p className="duel-hint">{canAttack ? 'Elige una criatura rival para atacar.' : 'Selecciona una carta de tu mano y un espacio libre para invocarla; o selecciona tu criatura y después al rival para atacar.'}</p>
       <div className="duel-field" aria-label="Tu campo">
         {duel.yo.campo.map((c, i) => c ? <Card key={i} card={c} selected={slot === i} disabled={!mine || busy}
           label={'Tu espacio ' + (i + 1) + ': ' + name(c.id)} onClick={() => { setSlot(i); setSelected([]); }} /> :
@@ -155,9 +162,9 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
           {chosen.length === 2 ? 'Fusionar e invocar' : 'Invocar criatura'}</button></>}
       </div>}
       <div className="duel-controls duel-turn">
-        <button disabled={!mine || busy || !remaining} onClick={() => action('terminar')}>Terminar turno</button>
-        <span>{remaining}s para actuar antes de cancelar por inactividad</span>
-        {!remaining && <button disabled={busy} onClick={() => action('vencido')}>Cancelar por inactividad</button>}
+        <button disabled={!mine || busy || !remaining} onClick={() => action('terminar')}>Pasar sin atacar</button>
+        <span>{remaining > 0 ? remaining + "s para jugar · El turno pasa automáticamente" : "Cambiando de turno…"}</span>
+
         <button disabled={busy} onClick={() => setConfirmQuit(true)}>Rendirse</button>
       </div>
       {confirmQuit && <div className="duel-invite" role="alert"><p>Rendirse cancela el duelo sin puntos para nadie. El cupo reservado sigue consumido.</p>
@@ -177,11 +184,11 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
     </div>}
     <details className="duel-guide"><summary>Cómo jugar · Mazo y fusiones</summary>
       <p>4,000 de vida, cinco espacios y mano de cinco cartas. Al comenzar tu turno recuperas tu mano hasta cinco. Puedes invocar una criatura o fusionar dos cartas de tu mano por turno, antes de atacar.</p>
-      <p>Selecciona tu atacante y después una criatura rival. Cada criatura ataca una vez por turno; en el primer turno nadie ataca. Puedes atacar directamente si el campo rival está vacío.</p>
+      <p>Selecciona tu atacante y después una criatura rival. El turno termina al atacar. En el primer turno no se ataca: al colocar la primera criatura, pasa el turno al rival. Puedes atacar directamente si el campo rival está vacío.</p>
       <p>Contra ataque: gana el ATQ mayor, destruye la criatura menor y la diferencia se resta a su vida. Si empatan, ambas se destruyen. Contra defensa: ATQ mayor destruye sin restar vida; ATQ menor te resta la diferencia, sin destruir tu criatura.</p>
       <p>Al invocar, elige una de sus dos afinidades. Cada afinidad vence a la siguiente y recibe +300 en combate: fuego → tierra → aire → agua → sombra → luz → fuego. Las cartas boca abajo revelan su identidad al combatir; las fusiones entran boca arriba.</p>
-      <p>Ganas al agotar la vida rival o si el rival no puede completar su mano. Empate al terminar 60 turnos. Tras 90 segundos sin acciones se puede cancelar sin premio.</p>
-      <p>Máximo tres duelos con recompensa al día por alumno y uno contra cada rival, ganes o pierdas. Si cualquiera agotó sus cupos, ambos juegan práctica. Se reinician a medianoche de Ciudad de México. Rendirse o abandonar no devuelve el cupo ni da puntos.</p>
+      <p>Ganas al agotar la vida rival o si el rival no puede completar su mano. Empate al terminar 60 turnos. Cada turno dura hasta 90 segundos; al agotarse el tiempo, pasa automáticamente al rival.</p>
+      <p>Máximo tres duelos con recompensa al día por alumno y uno contra cada rival, ganes o pierdas. Si cualquiera agotó sus cupos, ambos juegan práctica. Se reinician a medianoche de Ciudad de México. Rendirse no devuelve el cupo ni da puntos.</p>
       <div className="duel-catalog">{Object.values(cards).map(c => <article key={c.id}><img loading="lazy" src={c.imagen} alt="" /><strong>{c.nombre}</strong><small>{rarity[c.rareza]} · {c.copies} copias</small><small>{c.atk} ATQ / {c.def} DEF · {c.stars.join(' / ')}</small></article>)}</div>
       <h3>Recetas de fusión</h3><ul>{catalog.fusions.map(([a, b, c]) => <li key={a + b}>{name(a)} + {name(b)} → <strong>{name(c)}</strong></li>)}</ul>
     </details>

@@ -12,6 +12,9 @@ test('mobile arena: duplicate cards, fusion, target selection and turn controls'
   const page=await browser.newPage({viewport:{width:390,height:700}});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('http://127.0.0.1:'+server.httpServer.address().port+'/tests/ui/arena.html');
+  assert.equal(await page.locator('.duel-card strong').count(),0,'no repeated card names');
+  assert.equal(await page.locator('.duel-card-back').getAttribute('src'),'/hechi/card-back.png');
+  assert.equal(await page.locator('.house-cup-hero').count(),0);
   await page.getByRole('button',{name:'Bowtruckle, ataque 800, defensa 1400',exact:true}).click();
   assert.equal(await page.getByRole('button',{name:'Doxy, ataque 1100, defensa 700',exact:true}).count(),2);
   await page.getByRole('button',{name:'Doxy, ataque 1100, defensa 700',exact:true}).first().click();
@@ -25,8 +28,9 @@ test('mobile arena: duplicate cards, fusion, target selection and turn controls'
   assert.equal(calls[0].args.p_datos.uid2,'two');
   assert.equal(calls[1].args.p_datos.objetivo,0);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'no horizontal page overflow');
-  await page.getByRole('button',{name:'Terminar turno',exact:true}).click();
-  assert.equal(await page.getByRole('button',{name:'Terminar turno',exact:true}).isDisabled(),true);
+  await page.getByText('Ahora juega tu rival',{exact:true}).waitFor();
+  assert.equal(await page.getByRole('button',{name:'Pasar sin atacar',exact:true}).isDisabled(),true);
+  await page.waitForFunction(()=>getComputedStyle(document.querySelector('.duel-turn-toast')).visibility==='hidden');
   await page.getByText('Cómo jugar · Mazo y fusiones',{exact:true}).click();
   assert.equal(await page.locator('.duel-catalog article').count(),24);
 

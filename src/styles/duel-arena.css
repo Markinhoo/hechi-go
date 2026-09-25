@@ -57,3 +57,31 @@
  .duel-scoreboard span { font-size:10px; }
  .duel-controls { gap:8px; }
 }
+/* Give the arena the full content row while keeping role navigation available. */
+.game-shell.app-fixed.arena-focus {
+  grid-template-rows:minmax(0,1fr) !important;
+}
+.arena-focus .duel-arena { max-height:100%; }
+.duel-card img { aspect-ratio: 2 / 3; }
+.duel-card img.duel-card-back { display:block; background:none; object-fit:contain; border-radius:4px; }
+.duel-turn-toast {
+  position:fixed; z-index:90; left:50%; top:28%;
+  transform:translate(-50%,-50%); width:max-content; max-width:88vw;
+  padding:20px 32px; border:1px solid #e6c98577; border-radius:18px;
+  background:#142b32b3; backdrop-filter:blur(8px); color:#fff2cc;
+  text-align:center; pointer-events:none;
+  box-shadow:0 12px 40px #0004;
+  animation:duel-turn-notice 2.8s ease both;
+}
+.duel-turn-toast small,.duel-turn-toast strong { display:block; }
+.duel-turn-toast small { letter-spacing:2px; font:11px/1.6 Arial,sans-serif; }
+.duel-turn-toast strong { font:bold clamp(22px,4vw,34px)/1.5 Georgia,serif; }
+@keyframes duel-turn-notice {
+  0% { opacity:0; transform:translate(-50%,-40%); }
+  15%,70% { opacity:1; transform:translate(-50%,-50%); }
+  100% { opacity:0; transform:translate(-50%,-58%); visibility:hidden; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .duel-turn-toast { animation:duel-turn-notice-quiet 2.8s linear both; }
+  @keyframes duel-turn-notice-quiet { 0%,85% { opacity:1; } 100% { opacity:0; visibility:hidden; } }
+}

@@ -1065,8 +1065,8 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   })();
 
   return (
-    <main className={'game-shell app-fixed mobile-scroll-page ' + (sesion.tipo === 'alumno' ? 'student-view' : 'teacher-view')}>
-      <header className='hero compact-hero house-cup-hero' style={heroStyle}>
+    <main className={'game-shell app-fixed mobile-scroll-page ' + (sesion.tipo === 'alumno' ? 'student-view' : 'teacher-view') + ((sesion.tipo === 'alumno' ? studentTab : teacherTab) === 'arena' ? ' arena-focus' : '')}>
+      {(sesion.tipo === 'alumno' ? studentTab : teacherTab) !== 'arena' && <header className='hero compact-hero house-cup-hero' style={heroStyle}>
         <div>
           <span className='eyebrow'><FaWandMagicSparkles /> {sesion.tipo === 'maestro' ? 'Vista maestro' : 'Vista alumno'}</span>
           <h1>{tituloClase}</h1>
@@ -1082,7 +1082,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
           {sesion.tipo === 'maestro' && <button type='button' className='ghost danger-soft' onClick={() => abrirAccionMaestro({ tipo: 'eliminar-clase' })}>Eliminar clase</button>}
           <button type='button' className='ghost' onClick={salir}>Salir</button>
         </div>
-      </header>
+      </header>}
 
       {sesion.tipo === 'alumno' ? (
         <section className='student-tabs-area'>

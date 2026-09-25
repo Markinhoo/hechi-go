@@ -18,7 +18,7 @@ const rpc=async(method,args)=>{
     yo:{...duel.yo,mano:duel.yo.mano.filter(c=>![d.uid,d.uid2].includes(c.uid)),
      campo:[{id:'acromantula',uid:'one',afinidad:d.afinidad,posicion:d.posicion,ataco:false,cambio:true},null,null,null,null]}};
   }
-  if(args.p_accion==='atacar') duel={...duel,version:duel.version+1,mensaje:'Combate completado'};
+  if(args.p_accion==='atacar') duel={...duel,version:duel.version+1,turno:'b',ronda:3,mensaje:'Combate completado'};
   if(args.p_accion==='terminar') duel={...duel,version:duel.version+1,turno:'b',mensaje:'Turno del rival'};
   return {data:duel};
  }
@@ -30,8 +30,8 @@ export default function Fixture(){
  const nav=<nav className={teacher?(mobile?'student-tab-switcher teacher-tab-switcher':'student-tab-switcher teacher-desktop-tab-switcher'):'student-bottom-nav'}>
   {(teacher?(mobile?['Inicio','Puntajes','Hechizos','Kahoot','Arena']:['Inicio','Kahoot','Arena']):['Inicio','Puntaje','Bestiario','Hechizos','Kahoot','Arena']).map(t=><button key={t}>{t}</button>)}
  </nav>;
- return <main className={'game-shell app-fixed mobile-scroll-page '+(teacher?'teacher-view':'student-view')}>
-  <header className="house-cup-hero"><h1>Hechi Go</h1></header>
+ return <main className={'game-shell app-fixed mobile-scroll-page arena-focus '+(teacher?'teacher-view':'student-view')}>
+
   <section className={teacher?(mobile?'teacher-mobile-tabs-area':'teacher-desktop-tabs-area'):'student-tabs-area'}>
    {teacher&&nav}
    <DuelArena sesion={{tipo:teacher?'maestro':'alumno',token:'TEST',alumnoId:'a',password:'12345'}} rpc={rpc}/>

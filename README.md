@@ -135,7 +135,7 @@ interna rara), 2 por épica y 1 por legendaria. Puede haber duplicados en la man
 Reglas de esta primera versión: 4,000 de vida, cinco espacios, mano de cinco
 que se repone al iniciar turno, una invocación o fusión de dos cartas de la mano
 por turno, ataque/defensa, cartas ocultas y seis afinidades con ventaja de 300.
-No se ataca en el primer turno. Las recetas están visibles en la guía.
+La primera invocación termina el primer turno sin atacar. Desde el segundo turno, un ataque termina el turno automáticamente. Las recetas están visibles en la guía.
 Gana quien agota la vida rival o impide que complete su mano; tras 60 turnos
 hay empate. No se incluyen trampas ni equipos.
 
@@ -143,9 +143,7 @@ Victoria: +3 puntos personales y para la casa, sin modificar compras, galeones,
 oportunidades ni historial de sorteos. Tres partidas con recompensa por alumno
 al día y una por pareja de rivales; cuentan desde que se acepta, gane o pierda.
 Los límites usan la fecha de Ciudad de México. Si cualquiera no tiene cupo,
-ambos juegan práctica. Rendición/inactividad cancelan sin premio y no devuelven
-cupos. Tras 90 segundos sin acciones se puede cancelar; después de 10 minutos
-se cancela al consultar la arena. Cerrar la arena permite terminar partidas
+ambos juegan práctica. Rendirse cancela sin premio y no devuelve cupos. Cada turno dura hasta 90 segundos; el servidor pasa los turnos vencidos al consultar la arena. Cerrar la arena permite terminar partidas
 activas; reiniciar el parcial las cancela.
 
 El servidor valida credenciales, clase, versión, turnos, cartas y objetivos.
@@ -160,4 +158,23 @@ despliegue. Para cambios posteriores crear una nueva migración.
 Pruebas (mismos PGLITE_MODULE, PLAYWRIGHT_MODULE y EDGE_PATH descritos arriba):
 
     node --test supabase/tests/duel_arena.test.mjs
+    node --test tests/ui/arena.test.mjs
+### Actualización de interfaz y turnos (25 de septiembre)
+
+Aplicar supabase/migrations/20260925_arena_automatic_turns.sql sobre la arena
+existente antes de publicar el frontend actualizado. No requiere volver a
+ejecutar las migraciones del día 24. Conserva partidas y recompensas existentes.
+
+El turno pasa al invocar en el primer turno, después de un ataque o al vencer
+90 segundos desde el inicio del turno. Invocar o cambiar posición no reinicia
+el reloj. La victoria se resuelve antes de pasar el turno. Se mantiene la opción
+Pasar sin atacar. El servidor avanza turnos vencidos mediante las consultas de
+la arena; el cliente consulta también al llegar a cero. Si no hay nadie
+conectado, se resuelve al volver a consultar, sin otorgar premios por abandono.
+
+La pestaña Arena aprovecha el espacio de la cabecera de la copa en ambos roles,
+muestra el reverso real y anuncia cada cambio de turno con un aviso translúcido
+que se desvanece. La navegación a las otras pestañas sigue disponible.
+
+    node --test supabase/tests/duel_automatic_turns.test.mjs
     node --test tests/ui/arena.test.mjs
