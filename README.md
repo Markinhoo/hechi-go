@@ -210,3 +210,29 @@ usuario está en public/backgrounds/arena-castle.png.
 
     node --test supabase/tests/duel_spells.test.mjs
     node --test tests/ui/arena.test.mjs
+### Tablero y ataques por criatura
+
+Aplicar 20260925_c_arena_battlefield.sql después de la migración de hechizos,
+y publicar el frontend. Amplía las zonas de magia/trampa de tres a cinco
+espacios, conservando las trampas existentes. La actualización de partidas es
+idempotente y aumenta su versión para rechazar acciones enviadas desde una
+vista anterior al cambio.
+
+Cada criatura en ataque puede atacar una vez por turno. Después de atacar,
+el turno continúa si queda otra criatura en ataque sin usar; de lo contrario,
+pasa automáticamente. Terminar turno permite cederlo antes y el reloj de
+90 segundos sigue vigente. Las trampas consumen el ataque de la criatura
+afectada; las demás pueden continuar.
+
+El marcador de vida y cartas restantes encabeza el tablero. La información
+del catálogo y las recompensas queda al pie. La defensa se muestra horizontal.
+Al seleccionar una carta de la mano, su vista ampliada permite deslizar a
+izquierda/derecha o pulsar el botón para elegir boca arriba/abajo antes de
+invocar. Las fusiones se mantienen boca arriba y las trampas boca abajo.
+Cerrar la vista ampliada conserva la selección y no invoca. Las cartas ya
+colocadas se pueden inspeccionar sin cambiar su estado oculto.
+Para atacar directamente, seleccionar una criatura atacante y tocar cualquiera
+de los cinco espacios vacíos del campo rival.
+
+    node --test supabase/tests/duel_battlefield.test.mjs
+    node --test tests/ui/arena.test.mjs

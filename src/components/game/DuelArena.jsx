@@ -12,11 +12,11 @@ const rarity = { comun: 'Común', rara: 'Especial', epica: 'Épica', legendaria:
 function Card({ card, selected, onClick, disabled, label }) {
   const c = cards[card?.id];
   return <button type="button" className={'duel-card ' + (selected ? 'is-selected' : '')}
-    data-rarity={c?.rareza} disabled={disabled} onClick={onClick} aria-pressed={Boolean(selected)}
+    data-position={card?.posicion} data-rarity={c?.rareza} disabled={disabled} onClick={onClick} aria-pressed={Boolean(selected)}
     aria-label={label || (c ? c.tipo === 'criatura' ? c.nombre + ', ataque ' + (c.atk + (card.bonusAtk || 0)) + ', defensa ' + c.def : c.nombre + ', ' + c.tipo + ': ' + c.efecto : 'Carta oculta')}>
-    {c && !card.oculta ? <><img src={c.imagen} alt="" /><span className="duel-card-stats">{c.tipo === "criatura" ? <><b>ATQ {c.atk + (card.bonusAtk || 0)}</b><b>DEF {c.def}</b></> : <b>{c.tipo === "magia" ? "MAGIA" : "TRAMPA"}</b>}</span>
+    {c && !card.oculta ? <><span className="duel-card-art"><img src={c.imagen} alt="" /></span><span className="duel-card-stats">{c.tipo === "criatura" ? <><b>ATQ {c.atk + (card.bonusAtk || 0)}</b><b>DEF {c.def}</b></> : <b>{c.tipo === "magia" ? "MAGIA" : "TRAMPA"}</b>}</span>
       {card.posicion && <small>{card.posicion === 'ataque' ? 'Ataque' : 'Defensa'} · {card.afinidad}{card.oculta ? ' · Oculta' : ''}</small>}
-    </> : <><img className="duel-card-back" src="/hechi/card-back.png" alt="Carta boca abajo" /><small>{card?.posicion}</small></>}
+    </> : <><span className="duel-card-art"><img className="duel-card-back" src="/hechi/card-back.png" alt="Carta boca abajo" /></span><small>{card?.posicion}</small></>}
   </button>;
 }
 
@@ -31,6 +31,8 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
   const [star, setStar] = useState('');
   const [position, setPosition] = useState('ataque');
   const [hidden, setHidden] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const swipeStart = useRef(null);
   const [lastId, setLastId] = useState(null);
   const [clock, setClock] = useState(() => Date.now());
   const [confirmQuit, setConfirmQuit] = useState(false);
@@ -89,7 +91,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
         setArena(old => ({ ...old, activo: ['activo', 'pendiente'].includes(data.estado) ? data : null,
           duelos: [data, ...(old?.duelos || []).filter(d => d.id !== data.id)] }));
       } else if (data?.duelos) setArena(data);
-      setSelected([]); setSlot(null); setConfirmQuit(false);
+      setSelected([]); setSlot(null); setConfirmQuit(false); setPreviewOpen(false);
       await refresh();
     } catch (e) {
       setError(e.message || 'No se pudo realizar la acción.');
@@ -98,6 +100,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
   };
   const action = (p_accion, p_datos = {}) => act('accion_duelo_arena', { p_duelo: duel.id, p_version: duel.version, p_accion, p_datos });
   const choose = uid => {
+    setPreviewOpen(true);
     const next = hand.find(c => c.uid === uid);
     setSelected(prev => prev.includes(uid) ? prev.filter(id => id !== uid) :
       cards[next?.id]?.tipo !== 'criatura' || prev.some(id => cards[hand.find(c => c.uid === id)?.id]?.tipo !== 'criatura') ? [uid] : [...prev.slice(-1), uid]);
@@ -112,10 +115,11 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
     return action('hechizo', { uid: chosen[0].uid, casilla: index, objetivo: target });
   };
 
+  const previewCard = chosen.length ? (result || cards[chosen.at(-1)?.id]) : cards[ownCard?.id];
+  const previewFaceDown = chosen.length ? (result?.tipo === "trampa" || (result?.tipo === "criatura" && chosen.length === 1 && hidden)) : ownCard?.oculta;
+  const canFlipPreview = mine && chosen.length === 1 && result?.tipo === "criatura";
+  const flipPreview = () => { if (canFlipPreview) setHidden(value => !value); };
   return <section className="duel-arena panel student-tab-panel" aria-label="Arena del bestiario">
-    <header className="duel-heading"><div><small>DUELOS DEL BESTIARIO</small><h2>Arena de criaturas</h2></div>
-      <span className="duel-badge">{arena?.abierta ? 'Arena abierta' : 'Arena cerrada'}</span></header>
-    <p>Las 24 criaturas están disponibles para todos. Cada mazo tiene 75 cartas: 61 criaturas y 14 de magia o trampa, sin necesidad de comprarlas.</p>
     {error && <p className="duel-error" role="alert">{error}</p>}
     {!arena && <p role="status">Cargando arena…</p>}
     {teacher && arena && <div className="duel-controls">
@@ -123,7 +127,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
         {arena.abierta ? 'Cerrar arena' : 'Abrir arena'}</button>
       <p>Al cerrar, los duelos en curso pueden terminar. Se cancelan los retos pendientes.</p>
     </div>}
-    {!teacher && arena && <p className="duel-reward">{arena.cupos} de 3 duelos con recompensa disponibles hoy · Victoria +3 puntos · Derrota 0</p>}
+
     {!teacher && duel?.estado === 'pendiente' && <article className="duel-invite">
       <h3>{duel.nombre1} desafía a {duel.nombre2}</h3>
       <p>{duel.recompensa ? 'Con recompensa: al aceptar se reserva un cupo para ambos.' : 'Práctica: sin puntos ni consumo de cupos.'}</p>
@@ -132,32 +136,42 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
         {duel.jugador1 === sesion.alumnoId ? 'Cancelar reto' : 'Rechazar'}</button>
     </article>}
     {!teacher && playing && <>
+      {previewOpen && previewCard && mine && <aside className="duel-card-preview" aria-label="Vista de carta seleccionada">
+        <button className="duel-preview-close" aria-label="Cerrar vista de carta" onClick={() => setPreviewOpen(false)}>×</button>
+        <div className="duel-preview-swipe" data-face={previewFaceDown ? "down" : "up"}
+          onPointerDown={e => { e.preventDefault(); swipeStart.current = {x:e.clientX,y:e.clientY}; e.currentTarget.setPointerCapture(e.pointerId); }}
+          onPointerCancel={() => { swipeStart.current = null; }}
+          onPointerUp={e => { const start=swipeStart.current; swipeStart.current=null; if(start && Math.abs(e.clientX-start.x)>35 && Math.abs(e.clientX-start.x)>Math.abs(e.clientY-start.y)) flipPreview(); }}>
+          <img draggable={false} src={previewFaceDown ? "/hechi/card-back.png" : previewCard.imagen} alt={previewFaceDown ? "Carta boca abajo" : previewCard.nombre} />
+        </div>
+        {canFlipPreview && <button onClick={flipPreview}>{hidden ? "Poner boca arriba" : "Poner boca abajo"}</button>}
+        <small>{canFlipPreview ? "Desliza ← → para voltear. Toca el tablero para invocar." : chosen.length === 2 ? "Fusión boca arriba: toca un espacio libre." : ownCard ? "Toca el campo rival para atacar." : previewCard.efecto}</small>
+      </aside>}
       <div className="duel-turn-toast" key={duel.id + ':' + duel.ronda} role="status" aria-live="polite">
         <small>{mine ? 'INICIO DE TURNO' : 'FIN DE TU TURNO'}</small>
         <strong>{mine ? '¡Te toca jugar!' : 'Ahora juega tu rival'}</strong>
       </div>
-      <div className="duel-scoreboard">
-        <div><small>TÚ</small><strong>{duel.yo.vida} / 4000</strong><span>Mazo: {duel.yo.restantes}</span></div>
-        <div><strong>Turno {duel.ronda}</strong><span>{mine ? 'Tu turno' : 'Turno rival'}</span><small>{duel.recompensa ? 'Con recompensa' : 'Práctica'}</small></div>
-        <div><small>{duel.lado === 'a' ? duel.nombre2 : duel.nombre1}</small><strong>{duel.rival.vida} / 4000</strong><span>Mazo: {duel.rival.restantes} · Mano: {duel.rival.cantidadMano}</span></div>
+      <div className="duel-scoreboard duel-hud">
+        <div className="duel-hud-player"><small>TÚ</small><strong>VIDA {duel.yo.vida}</strong><span>Mazo {duel.yo.restantes} · Mano {duel.yo.cantidadMano}</span></div>
+        <div className="duel-hud-turn"><strong>{mine ? "Tu turno" : "Turno rival"}</strong><span>{remaining}s · Turno {duel.ronda}</span></div>
+        <div className="duel-hud-player rival"><small>{duel.lado === "a" ? duel.nombre2 : duel.nombre1}</small><strong>VIDA {duel.rival.vida}</strong><span>Mazo {duel.rival.restantes} · Mano {duel.rival.cantidadMano}</span></div>
       </div>
-      <p className="duel-message" role="status" key={duel.version}>{duel.mensaje}</p>
       <div className="duel-battlefield">
-      <div className="duel-supports" aria-label="Magia y trampas rivales">{(duel.rival.apoyos || [null,null,null]).map((c,i) => c ? <Card key={i} card={c} disabled label="Trampa rival oculta" /> : <div key={i} className="duel-support-empty">Magia / trampa</div>)}</div>
+      <div className="duel-supports" aria-label="Magia y trampas rivales">{(duel.rival.apoyos || [null,null,null,null,null]).map((c,i) => c ? <Card key={i} card={c} disabled label="Trampa rival oculta" /> : <div key={i} className="duel-support-empty">Magia / trampa</div>)}</div>
       <div className="duel-field" aria-label="Campo rival">
         {duel.rival.campo.map((c, i) => c ? <Card key={i} card={c} disabled={!canAttack}
           label={'Atacar espacio rival ' + (i + 1) + (c.id ? ': ' + name(c.id) : ': carta oculta')}
           onClick={() => action('atacar', { casilla: slot, objetivo: i })} /> :
-          <div className="duel-empty" key={i}>Vacío</div>)}
+          <button className="duel-empty" key={i} aria-label={"Ataque directo en espacio rival " + (i+1)} disabled={!canAttack || duel.rival.campo.some(Boolean)} onClick={() => action("atacar", { casilla: slot })}>{canAttack && !duel.rival.campo.some(Boolean) ? "Ataque directo" : "Vacío"}</button>)}
       </div>
-      <p className="duel-hint">{result && result.tipo !== 'criatura' ? result.efecto + (result.objetivo === 'criatura' ? ' Toca tu criatura.' : ' Toca tu zona de magia y trampas.') : canAttack ? 'Elige una criatura rival para atacar.' : 'Selecciona una carta de tu mano y un espacio libre para invocarla; o selecciona tu criatura y después al rival para atacar.'}</p>
+      <p className="duel-hint">{result && result.tipo !== 'criatura' ? result.efecto + (result.objetivo === 'criatura' ? ' Toca tu criatura.' : ' Toca tu zona de magia y trampas.') : canAttack ? (duel.rival.campo.some(Boolean) ? 'Toca una criatura rival para atacar.' : 'Toca el campo rival vacío para atacar directamente.') : 'Selecciona una carta de tu mano y un espacio libre para invocarla; o selecciona tu criatura y después al rival para atacar.'}</p>
       <div className="duel-field" aria-label="Tu campo">
         {duel.yo.campo.map((c, i) => c ? <Card key={i} card={c} selected={slot === i} disabled={!mine || busy}
-          label={'Tu espacio ' + (i + 1) + ': ' + name(c.id)} onClick={() => { if (result?.objetivo === 'criatura') { void cast(null, i); } else { setSlot(i); setSelected([]); } }} /> :
+          label={'Tu espacio ' + (i + 1) + ': ' + name(c.id)} onClick={() => { if (result?.objetivo === 'criatura') { void cast(null, i); } else { setSlot(i); setSelected([]); setPreviewOpen(true); } }} /> :
           <button key={i} className={'duel-empty ' + (slot === i ? 'is-selected' : '')} disabled={!mine || busy}
             aria-label={'Invocar en espacio ' + (i + 1)} aria-pressed={slot === i} onClick={() => { setSlot(i); void summon(i); }}>Espacio {i + 1}</button>)}
       </div>
-      <div className="duel-supports" aria-label="Tu zona de magia y trampas">{(duel.yo.apoyos || [null,null,null]).map((c,i) => c ? <Card key={i} card={c} disabled label={name(c.id) + ", trampa preparada"} /> : <button key={i} className="duel-support-empty" aria-label={"Usar magia o trampa en espacio " + (i+1)} disabled={!mine || busy || !remaining || duel.hechizo || !result || result.tipo === "criatura" || result.objetivo === "criatura"} onClick={() => cast(i)}>Magia / trampa</button>)}</div>
+      <div className="duel-supports" aria-label="Tu zona de magia y trampas">{(duel.yo.apoyos || [null,null,null,null,null]).map((c,i) => c ? <Card key={i} card={c} disabled label={name(c.id) + ", trampa preparada"} /> : <button key={i} className="duel-support-empty" aria-label={"Usar magia o trampa en espacio " + (i+1)} disabled={!mine || busy || !remaining || duel.hechizo || !result || result.tipo === "criatura" || result.objetivo === "criatura"} onClick={() => cast(i)}>Magia / trampa</button>)}</div>
       </div>
       <div className="duel-controls">
         {ownCard && <><button disabled={!mine || busy || ownCard.ataco || ownCard.cambio || !remaining}
@@ -170,15 +184,16 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
       {chosen.length > 0 && <div className="duel-summon">
         <strong>{chosen.length === 2 ? (result ? 'Fusión: ' + result.nombre : 'Estas cartas no tienen una receta juntas.') : (result?.tipo === 'criatura' ? 'Invocar: ' : 'Hechizo: ') + result?.nombre}</strong>
         {result?.tipo === 'criatura' && <><div className="duel-controls">
-          <label>Afinidad<select value={affinity} onChange={e => setStar(e.target.value)}>{result.stars.map(s => <option key={s}>{s}</option>)}</select></label>
-          <label>Posición<select value={position} onChange={e => setPosition(e.target.value)}><option value="ataque">Ataque</option><option value="defensa">Defensa</option></select></label>
+          <label>Afinidad<select aria-label="Afinidad" value={affinity} onChange={e => setStar(e.target.value)}>{result.stars.map(s => <option key={s}>{s}</option>)}</select></label>
+          <label>Posición<select aria-label="Posición" value={position} onChange={e => setPosition(e.target.value)}><option value="ataque">Ataque</option><option value="defensa">Defensa</option></select></label>
           {chosen.length === 1 && <label><input type="checkbox" checked={hidden} onChange={e => setHidden(e.target.checked)} /> Boca abajo</label>}
         </div><p>Toca un espacio vacío: se invoca al instante con estas opciones.</p>
         </>}
         {result && result.tipo !== "criatura" && <p>{result.efecto} {result.objetivo === "criatura" ? "Toca una de tus criaturas para aplicarlo." : "Toca un espacio libre de Magia / trampa para jugarla."}</p>}
       </div>}
+      <p className="duel-message" role="status" key={duel.version}>{duel.mensaje}</p>
       <div className="duel-controls duel-turn">
-        <button disabled={!mine || busy || !remaining} onClick={() => action('terminar')}>Pasar sin atacar</button>
+        <button disabled={!mine || busy || !remaining} onClick={() => action('terminar')}>Terminar turno</button>
         <span>{remaining > 0 ? remaining + "s para jugar · El turno pasa automáticamente" : "Cambiando de turno…"}</span>
 
         <button disabled={busy} onClick={() => setConfirmQuit(true)}>Rendirse</button>
@@ -198,9 +213,13 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
         <button disabled={busy || r.ocupado || !arena.abierta} onClick={() => act('retar_arena', { p_rival: r.id, p_practica: practice })}>Retar</button></div>)}</div>
       {arena.rivales.length === 0 && <p>Aún no hay otros alumnos en la clase.</p>}
     </div>}
+    <header className="duel-heading"><div><small>DUELOS DEL BESTIARIO</small><h2>Arena de criaturas</h2></div>
+      <span className="duel-badge">{arena?.abierta ? 'Arena abierta' : 'Arena cerrada'}</span></header>
+    <p>Las 24 criaturas están disponibles para todos. Cada mazo tiene 75 cartas: 61 criaturas y 14 de magia o trampa, sin necesidad de comprarlas.</p>
+    {!teacher && arena && <p className="duel-reward">{arena.cupos} de 3 duelos con recompensa disponibles hoy · Victoria +3 puntos · Derrota 0</p>}
     <details className="duel-guide"><summary>Cómo jugar · Mazo y fusiones</summary>
       <p>4,000 de vida, cinco espacios y mano de cinco cartas. Al comenzar tu turno recuperas tu mano hasta cinco. Puedes invocar una criatura o fusionar dos cartas de tu mano por turno, antes de atacar.</p>
-      <p>Selecciona tu atacante y después una criatura rival. El turno termina al atacar. En el primer turno no se ataca: al colocar la primera criatura, pasa el turno al rival. Puedes atacar directamente si el campo rival está vacío.</p>
+      <p>Selecciona tu atacante y después una criatura rival. Cada monstruo en ataque puede atacar una vez. El turno pasa automáticamente cuando ya no quedan atacantes disponibles, o puedes terminarlo antes. En el primer turno no se ataca: al colocar la primera criatura, pasa el turno al rival. Puedes atacar directamente si el campo rival está vacío.</p>
       <p>Contra ataque: gana el ATQ mayor, destruye la criatura menor y la diferencia se resta a su vida. Si empatan, ambas se destruyen. Contra defensa: ATQ mayor destruye sin restar vida; ATQ menor te resta la diferencia, sin destruir tu criatura.</p>
       <p>Al invocar, elige una de sus dos afinidades. Cada afinidad vence a la siguiente y recibe +300 en combate: fuego → tierra → aire → agua → sombra → luz → fuego. Las cartas boca abajo revelan su identidad al combatir; las fusiones entran boca arriba.</p>
       <p>Ganas al agotar la vida rival o si el rival no puede completar su mano. Empate al terminar 60 turnos. Cada turno dura hasta 90 segundos; al agotarse el tiempo, pasa automáticamente al rival.</p>

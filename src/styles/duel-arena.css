@@ -115,3 +115,42 @@
  .duel-field .duel-card img { height:78px; }
  .duel-supports .duel-card img { height:58px; }
 }
+.duel-arena .duel-hud {
+  margin:0 0 8px; padding:8px; border:1px solid #b9a56688; border-radius:10px;
+  grid-template-columns:1fr .8fr 1fr; background:#07111ddd; position:sticky; top:0; z-index:5;
+}
+.duel-hud .duel-hud-player { border-left:3px solid #d27065; padding-left:8px; text-align:left; }
+.duel-hud .duel-hud-player.rival { border-left:0; border-right:3px solid #719cde; padding-left:0; padding-right:8px; text-align:right; }
+.duel-hud .duel-hud-player small { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.duel-hud .duel-hud-player strong { font:700 clamp(14px,2vw,25px)/1.2 Arial,sans-serif; }
+.duel-hud .duel-hud-turn { align-content:center; }
+.duel-hud .duel-hud-turn strong { font-size:14px; }
+.duel-supports { grid-template-columns:repeat(5,minmax(0,1fr)); width:100%; gap:6px; }
+.duel-supports .duel-support-empty { font-size:10px; }
+.duel-card-art { display:grid; place-items:center; width:100%; height:clamp(76px,14dvh,130px); overflow:hidden; }
+.duel-arena .duel-card-art img { width:100%; height:100%; max-height:100%; object-fit:contain; }
+.duel-field .duel-card[data-position=defensa] { align-self:center; }
+.duel-field .duel-card[data-position=defensa] .duel-card-art { height:85px; }
+.duel-field .duel-card[data-position=defensa] .duel-card-art img { transform:rotate(90deg) scale(.8); }
+.duel-supports .duel-card-art { height:65px; }
+.duel-hand .duel-card-art { height:140px; }
+.duel-card-preview {
+  position:fixed; z-index:85; left:50%; top:48%; transform:translate(-50%,-50%);
+  width:150px; padding:10px; background:#0c172be8; border:1px solid #efd892;
+  border-radius:12px; box-shadow:0 18px 60px #000b; text-align:center;
+}
+.duel-preview-swipe { touch-action:pan-y; cursor:grab; }
+.duel-preview-swipe img { width:100%; height:185px; object-fit:contain; pointer-events:none; user-select:none; }
+.duel-card-preview .duel-preview-close { position:absolute; right:-12px; top:-14px; border-radius:50%; width:36px; height:36px; min-height:36px; padding:0; }
+.duel-card-preview > button:not(.duel-preview-close) { font-size:12px; padding:5px; width:100%; }
+.duel-card-preview small { display:block; font-size:11px; line-height:1.3; margin-top:6px; color:#fff4d2; }
+@media(max-width:600px) {
+ .duel-field .duel-card-art { height:78px; }
+ .duel-field .duel-card[data-position=defensa] .duel-card-art { height:48px; }
+ .duel-supports .duel-card-art { height:54px; }
+ .duel-hud { gap:4px; }
+ .duel-hud .duel-hud-player span { font-size:9px; }
+ .duel-hud .duel-hud-turn strong { font-size:11px; }
+ .duel-card-preview { width:124px; padding:8px; }
+ .duel-preview-swipe img { height:150px; }
+}
