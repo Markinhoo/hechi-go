@@ -178,3 +178,35 @@ que se desvanece. La navegación a las otras pestañas sigue disponible.
 
     node --test supabase/tests/duel_automatic_turns.test.mjs
     node --test tests/ui/arena.test.mjs
+### Magia, trampas e invocación directa
+
+Aplicar 20260925_b_arena_spells.sql después de 20260925_arena_automatic_turns.sql
+y publicar el frontend. Los duelos nuevos usan 75 cartas: las 61 criaturas
+más 14 hechizos. Las partidas ya iniciadas conservan su mazo.
+
+Seleccionar una criatura (o dos ingredientes válidos) y tocar un espacio vacío
+la invoca inmediatamente. Afinidad, posición y boca abajo se eligen antes de
+tocar el tablero. Engorgio se aplica tocando una criatura propia; los demás
+hechizos se juegan tocando un espacio libre de la zona Magia / trampa.
+
+Se permite un hechizo por turno, además de una invocación. Las trampas se
+colocan ocultas; ante un ataque válido, la primera trampa de izquierda a derecha
+se activa y se consume, cancelando ese ataque. El turno del atacante termina.
+Efectos exclusivos del duelo, independientes de los efectos escolares:
+
+| Carta | Tipo | Copias | Efecto |
+| --- | --- | --- | --- |
+| Incendio | Magia | 4 | 600 de daño al rival |
+| Engorgio | Magia | 4 | +500 ATQ a una criatura propia mientras siga en el campo |
+| Elixir de Vida | Magia | 2 | Recuperar 800 de vida, máximo 4000 |
+| Expecto Patronus | Trampa | 1 | Cancelar ataque y reflejar 400 de daño |
+| Confundo | Trampa | 2 | Cancelar ataque y poner atacante en defensa |
+| Invisibilidad | Trampa | 1 | Cancelar ataque |
+
+El catálogo visual está en duelCatalog.json; el generador anterior sigue siendo
+para criaturas y fusiones. Los hechizos del servidor están en la migración nueva,
+y la prueba verifica que las cantidades coincidan. El fondo proporcionado por el
+usuario está en public/backgrounds/arena-castle.png.
+
+    node --test supabase/tests/duel_spells.test.mjs
+    node --test tests/ui/arena.test.mjs

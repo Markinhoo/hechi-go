@@ -85,3 +85,33 @@
   .duel-turn-toast { animation:duel-turn-notice-quiet 2.8s linear both; }
   @keyframes duel-turn-notice-quiet { 0%,85% { opacity:1; } 100% { opacity:0; visibility:hidden; } }
 }
+.duel-arena {
+  background:linear-gradient(#07101499,#071014c9),url('/backgrounds/arena-castle.png') center top / cover no-repeat;
+}
+.duel-battlefield { padding:10px; border:1px solid #cbb77b55; border-radius:14px; background:#08121822; }
+.duel-arena .duel-card-stats { display:grid; gap:2px; width:100%; text-align:center; }
+.duel-arena .duel-card-stats b { font:bold clamp(12px,1.5vw,19px)/1.2 Arial,sans-serif; color:#fff4c3; white-space:nowrap; }
+.duel-card-stats b:last-child { color:#c8e7ff; }
+.duel-supports { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; width:min(100%,410px); margin:8px auto; }
+.duel-supports .duel-card { width:100%; max-width:100px; justify-self:center; }
+.duel-arena .duel-support-empty { min-height:48px; padding:6px; border:1px dashed #bfb1dd99; border-radius:8px; background:#29233877; color:#eee3ff; text-align:center; font-size:12px; display:grid; place-items:center; }
+.duel-hint { padding:8px; background:#071014bb; border-radius:8px; }
+.duel-arena .duel-card { background-color:#14252be6; }
+.duel-guide,.duel-summon,.duel-lobby { background:#081218aa; border-radius:10px; padding:12px; }
+@media(max-width:600px) {
+ .duel-battlefield { padding:5px; }
+ .duel-arena .duel-card-stats b { font-size:12px; }
+}
+.game-shell.arena-focus .duel-arena.panel {
+  background:linear-gradient(#07101480,#071014b3),url('/backgrounds/arena-castle.png') center top / cover no-repeat !important;
+  color:#f5e8c6 !important;
+}
+.game-shell .duel-arena h2,.game-shell .duel-arena h3 { color:#ffe2a2; }
+/* Keep the whole battlefield compact even on wide desktop screens. */
+.duel-field .duel-card img { height:clamp(76px,14dvh,130px); aspect-ratio:auto; }
+.duel-supports .duel-card img { height:70px; aspect-ratio:auto; }
+.duel-field .duel-card { justify-content:center; }
+@media(max-width:600px) {
+ .duel-field .duel-card img { height:78px; }
+ .duel-supports .duel-card img { height:58px; }
+}

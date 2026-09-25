@@ -1,41 +1,411 @@
 {
- "cards":[
- {"id":"bowtruckle","atk":800,"def":1400,"stars":["tierra","luz"],"copies":4},
- {"id":"doxy","atk":1100,"def":700,"stars":["aire","sombra"],"copies":4},
- {"id":"duendecillo","atk":1000,"def":1000,"stars":["aire","fuego"],"copies":4},
- {"id":"elfo","atk":900,"def":1200,"stars":["luz","tierra"],"copies":4},
- {"id":"lechuza","atk":700,"def":1300,"stars":["aire","luz"],"copies":4},
- {"id":"acromantula","atk":1600,"def":1200,"stars":["sombra","tierra"],"copies":3},
- {"id":"centauro","atk":1700,"def":1400,"stars":["tierra","luz"],"copies":3},
- {"id":"demiguise","atk":1200,"def":1900,"stars":["luz","aire"],"copies":3},
- {"id":"dugbog","atk":1500,"def":1700,"stars":["agua","tierra"],"copies":3},
- {"id":"escarbato","atk":1300,"def":1800,"stars":["tierra","sombra"],"copies":3},
- {"id":"fwooper","atk":1600,"def":1300,"stars":["aire","fuego"],"copies":3},
- {"id":"grindylow","atk":1700,"def":1200,"stars":["agua","sombra"],"copies":3},
- {"id":"basilisco","atk":2300,"def":1800,"stars":["sombra","tierra"],"copies":2},
- {"id":"cerbero","atk":2200,"def":2100,"stars":["fuego","sombra"],"copies":2},
- {"id":"dementor","atk":2100,"def":2300,"stars":["sombra","aire"],"copies":2},
- {"id":"gigante","atk":2400,"def":1700,"stars":["tierra","fuego"],"copies":2},
- {"id":"hipogrifo","atk":2200,"def":1900,"stars":["aire","luz"],"copies":2},
- {"id":"hombre-lobo","atk":2300,"def":1600,"stars":["sombra","tierra"],"copies":2},
- {"id":"inferi","atk":1900,"def":2400,"stars":["sombra","agua"],"copies":2},
- {"id":"thestral","atk":2100,"def":2200,"stars":["aire","sombra"],"copies":2},
- {"id":"dragon","atk":2800,"def":2300,"stars":["fuego","aire"],"copies":1},
- {"id":"fenix","atk":2500,"def":2600,"stars":["fuego","luz"],"copies":1},
- {"id":"troll","atk":2700,"def":2400,"stars":["tierra","sombra"],"copies":1},
- {"id":"unicornio","atk":2400,"def":2800,"stars":["luz","agua"],"copies":1}
- ],
- "fusions":[
- ["bowtruckle","doxy","acromantula"],["bowtruckle","elfo","centauro"],
- ["elfo","lechuza","demiguise"],["bowtruckle","duendecillo","dugbog"],
- ["elfo","duendecillo","escarbato"],["doxy","lechuza","fwooper"],
- ["doxy","duendecillo","grindylow"],
- ["acromantula","dugbog","basilisco"],["centauro","duendecillo","cerbero"],
- ["demiguise","doxy","dementor"],["escarbato","bowtruckle","gigante"],
- ["centauro","lechuza","hipogrifo"],["centauro","doxy","hombre-lobo"],
- ["grindylow","elfo","inferi"],["demiguise","fwooper","thestral"],
- ["basilisco","fwooper","dragon"],["hipogrifo","fwooper","fenix"],
- ["gigante","dugbog","troll"],["thestral","demiguise","unicornio"]
- ],
- "stars":["fuego","tierra","aire","agua","sombra","luz"]
+  "cards": [
+    {
+      "id": "bowtruckle",
+      "atk": 800,
+      "def": 1400,
+      "stars": [
+        "tierra",
+        "luz"
+      ],
+      "copies": 4
+    },
+    {
+      "id": "doxy",
+      "atk": 1100,
+      "def": 700,
+      "stars": [
+        "aire",
+        "sombra"
+      ],
+      "copies": 4
+    },
+    {
+      "id": "duendecillo",
+      "atk": 1000,
+      "def": 1000,
+      "stars": [
+        "aire",
+        "fuego"
+      ],
+      "copies": 4
+    },
+    {
+      "id": "elfo",
+      "atk": 900,
+      "def": 1200,
+      "stars": [
+        "luz",
+        "tierra"
+      ],
+      "copies": 4
+    },
+    {
+      "id": "lechuza",
+      "atk": 700,
+      "def": 1300,
+      "stars": [
+        "aire",
+        "luz"
+      ],
+      "copies": 4
+    },
+    {
+      "id": "acromantula",
+      "atk": 1600,
+      "def": 1200,
+      "stars": [
+        "sombra",
+        "tierra"
+      ],
+      "copies": 3
+    },
+    {
+      "id": "centauro",
+      "atk": 1700,
+      "def": 1400,
+      "stars": [
+        "tierra",
+        "luz"
+      ],
+      "copies": 3
+    },
+    {
+      "id": "demiguise",
+      "atk": 1200,
+      "def": 1900,
+      "stars": [
+        "luz",
+        "aire"
+      ],
+      "copies": 3
+    },
+    {
+      "id": "dugbog",
+      "atk": 1500,
+      "def": 1700,
+      "stars": [
+        "agua",
+        "tierra"
+      ],
+      "copies": 3
+    },
+    {
+      "id": "escarbato",
+      "atk": 1300,
+      "def": 1800,
+      "stars": [
+        "tierra",
+        "sombra"
+      ],
+      "copies": 3
+    },
+    {
+      "id": "fwooper",
+      "atk": 1600,
+      "def": 1300,
+      "stars": [
+        "aire",
+        "fuego"
+      ],
+      "copies": 3
+    },
+    {
+      "id": "grindylow",
+      "atk": 1700,
+      "def": 1200,
+      "stars": [
+        "agua",
+        "sombra"
+      ],
+      "copies": 3
+    },
+    {
+      "id": "basilisco",
+      "atk": 2300,
+      "def": 1800,
+      "stars": [
+        "sombra",
+        "tierra"
+      ],
+      "copies": 2
+    },
+    {
+      "id": "cerbero",
+      "atk": 2200,
+      "def": 2100,
+      "stars": [
+        "fuego",
+        "sombra"
+      ],
+      "copies": 2
+    },
+    {
+      "id": "dementor",
+      "atk": 2100,
+      "def": 2300,
+      "stars": [
+        "sombra",
+        "aire"
+      ],
+      "copies": 2
+    },
+    {
+      "id": "gigante",
+      "atk": 2400,
+      "def": 1700,
+      "stars": [
+        "tierra",
+        "fuego"
+      ],
+      "copies": 2
+    },
+    {
+      "id": "hipogrifo",
+      "atk": 2200,
+      "def": 1900,
+      "stars": [
+        "aire",
+        "luz"
+      ],
+      "copies": 2
+    },
+    {
+      "id": "hombre-lobo",
+      "atk": 2300,
+      "def": 1600,
+      "stars": [
+        "sombra",
+        "tierra"
+      ],
+      "copies": 2
+    },
+    {
+      "id": "inferi",
+      "atk": 1900,
+      "def": 2400,
+      "stars": [
+        "sombra",
+        "agua"
+      ],
+      "copies": 2
+    },
+    {
+      "id": "thestral",
+      "atk": 2100,
+      "def": 2200,
+      "stars": [
+        "aire",
+        "sombra"
+      ],
+      "copies": 2
+    },
+    {
+      "id": "dragon",
+      "atk": 2800,
+      "def": 2300,
+      "stars": [
+        "fuego",
+        "aire"
+      ],
+      "copies": 1
+    },
+    {
+      "id": "fenix",
+      "atk": 2500,
+      "def": 2600,
+      "stars": [
+        "fuego",
+        "luz"
+      ],
+      "copies": 1
+    },
+    {
+      "id": "troll",
+      "atk": 2700,
+      "def": 2400,
+      "stars": [
+        "tierra",
+        "sombra"
+      ],
+      "copies": 1
+    },
+    {
+      "id": "unicornio",
+      "atk": 2400,
+      "def": 2800,
+      "stars": [
+        "luz",
+        "agua"
+      ],
+      "copies": 1
+    }
+  ],
+  "fusions": [
+    [
+      "bowtruckle",
+      "doxy",
+      "acromantula"
+    ],
+    [
+      "bowtruckle",
+      "elfo",
+      "centauro"
+    ],
+    [
+      "elfo",
+      "lechuza",
+      "demiguise"
+    ],
+    [
+      "bowtruckle",
+      "duendecillo",
+      "dugbog"
+    ],
+    [
+      "elfo",
+      "duendecillo",
+      "escarbato"
+    ],
+    [
+      "doxy",
+      "lechuza",
+      "fwooper"
+    ],
+    [
+      "doxy",
+      "duendecillo",
+      "grindylow"
+    ],
+    [
+      "acromantula",
+      "dugbog",
+      "basilisco"
+    ],
+    [
+      "centauro",
+      "duendecillo",
+      "cerbero"
+    ],
+    [
+      "demiguise",
+      "doxy",
+      "dementor"
+    ],
+    [
+      "escarbato",
+      "bowtruckle",
+      "gigante"
+    ],
+    [
+      "centauro",
+      "lechuza",
+      "hipogrifo"
+    ],
+    [
+      "centauro",
+      "doxy",
+      "hombre-lobo"
+    ],
+    [
+      "grindylow",
+      "elfo",
+      "inferi"
+    ],
+    [
+      "demiguise",
+      "fwooper",
+      "thestral"
+    ],
+    [
+      "basilisco",
+      "fwooper",
+      "dragon"
+    ],
+    [
+      "hipogrifo",
+      "fwooper",
+      "fenix"
+    ],
+    [
+      "gigante",
+      "dugbog",
+      "troll"
+    ],
+    [
+      "thestral",
+      "demiguise",
+      "unicornio"
+    ]
+  ],
+  "stars": [
+    "fuego",
+    "tierra",
+    "aire",
+    "agua",
+    "sombra",
+    "luz"
+  ],
+  "spells": [
+    {
+      "id": "hechizo-incendio",
+      "numero": 7,
+      "tipo": "magia",
+      "nombre": "Incendio",
+      "rareza": "comun",
+      "copies": 4,
+      "efecto": "Resta 600 de vida al rival.",
+      "objetivo": "zona"
+    },
+    {
+      "id": "hechizo-engorgio",
+      "numero": 11,
+      "tipo": "magia",
+      "nombre": "Engorgio",
+      "rareza": "comun",
+      "copies": 4,
+      "efecto": "Da +500 ATQ a una criatura propia mientras siga en el campo.",
+      "objetivo": "criatura"
+    },
+    {
+      "id": "hechizo-elixir",
+      "numero": 17,
+      "tipo": "magia",
+      "nombre": "Elixir de Vida",
+      "rareza": "epica",
+      "copies": 2,
+      "efecto": "Recupera 800 de vida, hasta 4000.",
+      "objetivo": "zona"
+    },
+    {
+      "id": "hechizo-patronus",
+      "numero": 2,
+      "tipo": "trampa",
+      "nombre": "Expecto Patronus",
+      "rareza": "legendaria",
+      "copies": 1,
+      "efecto": "Cancela el ataque rival y le resta 400 de vida.",
+      "objetivo": "zona"
+    },
+    {
+      "id": "hechizo-confundo",
+      "numero": 4,
+      "tipo": "trampa",
+      "nombre": "Confundo",
+      "rareza": "epica",
+      "copies": 2,
+      "efecto": "Cancela el ataque y pone al atacante en defensa.",
+      "objetivo": "zona"
+    },
+    {
+      "id": "hechizo-invisibilidad",
+      "numero": 19,
+      "tipo": "trampa",
+      "nombre": "Invisibilidad",
+      "rareza": "legendaria",
+      "copies": 1,
+      "efecto": "Cancela el ataque rival.",
+      "objetivo": "zona"
+    }
+  ]
 }

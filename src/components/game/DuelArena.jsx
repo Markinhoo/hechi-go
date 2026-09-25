@@ -4,7 +4,7 @@ import { bestiario } from '../../data/bestiaryData';
 import catalog from '../../data/duelCatalog.json';
 import '../../styles/duel-arena.css';
 
-const cards = Object.fromEntries(catalog.cards.map(c => [c.id, { ...bestiario.find(b => b.id === c.id), ...c }]));
+const cards = Object.fromEntries(catalog.cards.map(c => [c.id, { ...bestiario.find(b => b.id === c.id), tipo: 'criatura', ...c }]).concat(catalog.spells.map(c => [c.id, { ...c, imagen: '/hechi/card-' + c.numero + '.png' }])));
 const rpcDefault = (name, args) => db.rpc(name, args);
 const name = id => cards[id]?.nombre || id;
 const rarity = { comun: 'Común', rara: 'Especial', epica: 'Épica', legendaria: 'Legendaria' };
@@ -13,8 +13,8 @@ function Card({ card, selected, onClick, disabled, label }) {
   const c = cards[card?.id];
   return <button type="button" className={'duel-card ' + (selected ? 'is-selected' : '')}
     data-rarity={c?.rareza} disabled={disabled} onClick={onClick} aria-pressed={Boolean(selected)}
-    aria-label={label || (c ? c.nombre + ', ataque ' + c.atk + ', defensa ' + c.def : 'Carta oculta')}>
-    {c && !card.oculta ? <><img src={c.imagen} alt="" /><small>{c.atk} ATQ · {c.def} DEF</small>
+    aria-label={label || (c ? c.tipo === 'criatura' ? c.nombre + ', ataque ' + (c.atk + (card.bonusAtk || 0)) + ', defensa ' + c.def : c.nombre + ', ' + c.tipo + ': ' + c.efecto : 'Carta oculta')}>
+    {c && !card.oculta ? <><img src={c.imagen} alt="" /><span className="duel-card-stats">{c.tipo === "criatura" ? <><b>ATQ {c.atk + (card.bonusAtk || 0)}</b><b>DEF {c.def}</b></> : <b>{c.tipo === "magia" ? "MAGIA" : "TRAMPA"}</b>}</span>
       {card.posicion && <small>{card.posicion === 'ataque' ? 'Ataque' : 'Defensa'} · {card.afinidad}{card.oculta ? ' · Oculta' : ''}</small>}
     </> : <><img className="duel-card-back" src="/hechi/card-back.png" alt="Carta boca abajo" /><small>{card?.posicion}</small></>}
   </button>;
@@ -73,7 +73,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
   const fusion = chosen.length === 2 ? catalog.fusions.find(([a, b]) =>
     [a, b].sort().join('+') === chosen.map(c => c.id).sort().join('+'))?.[2] : null;
   const result = cards[chosen.length === 2 ? fusion : chosen[0]?.id];
-  const affinity = result?.stars.includes(star) ? star : result?.stars[0];
+  const affinity = result?.stars?.includes(star) ? star : result?.stars?.[0];
   const ownCard = slot === null ? null : duel?.yo?.campo[slot];
   const canAttack = mine && remaining > 0 && duel.ronda > 1 && ownCard?.posicion === 'ataque' && !ownCard.ataco && !busy;
   const act = async (method, extra = {}, teacherOnly = false) => {
@@ -97,12 +97,25 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
     } finally { request.current = false; setBusy(false); }
   };
   const action = (p_accion, p_datos = {}) => act('accion_duelo_arena', { p_duelo: duel.id, p_version: duel.version, p_accion, p_datos });
-  const choose = uid => setSelected(prev => prev.includes(uid) ? prev.filter(id => id !== uid) : [...prev.slice(-1), uid]);
+  const choose = uid => {
+    const next = hand.find(c => c.uid === uid);
+    setSelected(prev => prev.includes(uid) ? prev.filter(id => id !== uid) :
+      cards[next?.id]?.tipo !== 'criatura' || prev.some(id => cards[hand.find(c => c.uid === id)?.id]?.tipo !== 'criatura') ? [uid] : [...prev.slice(-1), uid]);
+    setSlot(null);
+  };
+  const summon = index => {
+    if (!mine || busy || !remaining || duel.invoco || !result || result.tipo !== 'criatura') return;
+    return action('invocar', { uid: chosen[0].uid, uid2: chosen[1]?.uid, casilla: index, afinidad: affinity, posicion: position, oculta: hidden });
+  };
+  const cast = (index, target) => {
+    if (!mine || busy || !remaining || duel.hechizo || chosen.length !== 1 || result?.tipo === 'criatura') return;
+    return action('hechizo', { uid: chosen[0].uid, casilla: index, objetivo: target });
+  };
 
   return <section className="duel-arena panel student-tab-panel" aria-label="Arena del bestiario">
     <header className="duel-heading"><div><small>DUELOS DEL BESTIARIO</small><h2>Arena de criaturas</h2></div>
       <span className="duel-badge">{arena?.abierta ? 'Arena abierta' : 'Arena cerrada'}</span></header>
-    <p>Las 24 criaturas están disponibles para todos. Cada mazo tiene 61 cartas, sin necesidad de comprarlas.</p>
+    <p>Las 24 criaturas están disponibles para todos. Cada mazo tiene 75 cartas: 61 criaturas y 14 de magia o trampa, sin necesidad de comprarlas.</p>
     {error && <p className="duel-error" role="alert">{error}</p>}
     {!arena && <p role="status">Cargando arena…</p>}
     {teacher && arena && <div className="duel-controls">
@@ -129,18 +142,22 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
         <div><small>{duel.lado === 'a' ? duel.nombre2 : duel.nombre1}</small><strong>{duel.rival.vida} / 4000</strong><span>Mazo: {duel.rival.restantes} · Mano: {duel.rival.cantidadMano}</span></div>
       </div>
       <p className="duel-message" role="status" key={duel.version}>{duel.mensaje}</p>
+      <div className="duel-battlefield">
+      <div className="duel-supports" aria-label="Magia y trampas rivales">{(duel.rival.apoyos || [null,null,null]).map((c,i) => c ? <Card key={i} card={c} disabled label="Trampa rival oculta" /> : <div key={i} className="duel-support-empty">Magia / trampa</div>)}</div>
       <div className="duel-field" aria-label="Campo rival">
         {duel.rival.campo.map((c, i) => c ? <Card key={i} card={c} disabled={!canAttack}
           label={'Atacar espacio rival ' + (i + 1) + (c.id ? ': ' + name(c.id) : ': carta oculta')}
           onClick={() => action('atacar', { casilla: slot, objetivo: i })} /> :
           <div className="duel-empty" key={i}>Vacío</div>)}
       </div>
-      <p className="duel-hint">{canAttack ? 'Elige una criatura rival para atacar.' : 'Selecciona una carta de tu mano y un espacio libre para invocarla; o selecciona tu criatura y después al rival para atacar.'}</p>
+      <p className="duel-hint">{result && result.tipo !== 'criatura' ? result.efecto + (result.objetivo === 'criatura' ? ' Toca tu criatura.' : ' Toca tu zona de magia y trampas.') : canAttack ? 'Elige una criatura rival para atacar.' : 'Selecciona una carta de tu mano y un espacio libre para invocarla; o selecciona tu criatura y después al rival para atacar.'}</p>
       <div className="duel-field" aria-label="Tu campo">
         {duel.yo.campo.map((c, i) => c ? <Card key={i} card={c} selected={slot === i} disabled={!mine || busy}
-          label={'Tu espacio ' + (i + 1) + ': ' + name(c.id)} onClick={() => { setSlot(i); setSelected([]); }} /> :
+          label={'Tu espacio ' + (i + 1) + ': ' + name(c.id)} onClick={() => { if (result?.objetivo === 'criatura') { void cast(null, i); } else { setSlot(i); setSelected([]); } }} /> :
           <button key={i} className={'duel-empty ' + (slot === i ? 'is-selected' : '')} disabled={!mine || busy}
-            aria-label={'Invocar en espacio ' + (i + 1)} aria-pressed={slot === i} onClick={() => setSlot(i)}>Espacio {i + 1}</button>)}
+            aria-label={'Invocar en espacio ' + (i + 1)} aria-pressed={slot === i} onClick={() => { setSlot(i); void summon(i); }}>Espacio {i + 1}</button>)}
+      </div>
+      <div className="duel-supports" aria-label="Tu zona de magia y trampas">{(duel.yo.apoyos || [null,null,null]).map((c,i) => c ? <Card key={i} card={c} disabled label={name(c.id) + ", trampa preparada"} /> : <button key={i} className="duel-support-empty" aria-label={"Usar magia o trampa en espacio " + (i+1)} disabled={!mine || busy || !remaining || duel.hechizo || !result || result.tipo === "criatura" || result.objetivo === "criatura"} onClick={() => cast(i)}>Magia / trampa</button>)}</div>
       </div>
       <div className="duel-controls">
         {ownCard && <><button disabled={!mine || busy || ownCard.ataco || ownCard.cambio || !remaining}
@@ -149,17 +166,16 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
       </div>
       <h3>Tu mano <small>({hand.length}/5)</small></h3>
       <div className="duel-hand">{hand.map(c => <Card key={c.uid} card={c} selected={selected.includes(c.uid)}
-        disabled={!mine || busy || duel.invoco || duel.fase === 'batalla' || !remaining} onClick={() => choose(c.uid)} />)}</div>
+        disabled={!mine || busy || (cards[c.id]?.tipo === 'criatura' ? duel.invoco : duel.hechizo) || duel.fase === 'batalla' || !remaining} onClick={() => choose(c.uid)} />)}</div>
       {chosen.length > 0 && <div className="duel-summon">
-        <strong>{chosen.length === 2 ? (result ? 'Fusión: ' + result.nombre : 'Estas cartas no tienen una receta juntas.') : 'Invocar: ' + result?.nombre}</strong>
-        {result && <><div className="duel-controls">
+        <strong>{chosen.length === 2 ? (result ? 'Fusión: ' + result.nombre : 'Estas cartas no tienen una receta juntas.') : (result?.tipo === 'criatura' ? 'Invocar: ' : 'Hechizo: ') + result?.nombre}</strong>
+        {result?.tipo === 'criatura' && <><div className="duel-controls">
           <label>Afinidad<select value={affinity} onChange={e => setStar(e.target.value)}>{result.stars.map(s => <option key={s}>{s}</option>)}</select></label>
           <label>Posición<select value={position} onChange={e => setPosition(e.target.value)}><option value="ataque">Ataque</option><option value="defensa">Defensa</option></select></label>
           {chosen.length === 1 && <label><input type="checkbox" checked={hidden} onChange={e => setHidden(e.target.checked)} /> Boca abajo</label>}
-        </div><p>Elige un espacio vacío de tu campo.</p>
-        <button disabled={!mine || busy || !remaining || duel.invoco || duel.fase === 'batalla' || slot === null || Boolean(ownCard)}
-          onClick={() => action('invocar', { uid: chosen[0].uid, uid2: chosen[1]?.uid, casilla: slot, afinidad: affinity, posicion: position, oculta: hidden })}>
-          {chosen.length === 2 ? 'Fusionar e invocar' : 'Invocar criatura'}</button></>}
+        </div><p>Toca un espacio vacío: se invoca al instante con estas opciones.</p>
+        </>}
+        {result && result.tipo !== "criatura" && <p>{result.efecto} {result.objetivo === "criatura" ? "Toca una de tus criaturas para aplicarlo." : "Toca un espacio libre de Magia / trampa para jugarla."}</p>}
       </div>}
       <div className="duel-controls duel-turn">
         <button disabled={!mine || busy || !remaining} onClick={() => action('terminar')}>Pasar sin atacar</button>
@@ -189,7 +205,8 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
       <p>Al invocar, elige una de sus dos afinidades. Cada afinidad vence a la siguiente y recibe +300 en combate: fuego → tierra → aire → agua → sombra → luz → fuego. Las cartas boca abajo revelan su identidad al combatir; las fusiones entran boca arriba.</p>
       <p>Ganas al agotar la vida rival o si el rival no puede completar su mano. Empate al terminar 60 turnos. Cada turno dura hasta 90 segundos; al agotarse el tiempo, pasa automáticamente al rival.</p>
       <p>Máximo tres duelos con recompensa al día por alumno y uno contra cada rival, ganes o pierdas. Si cualquiera agotó sus cupos, ambos juegan práctica. Se reinician a medianoche de Ciudad de México. Rendirse no devuelve el cupo ni da puntos.</p>
-      <div className="duel-catalog">{Object.values(cards).map(c => <article key={c.id}><img loading="lazy" src={c.imagen} alt="" /><strong>{c.nombre}</strong><small>{rarity[c.rareza]} · {c.copies} copias</small><small>{c.atk} ATQ / {c.def} DEF · {c.stars.join(' / ')}</small></article>)}</div>
+      <div className="duel-catalog">{Object.values(cards).map(c => <article key={c.id}><img loading="lazy" src={c.imagen} alt="" /><strong>{c.nombre}</strong><small>{rarity[c.rareza]} · {c.copies} copias</small><small>{c.tipo === 'criatura' ? c.atk + ' ATQ / ' + c.def + ' DEF · ' + c.stars.join(' / ') : c.tipo + ': ' + c.efecto}</small></article>)}</div>
+      <p>Puedes usar una magia o colocar una trampa por turno, además de tu criatura. Engorgio se aplica tocando una criatura propia; las otras cartas se juegan tocando un espacio libre de Magia / trampa. Las trampas se activan automáticamente ante el siguiente ataque rival: una por ataque, de izquierda a derecha, y se consumen al activarse. Solo afectan al duelo.</p>
       <h3>Recetas de fusión</h3><ul>{catalog.fusions.map(([a, b, c]) => <li key={a + b}>{name(a)} + {name(b)} → <strong>{name(c)}</strong></li>)}</ul>
     </details>
     {arena?.duelos.length > 0 && <details className="duel-guide" open={teacher}><summary>Duelos recientes</summary>
