@@ -20,6 +20,9 @@ const rpc=async(method,args)=>{
    else yo.campo=yo.campo.map((c,i)=>i===data.objetivo?{...c,bonusAtk:500}:c);
    duel={...duel,yo,hechizo:true,version:duel.version+1};
   }
+  if(args.p_accion==='posicion'){
+   duel={...duel,version:duel.version+1,yo:{...duel.yo,campo:duel.yo.campo.map((c,i)=>i===args.p_datos.casilla?{...c,posicion:c.posicion==='ataque'?'defensa':'ataque'}:c)}};
+  }
   if(args.p_accion==='invocar'){
    const d=args.p_datos;
    duel={...duel,version:duel.version+1,invoco:true,mensaje:'Fusión: acromantula',

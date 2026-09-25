@@ -236,3 +236,18 @@ de los cinco espacios vacíos del campo rival.
 
     node --test supabase/tests/duel_battlefield.test.mjs
     node --test tests/ui/arena.test.mjs
+### Giro con flechas y postura al tocar
+
+Aplicar 20260925_d_arena_postures.sql después de la migración del tablero.
+La vista previa usa flechas laterales y conserva el gesto horizontal para
+voltear antes de invocar. Tocar una criatura propia alterna su postura en el
+servidor y la deja seleccionada para atacar; tocarla de nuevo la vuelve a cambiar.
+No hace falta abrir una vista previa ni confirmar la postura.
+
+Una criatura puede atacar desde ataque o defensa; al iniciar el combate pasa
+a ataque. Esto también permite que una trampa Confundo la vuelva a poner en
+defensa durante la resolución. Cada criatura conserva el límite de un ataque
+por turno: cambiar de postura no reinicia ese límite. El turno automático
+considera también las criaturas en defensa que todavía no hayan atacado.
+
+    node --test supabase/tests/duel_postures.test.mjs

@@ -28,9 +28,9 @@ test('mobile arena: duplicate cards, fusion, target selection and turn controls'
   await page.getByRole('button',{name:'Atacar espacio rival 1: carta oculta',exact:true}).click();
   await page.getByText('Combate completado',{exact:true}).first().waitFor();
   const calls=await page.evaluate(()=>window.arenaCalls.filter(c=>c.method==='accion_duelo_arena'));
-  assert.deepEqual(calls.map(c=>c.args.p_accion),['hechizo','invocar','atacar']);
+  assert.deepEqual(calls.map(c=>c.args.p_accion),['hechizo','invocar','posicion','atacar']);
   assert.equal(calls[1].args.p_datos.uid2,'two');
-  assert.equal(calls[2].args.p_datos.objetivo,0);
+  assert.equal(calls[3].args.p_datos.objetivo,0);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'no horizontal page overflow');
   await page.getByText('Ahora juega tu rival',{exact:true}).waitFor();
   assert.equal(await page.getByRole('button',{name:'Terminar turno',exact:true}).isDisabled(),true);
@@ -62,6 +62,10 @@ test('mobile arena: duplicate cards, fusion, target selection and turn controls'
   await page.goto('http://127.0.0.1:'+server.httpServer.address().port+'/tests/ui/arena.html?direct');
   await page.getByRole('button',{name:'Bowtruckle, ataque 800, defensa 1400',exact:true}).click();
   assert.equal(await page.getByRole('button',{name:'Usar magia o trampa en espacio 5',exact:true}).count(),1);
+  assert.equal(await page.getByRole('button',{name:/Poner boca/}).count(),0);
+  await page.getByRole('button',{name:'Girar carta a la derecha',exact:true}).click();
+  assert.equal(await page.locator('.duel-preview-swipe').getAttribute('data-face'),'down');
+  await page.getByRole('button',{name:'Girar carta a la izquierda',exact:true}).click();
   const preview=page.locator('.duel-preview-swipe');
   const bounds=await preview.boundingBox();
   await page.mouse.move(bounds.x+15,bounds.y+60);await page.mouse.down();
@@ -78,6 +82,10 @@ test('mobile arena: duplicate cards, fusion, target selection and turn controls'
   const defender=page.getByRole('button',{name:'Tu espacio 1: Bowtruckle',exact:true});
   assert.equal(await defender.getAttribute('data-position'),'defensa');
   assert.notEqual(await defender.locator('img').evaluate(el=>getComputedStyle(el).transform),'none');
+  await defender.click();
+  await page.waitForFunction(()=>document.querySelector('[aria-label="Tu espacio 1: Bowtruckle"]').dataset.position==='ataque');
+  await defender.click();
+  await page.waitForFunction(()=>document.querySelector('[aria-label="Tu espacio 1: Bowtruckle"]').dataset.position==='defensa');
   assert.equal(await page.locator('.duel-arena').evaluate(el=>el.querySelector('.duel-hud').getBoundingClientRect().top<el.querySelector('.duel-heading').getBoundingClientRect().top),true);
   await page.reload();
   await page.getByRole('button',{name:'Bowtruckle, ataque 800, defensa 1400',exact:true}).click();

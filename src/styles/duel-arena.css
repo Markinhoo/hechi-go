@@ -154,3 +154,10 @@
  .duel-card-preview { width:124px; padding:8px; }
  .duel-preview-swipe img { height:150px; }
 }
+.duel-card-preview > button.duel-flip-arrow {
+  position:absolute; top:42%; width:34px; height:48px; min-height:44px;
+  padding:0; font:36px/1 Arial,sans-serif; background:#102333cf;
+  color:#ffe1a0; border:1px solid #e4c98388; border-radius:10px;
+}
+.duel-card-preview > .duel-flip-arrow.left { left:-28px; }
+.duel-card-preview > .duel-flip-arrow.right { right:-28px; }
