@@ -11,14 +11,14 @@ const rpcDefault = (name, args) => db.rpc(name, args);
 const name = id => cards[id]?.nombre || id;
 const rarity = { comun: 'Común', rara: 'Especial', epica: 'Épica', legendaria: 'Legendaria' };
 
-function Card({ card, selected, onClick, disabled, label }) {
+function Card({ card, selected, onClick, disabled, label, style, browsing }) {
   const c = cards[card?.id];
-  return <button type="button" className={'duel-card ' + (selected ? 'is-selected' : '')}
+  return <button type="button" style={style} data-uid={card?.uid} className={'duel-card ' + (selected ? 'is-selected ' : '') + (browsing ? 'is-browsing' : '')}
     data-position={card?.posicion} data-rarity={c?.rareza} disabled={disabled} onClick={onClick} aria-pressed={Boolean(selected)}
     aria-label={label || (c ? c.tipo === 'criatura' ? c.nombre + ', ataque ' + (c.atk + (card.bonusAtk || 0)) + ', defensa ' + c.def : c.nombre + ', ' + c.tipo + ': ' + c.efecto : 'Carta oculta')}>
-    {c && !card.oculta ? <><span className="duel-card-art"><img src={c.imagen} alt="" /></span><span className="duel-card-stats">{c.tipo === "criatura" ? <><b>ATQ {c.atk + (card.bonusAtk || 0)}</b><b>DEF {c.def}</b></> : <b>{c.tipo === "magia" ? "MAGIA" : "TRAMPA"}</b>}</span>
+    <span className="duel-card-face">{c && !card.oculta ? <><span className="duel-card-art"><img draggable={false} src={c.imagen} alt="" /></span><span className="duel-card-stats">{c.tipo === "criatura" ? <><b>ATQ {c.atk + (card.bonusAtk || 0)}</b><b>DEF {c.def}</b></> : <b>{c.tipo === "magia" ? "MAGIA" : "TRAMPA"}</b>}</span>
       {card.posicion && <small>{card.posicion === 'ataque' ? 'Ataque' : 'Defensa'} · {card.afinidad}{card.oculta ? ' · Oculta' : ''}</small>}
-    </> : <><span className="duel-card-art"><img className="duel-card-back" src="/hechi/card-back.png" alt="Carta boca abajo" /></span><small>{card?.posicion}</small></>}
+    </> : <><span className="duel-card-art"><img draggable={false} className="duel-card-back" src="/hechi/card-back.png" alt="Carta boca abajo" /></span><small>{card?.posicion}</small></>}</span>
   </button>;
 }
 
@@ -28,11 +28,20 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
   const [error, setError] = useState('');
   const [pending, setBusy] = useState(false);
   const [combatQueue, setCombatQueue] = useState([]);
+  const [intro, setIntro] = useState(null);
+  const [browsing, setBrowsing] = useState(null);
+  const handGesture = useRef(null);
+  const suppressHandClick = useRef(false);
   const busy = pending || combatQueue.length > 0;
   const seenEvents = useRef({duel:null,ids:new Set()});
+  const introducedDuels = useRef(new Set());
   const finishCombat = useCallback(() => setCombatQueue(queue => queue.slice(1)), []);
   const receiveEvents = useCallback(d => {
     if (!d) return;
+    if (d.estado === 'activo' && !introducedDuels.current.has(d.id)) {
+      introducedDuels.current.add(d.id);
+      setIntro({id:d.id,expires:Date.now()+9000});
+    }
     const events = d.eventos || [];
     if (seenEvents.current.duel !== d.id) { seenEvents.current={duel:d.id,ids:new Set(events.map(e=>e.id))}; return; }
     const fresh=events.filter(e=>!seenEvents.current.ids.has(e.id));
@@ -131,6 +140,15 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
       cards[next?.id]?.tipo !== 'criatura' || prev.some(id => cards[hand.find(c => c.uid === id)?.id]?.tipo !== 'criatura') ? [uid] : [...prev.slice(-1), uid]);
     setSlot(null);
   };
+  const handDisabled = c => !mine || busy || (cards[c.id]?.tipo === 'criatura' ? duel.invoco : duel.hechizo) || duel.fase === 'batalla' || !remaining;
+  const browseHand = e => {
+    const gesture = handGesture.current;
+    if (!gesture || e.pointerId !== gesture.pointer) return;
+    if (Math.abs(e.clientX - gesture.startX) > 8) gesture.moved = true;
+    const nearest = gesture.cards.reduce((best, card) => Math.abs(card.x-e.clientX) < Math.abs(best.x-e.clientX) ? card : best);
+    gesture.uid = nearest.uid;
+    setBrowsing(nearest.uid);
+  };
   const summon = index => {
     if (!mine || busy || !remaining || duel.invoco || !result || result.tipo !== 'criatura') return;
     return action('invocar', { uid: chosen[0].uid, uid2: chosen[1]?.uid, casilla: index, afinidad: affinity, posicion: position, oculta: hidden });
@@ -178,8 +196,9 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
         <small>{mine ? 'INICIO DE TURNO' : 'FIN DE TU TURNO'}</small>
         <strong>{mine ? '¡Te toca jugar!' : 'Ahora juega tu rival'}</strong>
       </div>
+      {intro?.id === duel.id && clock < intro.expires && <p className="duel-intro-toast" role="status">Selecciona una carta de tu mano y un espacio libre para invocarla. Para atacar, toca tu criatura y después una del rival. Vuelve a tocar tu criatura seleccionada para cambiar su posición.</p>}
       <div className="duel-scoreboard duel-hud">
-        <div className="duel-hud-player"><small>TÚ</small><strong>VIDA {duel.yo.vida}</strong><span>Mazo {duel.yo.restantes} · Mano {duel.yo.cantidadMano}</span></div>
+        <div className="duel-rival-hand" role="img" aria-label={'Mano rival: ' + duel.rival.cantidadMano + ' cartas boca abajo'}>{Array.from({length:Math.max(0,Math.min(5,duel.rival.cantidadMano || 0))},(_,i) => <img key={i} draggable={false} src="/hechi/card-back.png" alt="" style={{'--fan-offset':i-(Math.min(5,duel.rival.cantidadMano)-1)/2}} />)}</div>
         <div className="duel-hud-turn"><strong>{mine ? "Tu turno" : "Turno rival"}</strong><span>{remaining}s · Turno {duel.ronda}</span></div>
         <div className="duel-hud-player rival"><small>{duel.lado === "a" ? duel.nombre2 : duel.nombre1}</small><strong>VIDA {duel.rival.vida}</strong><span>Mazo {duel.rival.restantes} · Mano {duel.rival.cantidadMano}</span></div>
       </div>
@@ -191,7 +210,6 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
           onClick={() => action('atacar', { casilla: slot, objetivo: i })} /> :
           <button className="duel-empty" key={i} aria-label={"Ataque directo en espacio rival " + (i+1)} disabled={!canAttack || duel.rival.campo.some(Boolean)} onClick={() => action("atacar", { casilla: slot })}>{canAttack && !duel.rival.campo.some(Boolean) ? "Ataque directo" : "Vacío"}</button>)}
       </div>
-      <p className="duel-hint">{result && result.tipo !== 'criatura' ? result.efecto + (result.objetivo === 'criatura' ? ' Toca tu criatura.' : ' Toca tu zona de magia y trampas.') : canAttack ? (duel.rival.campo.some(Boolean) ? 'Toca una criatura rival para atacar.' : 'Toca el campo rival vacío para atacar directamente.') : 'Selecciona una carta de tu mano y un espacio libre para invocarla; o selecciona tu criatura y después al rival para atacar.'}</p>
       <div className="duel-field" aria-label="Tu campo">
         {duel.yo.campo.map((c, i) => c ? <Card key={i} card={c} selected={slot === i} disabled={!mine || busy}
           label={'Tu espacio ' + (i + 1) + ': ' + name(c.id)} onClick={() => { if (result?.objetivo === 'criatura') { void cast(null, i); } else if (slot === i) { void action('posicion', { casilla: i }); } else { setSelected([]); setSlot(i); setPreviewOpen(false); } }} /> :
@@ -201,9 +219,30 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
       <div className="duel-supports" aria-label="Tu zona de magia y trampas">{(duel.yo.apoyos || [null,null,null,null,null]).map((c,i) => c ? <Card key={i} card={c} disabled label={name(c.id) + ", trampa preparada"} /> : <button key={i} className="duel-support-empty" aria-label={"Usar magia o trampa en espacio " + (i+1)} disabled={!mine || busy || !remaining || duel.hechizo || !result || result.tipo === "criatura" || result.objetivo === "criatura"} onClick={() => cast(i)}>Magia / trampa</button>)}</div>
       </div>
       <div className="duel-hand-dock">
+      <div className="duel-own-life"><small>TÚ</small><strong>VIDA {duel.yo.vida}</strong><span>Mazo {duel.yo.restantes}</span></div>
       <h3>Tu mano <small>({hand.length}/5)</small></h3>
-      <div className="duel-hand">{hand.map(c => <Card key={c.uid} card={c} selected={selected.includes(c.uid)}
-        disabled={!mine || busy || (cards[c.id]?.tipo === 'criatura' ? duel.invoco : duel.hechizo) || duel.fase === 'batalla' || !remaining} onClick={() => choose(c.uid)} />)}</div>
+      <div className="duel-hand" aria-label="Tu mano de cartas"
+        onPointerDown={e => {
+          suppressHandClick.current = false;
+          const buttons = [...e.currentTarget.querySelectorAll('button:not(:disabled)')];
+          if (!buttons.length || e.button !== 0) return;
+          const target = e.target.closest('button');
+          if (!target || target.disabled) return;
+          handGesture.current = {pointer:e.pointerId,startX:e.clientX,moved:false,uid:target.dataset.uid,cards:buttons.map(button => ({uid:button.dataset.uid,x:button.getBoundingClientRect().left+button.getBoundingClientRect().width/2}))};
+          setBrowsing(target.dataset.uid);
+        }}
+        onPointerMove={e => { browseHand(e); if (handGesture.current?.moved && !e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.setPointerCapture(e.pointerId); }}
+        onPointerUp={e => {
+          const gesture = handGesture.current;
+          if (!gesture || gesture.pointer !== e.pointerId) return;
+          handGesture.current = null; setBrowsing(null);
+          if (gesture.moved) { suppressHandClick.current = true; const card=hand.find(c=>c.uid===gesture.uid); if(card && !handDisabled(card)) choose(gesture.uid); }
+        }}
+        onPointerCancel={() => { handGesture.current=null; setBrowsing(null); }}>
+        {hand.map((c,i) => <Card key={c.uid} card={c} selected={selected.includes(c.uid)} browsing={browsing===c.uid}
+          style={{'--fan-offset':i-(hand.length-1)/2,'--fan-order':i}} disabled={handDisabled(c)}
+          onClick={() => { if (suppressHandClick.current) { suppressHandClick.current=false; return; } choose(c.uid); }} />)}
+      </div>
       </div>
       {chosen.length > 0 && <div className="duel-summon duel-selection-options">
         <strong>{chosen.length === 2 ? (result ? 'Fusión: ' + result.nombre : 'Estas cartas no tienen una receta juntas.') : (result?.tipo === 'criatura' ? 'Invocar: ' : 'Hechizo: ') + result?.nombre}</strong>

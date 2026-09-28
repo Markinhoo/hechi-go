@@ -1,0 +1,59 @@
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import { pathToFileURL } from 'node:url';
+import { createServer } from 'vite';
+const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(process.env.PLAYWRIGHT_MODULE).href : 'playwright');
+
+test('touch fan: browse, release, cancel, corners and hidden opponent hand', async () => {
+  const server = await createServer({ server: { host: '127.0.0.1', port: 0 } });
+  let browser;
+  try {
+    await server.listen();
+    browser = await chromium.launch({ headless: true, executablePath: process.env.EDGE_PATH });
+    const page = await browser.newPage({ viewport: { width: 390, height: 700 }, hasTouch: true, isMobile: true });
+    await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/tests/ui/arena.html`);
+    await page.locator('.duel-hand .duel-card').first().waitFor();
+    assert.equal(await page.locator('.duel-hint').count(), 0);
+    assert.equal(await page.locator('.duel-rival-hand img').count(), 5);
+    assert.ok(await page.locator('.duel-rival-hand img').evaluateAll(images => images.every(img => img.getAttribute('src') === '/hechi/card-back.png')));
+    const rival = await page.locator('.duel-hud-player.rival').boundingBox();
+    const own = await page.locator('.duel-own-life').boundingBox();
+    assert.ok(rival.x < 20 && rival.y < 20 && own.x > 195 && own.y > 350);
+    const centers = await page.locator('.duel-hand .duel-card').evaluateAll(cards => cards.map(card => {
+      const box = card.getBoundingClientRect();
+      return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    }));
+    const cdp = await page.context().newCDPSession(page);
+    const touch = (type, point) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: point ? [{ ...point, id: 1 }] : [] });
+    await touch('touchStart', centers[0]);
+    await touch('touchMove', centers[1]);
+    await page.locator('[data-uid="two"].is-browsing').waitFor();
+    assert.equal(await page.locator('.duel-hand .is-selected').count(), 0, 'browsing does not select every crossed card');
+    await touch('touchMove', centers[2]);
+    await page.locator('[data-uid="three"].is-browsing').waitFor();
+    await touch('touchEnd');
+    await page.locator('[data-uid="three"].is-selected').waitFor();
+    assert.equal(await page.locator('.duel-hand .is-selected').count(), 1);
+    assert.equal(await page.evaluate(() => window.arenaCalls.filter(c => c.method === 'accion_duelo_arena').length), 0);
+    await page.getByRole('button', { name: 'Cerrar vista de carta', exact: true }).click();
+    await touch('touchStart', centers[0]);
+    await touch('touchMove', centers[1]);
+    await touch('touchCancel');
+    assert.equal(await page.locator('.duel-hand .is-browsing').count(), 0);
+    assert.equal(await page.locator('[data-uid="three"].is-selected').count(), 1, 'cancelling keeps the original selection');
+    for (const [width, height] of [[320,568],[390,700],[430,932],[844,390],[1280,900]]) {
+      await page.setViewportSize({ width, height });
+      await page.waitForTimeout(180);
+      const boxes = await page.locator('.duel-hand .duel-card').evaluateAll(cards => cards.map(card => card.getBoundingClientRect().toJSON()));
+      assert.ok(boxes.every(box => box.left >= 0 && box.right <= width && box.bottom <= height), `fan fits ${width}x${height}`);
+    }
+    await page.setViewportSize({ width: 390, height: 700 });
+    await page.waitForFunction(() => !document.querySelector('.duel-intro-toast'), null, { timeout: 11000 });
+    await page.getByRole('button', { name: 'Invocar en espacio 1', exact: true }).click();
+    assert.equal(await page.locator('.duel-intro-toast').count(), 0, 'summoning does not replay the introduction');
+    if (process.env.ARENA_SCREENSHOT) await page.screenshot({ path: process.env.ARENA_SCREENSHOT });
+  } finally {
+    await browser?.close();
+    await server.close();
+  }
+});

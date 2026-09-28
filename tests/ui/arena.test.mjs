@@ -83,7 +83,7 @@ test('mobile arena: duplicate cards, fusion, target selection and turn controls'
   await page.getByRole('button',{name:'Invocar en espacio 1',exact:true}).click();
   const defender=page.getByRole('button',{name:'Tu espacio 1: Bowtruckle',exact:true});
   assert.equal(await defender.getAttribute('data-position'),'defensa');
-  assert.notEqual(await defender.locator('img').evaluate(el=>getComputedStyle(el).transform),'none');
+  assert.notEqual(await defender.locator('.duel-card-face').evaluate(el=>getComputedStyle(el).transform),'none');
   await defender.click();
   assert.equal(await defender.getAttribute('data-position'),'defensa','first tap only selects');
   await defender.click();
