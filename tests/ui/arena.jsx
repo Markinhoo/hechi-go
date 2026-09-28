@@ -8,6 +8,8 @@ let duel = {id:'duel',estado:'activo',jugador1:'a',jugador2:'b',nombre1:'Alumno'
  rival:{...player,mano:[],campo:[{oculta:true,posicion:'ataque'},null,null,null,null]}};
 if(new URLSearchParams(window.location.search).has('direct')) duel.rival.campo=[null,null,null,null,null];
 window.arenaCalls=[];
+const cinematic=new URLSearchParams(window.location.search).has('cinematic');
+window.deliverRemoteCombat=()=>{duel={...duel,version:duel.version+1,eventos:[...(duel.eventos||[]),{id:'remote',tipo:'combate',actor:'b',atacante:{id:'dragon'},defensor:null,directo:true,ataque:2800,danoActor:0,danoRival:2800}]};};
 let abierta=true;
 const rpc=async(method,args)=>{
  window.arenaCalls.push({method,args});
@@ -31,6 +33,8 @@ const rpc=async(method,args)=>{
   }
   if(args.p_accion==='atacar') duel={...duel,version:duel.version+1,turno:'b',ronda:3,mensaje:'Combate completado'};
   if(args.p_accion==='terminar') duel={...duel,version:duel.version+1,turno:'b',mensaje:'Turno del rival'};
+  if(cinematic && args.p_accion==='invocar' && args.p_datos.uid2) duel={...duel,eventos:[...(duel.eventos||[]),{id:'fusion-'+duel.version,tipo:'fusion',actor:'a',ingredientes:['bowtruckle','doxy'],resultado:'acromantula'}]};
+  if(cinematic && args.p_accion==='atacar') duel={...duel,eventos:[...(duel.eventos||[]),{id:'combat-'+duel.version,tipo:'combate',actor:'a',atacante:{id:'acromantula'},defensor:{oculta:true},trampa:'hechizo-patronus',ataque:1600,danoActor:400,danoRival:0}]};
   return {data:duel};
  }
  return {data:{abierta,cupos:2,activo:duel,duelos:[duel],rivales:[]}};

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import DuelCombat from './DuelCombat';
 import { db } from '../../services/hechiApi';
 import { bestiario } from '../../data/bestiaryData';
 import catalog from '../../data/duelCatalog.json';
@@ -24,7 +25,20 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
   const teacher = sesion.tipo === 'maestro';
   const [arena, setArena] = useState(null);
   const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [pending, setBusy] = useState(false);
+  const [combatQueue, setCombatQueue] = useState([]);
+  const busy = pending || combatQueue.length > 0;
+  const seenEvents = useRef({duel:null,ids:new Set()});
+  const finishCombat = useCallback(() => setCombatQueue(queue => queue.slice(1)), []);
+  const receiveEvents = useCallback(d => {
+    if (!d) return;
+    const events = d.eventos || [];
+    if (seenEvents.current.duel !== d.id) { seenEvents.current={duel:d.id,ids:new Set(events.map(e=>e.id))}; return; }
+    const fresh=events.filter(e=>!seenEvents.current.ids.has(e.id));
+    if (!fresh.length) return;
+    fresh.forEach(e=>seenEvents.current.ids.add(e.id));
+    setCombatQueue(queue=>[...queue,...fresh.map(event=>({event,lado:d.lado}))]);
+  }, []);
   const [practice, setPractice] = useState(false);
   const [selected, setSelected] = useState([]);
   const [slot, setSlot] = useState(null);
@@ -47,8 +61,8 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
     const { data, error: failure } = await rpc('obtener_arena', args());
     if (!alive.current || started !== revision.current) return;
     if (failure) setError(failure.message || 'No se pudo cargar la arena.');
-    else setArena(data);
-  }, [rpc, args]);
+    else { receiveEvents(data.activo || data.duelos?.find(d=>d.id===seenEvents.current.duel)); setArena(data); if (data.activo) setLastId(data.activo.id); }
+  }, [rpc, args, receiveEvents]);
   useEffect(() => {
     alive.current = true;
     let stopped = false;
@@ -87,6 +101,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
       const { data, error: failure } = await rpc(method, { ...(teacherOnly ? { p_token: sesion.token } : args()), ...extra });
       if (failure) throw new Error(failure.message);
       if (data?.id) {
+        receiveEvents(data);
         setLastId(data.id);
         setArena(old => ({ ...old, activo: ['activo', 'pendiente'].includes(data.estado) ? data : null,
           duelos: [data, ...(old?.duelos || []).filter(d => d.id !== data.id)] }));
@@ -120,6 +135,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
   const canFlipPreview = mine && chosen.length === 1 && result?.tipo === "criatura";
   const flipPreview = () => { if (canFlipPreview) setHidden(value => !value); };
   return <section className="duel-arena panel student-tab-panel" aria-label="Arena del bestiario">
+    {combatQueue[0] && <DuelCombat key={combatQueue[0].event.id} item={combatQueue[0]} cards={cards} onComplete={finishCombat} />}
     {error && <p className="duel-error" role="alert">{error}</p>}
     {!arena && <p role="status">Cargando arena…</p>}
     {teacher && arena && <div className="duel-controls">
@@ -135,7 +151,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
       <button disabled={busy} onClick={() => act('responder_reto_arena', { p_duelo: duel.id, p_aceptar: false })}>
         {duel.jugador1 === sesion.alumnoId ? 'Cancelar reto' : 'Rechazar'}</button>
     </article>}
-    {!teacher && playing && <>
+    {!teacher && playing && <div className="duel-play-surface" inert={combatQueue.length ? true : undefined}>
       {previewOpen && previewCard && mine && <aside className="duel-card-preview" aria-label="Vista de carta seleccionada">
         <button className="duel-preview-close" aria-label="Cerrar vista de carta" onClick={() => setPreviewOpen(false)}>×</button>
         <div className="duel-preview-swipe" data-face={previewFaceDown ? "down" : "up"}
@@ -147,7 +163,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
         {canFlipPreview && <><button className="duel-flip-arrow left" aria-label="Girar carta a la izquierda" onClick={flipPreview}>‹</button><button className="duel-flip-arrow right" aria-label="Girar carta a la derecha" onClick={flipPreview}>›</button></>}
         <small>{canFlipPreview ? "Desliza ← → para voltear. Toca el tablero para invocar." : chosen.length === 2 ? "Fusión boca arriba: toca un espacio libre." : ownCard ? "Toca el campo rival para atacar." : previewCard.efecto}</small>
       </aside>}
-      <div className="duel-turn-toast" key={duel.id + ':' + duel.ronda} role="status" aria-live="polite">
+      <div className="duel-turn-toast" hidden={combatQueue.length > 0} key={duel.id + ':' + duel.ronda} role="status" aria-live="polite">
         <small>{mine ? 'INICIO DE TURNO' : 'FIN DE TU TURNO'}</small>
         <strong>{mine ? '¡Te toca jugar!' : 'Ahora juega tu rival'}</strong>
       </div>
@@ -173,10 +189,12 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
       </div>
       <div className="duel-supports" aria-label="Tu zona de magia y trampas">{(duel.yo.apoyos || [null,null,null,null,null]).map((c,i) => c ? <Card key={i} card={c} disabled label={name(c.id) + ", trampa preparada"} /> : <button key={i} className="duel-support-empty" aria-label={"Usar magia o trampa en espacio " + (i+1)} disabled={!mine || busy || !remaining || duel.hechizo || !result || result.tipo === "criatura" || result.objetivo === "criatura"} onClick={() => cast(i)}>Magia / trampa</button>)}</div>
       </div>
+      <div className="duel-hand-dock">
       <h3>Tu mano <small>({hand.length}/5)</small></h3>
       <div className="duel-hand">{hand.map(c => <Card key={c.uid} card={c} selected={selected.includes(c.uid)}
         disabled={!mine || busy || (cards[c.id]?.tipo === 'criatura' ? duel.invoco : duel.hechizo) || duel.fase === 'batalla' || !remaining} onClick={() => choose(c.uid)} />)}</div>
-      {chosen.length > 0 && <div className="duel-summon">
+      </div>
+      {chosen.length > 0 && <div className="duel-summon duel-selection-options">
         <strong>{chosen.length === 2 ? (result ? 'Fusión: ' + result.nombre : 'Estas cartas no tienen una receta juntas.') : (result?.tipo === 'criatura' ? 'Invocar: ' : 'Hechizo: ') + result?.nombre}</strong>
         {result?.tipo === 'criatura' && <><div className="duel-controls">
           <label>Afinidad<select aria-label="Afinidad" value={affinity} onChange={e => setStar(e.target.value)}>{result.stars.map(s => <option key={s}>{s}</option>)}</select></label>
@@ -195,7 +213,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
       </div>
       {confirmQuit && <div className="duel-invite" role="alert"><p>Rendirse cancela el duelo sin puntos para nadie. El cupo reservado sigue consumido.</p>
         <button disabled={busy} onClick={() => action('rendirse')}>Confirmar rendición</button><button onClick={() => setConfirmQuit(false)}>Seguir jugando</button></div>}
-    </>}
+    </div>}
     {!teacher && duel && !['pendiente', 'activo'].includes(duel.estado) && <article className="duel-invite" role="status">
       <h3>{duel.ganador ? (duel.ganador === sesion.alumnoId ? '¡Victoria!' : 'Duelo terminado') : 'Duelo cerrado'}</h3>
       <p>{duel.mensaje}</p><p>{duel.premioEntregado ? 'El ganador recibió 3 puntos.' : 'Sin puntos otorgados.'}</p>

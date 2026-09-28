@@ -251,3 +251,22 @@ por turno: cambiar de postura no reinicia ese límite. El turno automático
 considera también las criaturas en defensa que todavía no hayan atacado.
 
     node --test supabase/tests/duel_postures.test.mjs
+### Presentación de combate (28 de septiembre)
+
+Aplicar 20260928_arena_combat_events.sql después de las migraciones anteriores
+y publicar el frontend. El servidor conserva los últimos 12 eventos públicos
+de combate/fusión dentro de la partida. Incluyen daño real, valores de combate,
+destrucciones y trampas activadas. Nunca contienen manos ni mazos; un objetivo
+oculto de un ataque cancelado por trampa conserva su reverso en el evento.
+
+Ambos jugadores ven una secuencia de 2.6 segundos (pueden omitirla con Continuar):
+atacante y objetivo, impacto/trampa, daño y resultado. Las fusiones presentan
+ingredientes y criatura resultante. El sondeo añade solo eventos nuevos a la
+cola; al abrir una partida no reproduce eventos históricos. Durante la secuencia
+los controles del tablero quedan inactivos. Se respeta movimiento reducido.
+
+El tablero y la mano comparten una superficie compacta. En pantallas de altura
+muy reducida se conserva el desplazamiento para no reducir controles en exceso.
+
+    node --test supabase/tests/duel_combat_events.test.mjs
+    node --test tests/ui/arena-combat.test.mjs tests/ui/arena.test.mjs

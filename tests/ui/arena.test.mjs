@@ -10,6 +10,7 @@ test('mobile arena: duplicate cards, fusion, target selection and turn controls'
   await server.listen();
   browser=await chromium.launch({headless:true,executablePath:process.env.EDGE_PATH});
   const page=await browser.newPage({viewport:{width:390,height:700}});
+  page.setDefaultTimeout(6000);
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('http://127.0.0.1:'+server.httpServer.address().port+'/tests/ui/arena.html');
   assert.equal(await page.locator('.duel-card strong').count(),0,'no repeated card names');

@@ -1,0 +1,39 @@
+import assert from 'node:assert/strict';
+import {test} from 'node:test';
+import {pathToFileURL} from 'node:url';
+import {createServer} from 'vite';
+const {chromium}=await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE).href);
+test('combat presentation: fusion, trap, damage, no replay and compact hand',async()=>{
+ const server=await createServer({server:{host:'127.0.0.1',port:0}});
+ let browser;
+ try{
+  await server.listen();browser=await chromium.launch({headless:true,executablePath:process.env.EDGE_PATH});
+  const page=await browser.newPage({viewport:{width:390,height:700}});
+  page.setDefaultTimeout(6000);
+  await page.goto('http://127.0.0.1:'+server.httpServer.address().port+'/tests/ui/arena.html?cinematic');
+  await page.getByRole('button',{name:'Bowtruckle, ataque 800, defensa 1400',exact:true}).click();
+  await page.getByRole('button',{name:'Doxy, ataque 1100, defensa 700',exact:true}).first().click();
+  await page.getByRole('button',{name:'Invocar en espacio 1',exact:true}).click();
+  await page.getByRole('dialog',{name:'Fusión de criaturas'}).waitFor();
+  await page.getByRole('button',{name:'Continuar',exact:true}).click();
+  await page.waitForTimeout(1900);
+  assert.equal(await page.getByRole('dialog').count(),0,'polling must not replay fusion');
+  const hand=await page.locator('.duel-hand-dock').boundingBox();
+  const board=await page.locator('.duel-battlefield').boundingBox();
+  assert.ok(board.y>=0 && hand.y+hand.height<650,'board and hand visible above mobile navigation');
+  if(process.env.ARENA_SCREENSHOT) await page.screenshot({path:process.env.ARENA_SCREENSHOT,type:'jpeg',quality:60});
+  await page.getByRole('button',{name:'Tu espacio 1: Acromantula',exact:true}).click();
+  await page.getByRole('button',{name:'Atacar espacio rival 1: carta oculta',exact:true}).click();
+  const dialog=page.getByRole('dialog',{name:'Resolución del combate'});
+  await dialog.waitFor();
+  await dialog.getByText('−400 de vida para ti',{exact:true}).waitFor();
+  assert.equal(await dialog.getByAltText('Carta oculta',{exact:true}).count(),1);
+  await page.waitForFunction(()=>!document.querySelector('.duel-combat-overlay'),null,{timeout:5000});
+  await page.waitForTimeout(1900);
+  assert.equal(await page.getByRole('dialog').count(),0);
+  await page.evaluate(()=>window.deliverRemoteCombat());
+  await page.getByRole('dialog',{name:'Resolución del combate'}).waitFor();
+  await page.getByText('−2800 de vida para ti',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'Continuar',exact:true}).click();
+ }finally{await browser?.close();await server.close();}
+});
