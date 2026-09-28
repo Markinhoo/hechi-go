@@ -218,3 +218,56 @@
 .duel-play-surface .duel-field .duel-card > small { display:none; }
 .duel-play-surface .duel-field .duel-card-art { height:100%; }
 .duel-play-surface .duel-field [data-position=defensa] .duel-card-art { height:100%; }
+
+/* The active duel lives outside the app shell so the board owns the viewport. */
+.duel-arena.duel-fullscreen {
+ position:fixed; inset:0; z-index:120; width:100%; height:100dvh; max-height:none;
+ margin:0; border:0; border-radius:0; overflow:hidden;
+ padding:max(6px,env(safe-area-inset-top)) max(6px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left));
+ background:radial-gradient(ellipse at 50% 50%,#17698166,transparent 65%),linear-gradient(#031426bb,#04152ad9),url('/backgrounds/arena-castle.png') center / cover;
+}
+.duel-fullscreen *, .duel-fullscreen *::before, .duel-fullscreen *::after { box-sizing:border-box; }
+.duel-fullscreen .duel-play-surface {
+ width:100%; max-width:1000px; height:100%; min-height:0; max-height:none;
+ grid-template-columns:minmax(0,1fr); grid-template-rows:auto minmax(0,1fr) auto auto auto; gap:4px;
+}
+.duel-fullscreen .duel-play-surface > * { min-width:0; }
+.duel-fullscreen .duel-hud { padding:5px 48px 5px 5px; margin:0; background:#031025d9; border-color:#50cafa88; }
+.duel-fullscreen .duel-hud-player { grid-column:3; grid-row:1; border-color:#41d9ef; text-align:right; }
+.duel-fullscreen .duel-hud-player.rival { grid-column:1; grid-row:1; text-align:left; border-color:#b46aff; }
+.duel-fullscreen .duel-hud-turn { grid-column:2; grid-row:1; }
+.duel-fullscreen .duel-hud strong { color:#fff; text-shadow:0 2px 3px #000; }
+.duel-fullscreen .duel-hud small, .duel-fullscreen .duel-hud span, .duel-fullscreen p, .duel-fullscreen h3, .duel-fullscreen .duel-turn span { color:#d9ecf9; }
+.duel-fullscreen .duel-card-art { position:relative; }
+.duel-fullscreen .duel-card-art img { position:absolute; inset:0; width:100%; height:100%; min-height:0; aspect-ratio:auto; }
+.duel-fullscreen .duel-menu-toggle { position:absolute; right:3px; top:3px; z-index:10; width:44px; padding:0; background:#063154; color:#baf5ff; border-color:#6bd8ff; font-size:26px; }
+.duel-fullscreen .duel-battlefield {
+ grid-template-rows:minmax(32px,.5fr) minmax(0,1fr) 30px minmax(0,1fr) minmax(32px,.5fr);
+ border-color:#79d4ec66; border-radius:6px; background:linear-gradient(#39628b22,#07142c22);
+}
+.duel-fullscreen .duel-field, .duel-fullscreen .duel-supports { gap:clamp(3px,1.5vw,12px); }
+.duel-fullscreen .duel-field .duel-card, .duel-fullscreen .duel-empty, .duel-fullscreen .duel-support-empty { border:1px solid #86bccc88; border-radius:3px; background:#07152544; }
+.duel-fullscreen .duel-supports .duel-card { height:100%; max-width:none; }
+.duel-fullscreen .duel-supports .duel-card-art { height:100%; min-height:0; }
+.duel-fullscreen .duel-supports .duel-card small, .duel-fullscreen .duel-supports .duel-card-stats { display:none; }
+.duel-fullscreen .duel-card-stats b { font-size:clamp(9px,2.6vw,15px); }
+.duel-fullscreen .duel-hint { overflow:hidden; text-align:center; }
+.duel-fullscreen .duel-hand-dock { padding:3px; border-color:#54bcd055; background:#05122599; }
+.duel-fullscreen .duel-hand { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:3px; overflow:visible; }
+.duel-fullscreen .duel-hand .duel-card { width:100%; min-width:0; }
+.duel-fullscreen .duel-hand .duel-card-art { height:clamp(34px,10dvh,90px); }
+.duel-fullscreen .duel-turn { flex-wrap:nowrap; }
+.duel-fullscreen .duel-turn span { min-width:0; font-size:9px; }
+.duel-fullscreen .duel-selection-options { position:absolute; bottom:155px; width:100%; background:#0b2039f5; z-index:86; }
+.duel-fullscreen .duel-card-preview { z-index:85; }
+.duel-fullscreen .duel-menu-panel { position:absolute; inset:58px 6px 6px; z-index:100; padding:16px; overflow:auto; overflow-wrap:anywhere; background:#07172bf5; border:1px solid #61bad1; border-radius:12px; }
+.duel-fullscreen .duel-menu-panel[hidden] { display:none; }
+.duel-fullscreen .duel-invite { position:absolute; inset:25% 8px auto; z-index:101; background:#102135; }
+.duel-fullscreen .duel-error { position:absolute; left:8px; right:8px; top:60px; z-index:110; }
+.duel-fullscreen .duel-turn-toast { z-index:90; }
+.duel-fullscreen .duel-combat-overlay { z-index:150; }
+@media(max-height:500px) {
+ .duel-fullscreen .duel-hud-player span, .duel-fullscreen .duel-hand-dock h3 { display:none; }
+ .duel-fullscreen .duel-hand .duel-card-art { height:28px; }
+ .duel-fullscreen .duel-message { max-height:22px; padding:1px 4px; }
+}
