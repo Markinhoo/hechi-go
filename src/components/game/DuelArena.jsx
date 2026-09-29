@@ -105,7 +105,8 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
   }, [refresh]);
   const duel = arena?.activo || arena?.duelos?.find(d => d.id === lastId);
   const playing = duel?.estado === 'activo';
-  const fullscreen = !teacher && playing && !lobbyOpen;
+  const fullscreen = !teacher && (playing || combatQueue.length > 0) && !lobbyOpen;
+  const directEvent = combatQueue[0]?.event.directo && !combatQueue[0].event.trampa ? combatQueue[0] : null;
   useEffect(() => {
     if (!fullscreen) return;
     const previous = document.body.style.overflow;
@@ -259,12 +260,14 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
       <div className="duel-battlefield">
       <div className="duel-supports" aria-label="Magia y trampas rivales">{(duel.rival.apoyos || [null,null,null,null,null]).map((c,i) => c ? <Card key={i} card={c} disabled label="Trampa rival oculta" /> : <div key={i} className="duel-support-empty">Magia / trampa</div>)}</div>
       <div className="duel-field" aria-label="Campo rival">
+        {directEvent && directEvent.event.actor === directEvent.lado && <span key={directEvent.event.id} className="duel-direct-flash" role="status" aria-label={'Ataque directo: '+directEvent.event.danoRival+' de daño al rival'} />}
         {duel.rival.campo.map((c, i) => c ? <Card key={i} card={c} disabled={!canAttack}
           label={'Atacar espacio rival ' + (i + 1) + (c.id ? ': ' + name(c.id) : ': carta oculta')}
           onClick={() => action('atacar', { casilla: slot, objetivo: i })} /> :
           <button className="duel-empty" key={i} aria-label={"Ataque directo en espacio rival " + (i+1)} disabled={!canAttack || duel.rival.campo.some(Boolean)} onClick={() => action("atacar", { casilla: slot })}>{canAttack && !duel.rival.campo.some(Boolean) ? "Ataque directo" : "Vacío"}</button>)}
       </div>
       <div className="duel-field" aria-label="Tu campo">
+        {directEvent && directEvent.event.actor !== directEvent.lado && <span key={directEvent.event.id} className="duel-direct-flash" role="status" aria-label={'Ataque directo: '+directEvent.event.danoRival+' de daño para ti'} />}
         {duel.yo.campo.map((c, i) => c ? <Card key={i} card={c} drop={'target:'+i} selected={slot === i} disabled={!mine || busy}
           label={'Tu espacio ' + (i + 1) + ': ' + name(c.id)} onClick={() => { if (result?.objetivo === 'criatura') { void cast(null, i); } else if (slot === i) { void action('posicion', { casilla: i }); } else { setSelected([]); setSlot(i); setPlacement(null); } }} /> :
           <button key={i} data-drop={'field:'+i} className={'duel-empty ' + (slot === i ? 'is-selected' : '')} disabled={!mine || busy}

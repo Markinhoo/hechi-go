@@ -8,6 +8,7 @@ let duel = {id:'duel',estado:'activo',jugador1:'a',jugador2:'b',nombre1:'Alumno'
  rival:{...player,mano:[],campo:[{oculta:true,posicion:'ataque'},null,null,null,null]}};
 if(new URLSearchParams(window.location.search).has('direct')) duel.rival.campo=[null,null,null,null,null];
 window.arenaCalls=[];
+window.deliverCombatEvent=event=>{duel={...duel,version:duel.version+1,eventos:[...(duel.eventos||[]),{...event,id:'effect-'+(duel.version+1),tipo:'combate'}]};window.dispatchEvent(new Event('online'));};
 window.expireArenaTurn=()=>{duel={...duel,venceEn:new Date(Date.now()-1000).toISOString()};};
 const cinematic=new URLSearchParams(window.location.search).has('cinematic');
 window.deliverRemoteCombat=(direct=true)=>{duel={...duel,version:duel.version+1,eventos:[...(duel.eventos||[]),{id:'remote',tipo:'combate',actor:'b',atacante:{id:'dragon'},defensor:direct?null:{id:'bowtruckle',posicion:'ataque'},directo:direct,ataque:2800,danoActor:0,danoRival:2800}]};};

@@ -404,6 +404,33 @@
 .combat-defender.receives-impact { position:relative; }
 .receives-impact::after { content:''; position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse,#fff 0%,#e7fbffdd 12%,#6ad8ff66 32%,transparent 65%); opacity:0; animation:attack-light 1.6s ease-out both; }
 @keyframes attack-light { 0%,48% {opacity:0;transform:scale(.25)} 60% {opacity:.9;transform:scale(1.12)} 100% {opacity:0;transform:scale(1.5)} }
+.duel-field { position:relative; }
+.duel-direct-flash { position:absolute; inset:-6px; z-index:20; pointer-events:none; border-radius:10px; background:radial-gradient(ellipse,#fff 0%,#a9edffa6 30%,#3aafff00 75%); animation:direct-field-flash .85s ease-out both; }
+@keyframes direct-field-flash { 0% {opacity:0;transform:scale(.65)} 22% {opacity:.9} 100% {opacity:0;transform:scale(1.08)} }
+.combat-card-visual { position:relative; width:100%; }
+.duel-arena .duel-combat-stage h2 { color:#fff2cb; font:700 26px/1.2 Arial,sans-serif; }
+.combat-shards { position:absolute; inset:0; pointer-events:none; }
+.duel-combat-pair .combat-shards img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; opacity:0; animation:card-shard-fall 1.35s .9s ease-in both; }
+.is-shattered .combat-card-original { animation:card-break-original .9s steps(1,end) both; }
+@keyframes card-break-original { 0% {opacity:1} 100% {opacity:0} }
+@keyframes card-shard-fall { 0% {opacity:1;transform:translate(0,0) rotate(0)} 20% {opacity:1} 100% {opacity:0;transform:translate(var(--shard-x),var(--shard-y)) rotate(var(--shard-turn))} }
+.is-rebound .combat-attacker { animation:attack-and-recoil 1.9s ease both; }
+.is-rebound .combat-defender { animation:defender-counter 1.9s ease both; }
+.combat-return-beam { position:absolute; top:40%; left:15%; width:70%; height:6px; z-index:4; pointer-events:none; background:linear-gradient(90deg,#fff,#8ae9ff,transparent); box-shadow:0 0 14px #a5f3ff; border-radius:50%; transform-origin:right; animation:return-beam 1.9s ease both; }
+.receives-return::after { content:''; position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse,#fff,#98eaff88 30%,transparent 65%); animation:return-impact 1.9s ease both; }
+.is-rebound .combat-attacker .combat-shards img { animation-delay:1.5s; }
+.is-rebound .combat-attacker .combat-card-original { animation-duration:1.5s; }
+.is-rebound .combat-outcome { animation:rebound-result 2.2s both; }
+@keyframes attack-and-recoil { 0% {opacity:0;transform:translateX(-35px)} 25% {opacity:1;transform:translateX(0)} 42% {transform:translateX(30px)} 58% {transform:translateX(0)} 80% {transform:translateX(-18px) rotate(-7deg)} 100% {transform:none} }
+@keyframes defender-counter { 0% {opacity:0} 25% {opacity:1} 43% {transform:translateX(8px)} 65% {transform:translateX(-30px)} 100% {transform:none} }
+@keyframes return-beam { 0%,48% {opacity:0;transform:scaleX(0)} 58% {opacity:1;transform:scaleX(.15)} 76% {opacity:1;transform:scaleX(1)} 100% {opacity:0;transform:scaleX(1)} }
+@keyframes return-impact { 0%,65% {opacity:0;transform:scale(.4)} 80% {opacity:.9;transform:scale(1.1)} 100% {opacity:0;transform:scale(1.3)} }
+@keyframes rebound-result { 0%,72% {opacity:0} 100% {opacity:1} }
+@media(prefers-reduced-motion:reduce) {
+ .duel-direct-flash {animation:none;opacity:.2;transform:none;}
+ .duel-combat-pair .combat-shards img,.is-shattered .combat-card-original,.is-rebound .combat-attacker,.is-rebound .combat-defender,.is-rebound .combat-outcome {animation:none;}
+ .combat-shards,.combat-return-beam,.receives-return::after {display:none;}
+}
 @media(max-height:500px) { .duel-placement-flip {width:64px;height:96px;} .duel-fullscreen .duel-placement {bottom:48px;padding:6px;} }
 @media(prefers-reduced-motion:reduce) {
  .duel-fullscreen .duel-hand .is-compatible .duel-card-face::after,.duel-placement-flip[data-face=down] .duel-card-face,.combat-vortex,.is-fusion .combat-attacker,.is-fusion .combat-defender,.is-fusion .combat-outcome,.receives-impact::after { animation:none; }
