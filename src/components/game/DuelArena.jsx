@@ -12,7 +12,7 @@ const rpcDefault = (name, args) => db.rpc(name, args);
 const name = id => cards[id]?.nombre || id;
 const rarity = { comun: 'Común', rara: 'Especial', epica: 'Épica', legendaria: 'Legendaria' };
 
-function Card({ card, selected, onClick, disabled, label, style, browsing, compatible, drop }) {
+function Card({ card, selected, onClick, disabled, label, style, browsing, compatible, drop, pairs = [] }) {
   const c = cards[card?.id];
   return <button type="button" style={style} data-uid={card?.uid} title={compatible ? 'Combinación disponible' : undefined} className={'duel-card ' + (selected ? 'is-selected ' : '') + (browsing ? 'is-browsing ' : '') + (compatible ? 'is-compatible' : '')}
     data-drop={drop} data-position={card?.posicion} data-rarity={c?.rareza} disabled={disabled} onClick={onClick} aria-pressed={Boolean(selected)}
@@ -20,6 +20,7 @@ function Card({ card, selected, onClick, disabled, label, style, browsing, compa
     <span className="duel-card-face">{c && !card.oculta ? <><span className="duel-card-art"><img draggable={false} src={c.imagen} alt="" /></span><span className="duel-card-stats">{c.tipo === "criatura" ? <><b>ATQ {c.atk + (card.bonusAtk || 0)}</b><b>DEF {c.def}</b></> : <b>{c.tipo === "magia" ? "MAGIA" : "TRAMPA"}</b>}</span>
       {card.posicion && <small>{card.posicion === 'ataque' ? 'Ataque' : 'Defensa'} · {card.afinidad}{card.oculta ? ' · Oculta' : ''}</small>}
     </> : <><span className="duel-card-art"><img draggable={false} className="duel-card-back" src="/hechi/card-back.png" alt="Carta boca abajo" /></span><small>{card?.posicion}</small></>}</span>
+    {pairs.length > 0 && <span className="duel-pair-tags" aria-label={'Parejas compatibles: '+pairs.map(p=>p.number).join(', ')}>{pairs.map(p=><span key={p.number} style={{background:p.color}}>{p.number}</span>)}</span>}
   </button>;
 }
 
@@ -56,6 +57,8 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
   const [rivalSearch, setRivalSearch] = useState('');
   const [placement, setPlacement] = useState(null);
   const [drag, setDrag] = useState(null);
+  const flipStart = useRef(null);
+  const flippedBySwipe = useRef(false);
   const [lastId, setLastId] = useState(null);
   const [clock, setClock] = useState(() => Date.now());
   const [confirmQuit, setConfirmQuit] = useState(false);
@@ -107,10 +110,17 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
   const combination = chosen.length === 2 ? duelCombination(chosen[0], chosen[1], duel?.hechizo) : null;
   const result = cards[chosen.length === 2 ? combination?.id : chosen[0]?.id];
   const compatible = new Set();
+  const pairsByUid = new Map();
+  const pairColors = ['#ffca58','#7ddaff','#e9a0ff','#8ff0a1','#ff9384','#b3a6ff','#a5e9df','#ffc6e0','#d9ef7b','#c6d8ff'];
+  let pairNumber = 0;
   if (mine && remaining > 0 && !busy && !duel.invoco && duel.fase !== 'batalla') {
-    for (const a of hand) for (const b of hand) {
-      if (chosen.length && !chosen.some(c => c.uid === a.uid)) continue;
-      if (duelCombination(a, b, duel.hechizo)) { compatible.add(a.uid); compatible.add(b.uid); }
+    for (let i=0;i<hand.length;i++) for (let j=i+1;j<hand.length;j++) {
+      const a=hand[i], b=hand[j];
+      if (!duelCombination(a,b,duel.hechizo)) continue;
+      const pair={number:++pairNumber,color:pairColors[(pairNumber-1)%pairColors.length]};
+      if (chosen.length && !chosen.some(c=>c.uid===a.uid || c.uid===b.uid)) continue;
+      compatible.add(a.uid); compatible.add(b.uid);
+      for (const card of [a,b]) pairsByUid.set(card.uid,[...(pairsByUid.get(card.uid)||[]),pair]);
     }
   }
   const affinity = result?.stars?.[0];
@@ -173,7 +183,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
         kind === 'target' ? card.objetivo !== 'criatura' || !duel.yo.campo[index] :
         kind === 'support' ? card.tipo === 'criatura' || card.objetivo === 'criatura' || duel.yo.apoyos?.[index] : true) return;
     setSelected(uids); setSlot(null);
-    setPlacement({kind,index,duel:duel.id,version:duel.version});
+    setPlacement({kind,index,duel:duel.id,version:duel.version,faceDown:card.tipo==='trampa'});
   };
   const confirmPlacement = hidden => {
     if (!placing || !result) return;
@@ -204,13 +214,19 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
     </article>}
     {fullscreen && <div className="duel-play-surface" inert={combatQueue.length ? true : undefined}>
       <button className="duel-menu-toggle" aria-label="Menú del duelo" aria-expanded={menuOpen} aria-controls="duel-menu" onClick={() => setMenuOpen(value => !value)}>☰</button>
-      {drag && <img className="duel-drag-ghost" src={cards[hand.find(c=>c.uid===drag.uid)?.id]?.imagen} alt="" style={{left:drag.x,top:drag.y}} />}
+      {drag && <div className="duel-drag-ghost" aria-hidden="true" style={{left:drag.x,top:drag.y}}><Card card={hand.find(c=>c.uid===drag.uid)} disabled /></div>}
       {placing && result && <aside className="duel-placement" role="dialog" aria-label="Colocar carta" onKeyDown={e=>{if(e.key==='Escape') setPlacement(null);}}>
         <strong>{result.nombre} · Espacio {placement.index + 1}</strong>
         {result.tipo === 'criatura' && <small>{affinity} · ATQ {result.atk + (combination?.bonusAtk || 0)}</small>}
+        <div className="duel-placement-flip" data-face={placement.faceDown ? 'down' : 'up'} onClick={()=>{if(result.tipo!=='criatura' || chosen.length!==1) return;if(flippedBySwipe.current){flippedBySwipe.current=false;return;}setPlacement(p=>({...p,faceDown:!p.faceDown}));}}
+          onPointerDown={e=>{flipStart.current=e.clientX;flippedBySwipe.current=false;e.currentTarget.setPointerCapture(e.pointerId);}}
+          onPointerCancel={()=>{flipStart.current=null;}}
+          onPointerUp={e=>{if(flipStart.current!==null && Math.abs(e.clientX-flipStart.current)>30 && result.tipo==='criatura' && chosen.length===1) {flippedBySwipe.current=true;setPlacement(p=>({...p,faceDown:!p.faceDown}));}flipStart.current=null;}}>
+          <Card card={{id:result.id,oculta:placement.faceDown,bonusAtk:combination?.bonusAtk || 0}} label="Girar carta" disabled={result.tipo!=='criatura' || chosen.length!==1} />
+        </div>
+        {result.tipo==='criatura' && chosen.length===1 && <div className="duel-flip-controls"><button aria-label="Girar carta a la izquierda" onClick={()=>setPlacement(p=>({...p,faceDown:!p.faceDown}))}>‹</button><small>Desliza para girar · {placement.faceDown?'Boca abajo':'Boca arriba'}</small><button aria-label="Girar carta a la derecha" onClick={()=>setPlacement(p=>({...p,faceDown:!p.faceDown}))}>›</button></div>}
         <div className="duel-controls">
-          {result.tipo !== 'trampa' && <button onClick={()=>confirmPlacement(false)}>Boca arriba</button>}
-          {(result.tipo === 'trampa' || (result.tipo === 'criatura' && chosen.length === 1)) && <button onClick={()=>confirmPlacement(true)}>Boca abajo</button>}
+          <button onClick={()=>confirmPlacement(placement.faceDown)}>Colocar {placement.faceDown?'boca abajo':'boca arriba'}</button>
           <button onClick={()=>setPlacement(null)}>Cancelar</button>
         </div>
         {chosen.length === 2 && <small>Las combinaciones se colocan boca arriba.</small>}
@@ -269,7 +285,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
         }}
         onPointerCancel={() => { handGesture.current=null; setBrowsing(null); setDrag(null); }}>
         {hand.map((c,i) => <Card key={c.uid} card={c} selected={selected.includes(c.uid)} browsing={browsing===c.uid} compatible={compatible.has(c.uid)}
-          style={{'--fan-offset':i-(hand.length-1)/2,'--fan-order':i}} disabled={handDisabled(c)}
+          pairs={pairsByUid.get(c.uid)} style={{'--fan-offset':i-(hand.length-1)/2,'--fan-order':i,'--pair-color':pairsByUid.get(c.uid)?.[0]?.color}} disabled={handDisabled(c)}
           onClick={() => { if (suppressHandClick.current) { suppressHandClick.current=false; return; } choose(c.uid); }} />)}
       </div>
       </div>

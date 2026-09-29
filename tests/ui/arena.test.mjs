@@ -18,6 +18,10 @@ test('mobile arena: duplicate cards, fusion, target selection and turn controls'
   assert.equal(await page.locator('.house-cup-hero').count(),0);
   assert.equal(await page.locator('.duel-hand .is-compatible').count(),4,'creatures and Engorgio glow when combinations are available');
   assert.equal(await page.locator('[data-uid="trap"].is-compatible').count(),0,'unrelated traps do not glow');
+  const pairs=await page.locator('.duel-hand .duel-pair-tags > span').evaluateAll(tags=>tags.map(tag=>({number:tag.textContent,color:getComputedStyle(tag).backgroundColor})));
+  for(const number of new Set(pairs.map(p=>p.number))) {
+   const pair=pairs.filter(p=>p.number===number);assert.equal(pair.length,2);assert.equal(pair[0].color,pair[1].color);
+  }
   await page.getByRole('button',{name:/Invisibilidad, trampa:/}).click();
   await page.getByRole('button',{name:'Usar magia o trampa en espacio 1',exact:true}).click();
   assert.equal(await page.getByRole('button',{name:'Invisibilidad, trampa preparada'}).locator('img').getAttribute('src'),'/hechi/card-back.png');
@@ -25,7 +29,7 @@ test('mobile arena: duplicate cards, fusion, target selection and turn controls'
   assert.equal(await page.getByRole('button',{name:'Doxy, ataque 1100, defensa 700',exact:true}).count(),2);
   await page.getByRole('button',{name:'Doxy, ataque 1100, defensa 700',exact:true}).first().click();
   await page.getByRole('button',{name:'Invocar en espacio 1',exact:true}).click();
-  await page.getByRole('button',{name:'Boca arriba',exact:true}).click();
+  await page.getByRole('button',{name:'Colocar boca arriba',exact:true}).click();
   assert.equal(await page.getByRole('button',{name:'Fusionar e invocar',exact:true}).count(),0);
   assert.equal(await page.getByRole('button',{name:'Tu espacio 1: Acromantula',exact:true}).locator('.duel-card-stats b').count(),2);
   await page.getByRole('button',{name:'Tu espacio 1: Acromantula',exact:true}).click();
@@ -57,7 +61,7 @@ test('mobile arena: duplicate cards, fusion, target selection and turn controls'
   await page.goto('http://127.0.0.1:'+server.httpServer.address().port+'/tests/ui/arena.html');
   await page.getByRole('button',{name:'Bowtruckle, ataque 800, defensa 1400',exact:true}).click();
   await page.getByRole('button',{name:'Invocar en espacio 1',exact:true}).click();
-  await page.getByRole('button',{name:'Boca arriba',exact:true}).click();
+  await page.getByRole('button',{name:'Colocar boca arriba',exact:true}).click();
   await page.getByRole('button',{name:/Engorgio, magia:/}).click();
   await page.getByRole('button',{name:'Tu espacio 1: Bowtruckle',exact:true}).click();
   await page.getByText('ATQ 1300',{exact:true}).waitFor();
@@ -71,7 +75,8 @@ test('mobile arena: duplicate cards, fusion, target selection and turn controls'
   assert.equal(await page.getByRole('button',{name:/Poner boca/}).count(),0);
   assert.equal(await page.locator('.duel-card-preview, .duel-selection-options').count(),0);
   await page.getByRole('button',{name:'Invocar en espacio 1',exact:true}).click();
-  await page.getByRole('button',{name:'Boca abajo',exact:true}).click();
+  await page.getByRole('button',{name:'Girar carta a la derecha',exact:true}).click();
+  await page.getByRole('button',{name:'Colocar boca abajo',exact:true}).click();
   const defender=page.getByRole('button',{name:'Tu espacio 1: Bowtruckle',exact:true});
   assert.equal(await defender.getAttribute('data-position'),'ataque');
   await defender.click();
@@ -95,7 +100,7 @@ test('mobile arena: duplicate cards, fusion, target selection and turn controls'
   await page.reload();
   await page.getByRole('button',{name:'Bowtruckle, ataque 800, defensa 1400',exact:true}).click();
   await page.getByRole('button',{name:'Invocar en espacio 1',exact:true}).click();
-  await page.getByRole('button',{name:'Boca arriba',exact:true}).click();
+  await page.getByRole('button',{name:'Colocar boca arriba',exact:true}).click();
   await page.getByRole('button',{name:'Tu espacio 1: Bowtruckle',exact:true}).click();
   await page.getByRole('button',{name:'Ataque directo en espacio rival 1',exact:true}).click();
   const direct=await page.evaluate(()=>window.arenaCalls.filter(c=>c.method==='accion_duelo_arena').at(-1));
@@ -106,7 +111,7 @@ test('mobile arena: duplicate cards, fusion, target selection and turn controls'
    await page.locator('.duel-hand [data-uid="'+order[1]+'"]').click();
    assert.equal(await page.locator('.duel-hand .is-selected').count(),2);
    await page.getByRole('button',{name:'Invocar en espacio 1',exact:true}).click();
-  await page.getByRole('button',{name:'Boca arriba',exact:true}).click();
+  await page.getByRole('button',{name:'Colocar boca arriba',exact:true}).click();
    await page.getByText('ATQ 1300',{exact:true}).waitFor();
    const boost=await page.evaluate(()=>window.arenaCalls.filter(c=>c.method==='accion_duelo_arena').at(-1));
    assert.deepEqual([boost.args.p_datos.uid,boost.args.p_datos.uid2],order);

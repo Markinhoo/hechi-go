@@ -9,7 +9,7 @@ let duel = {id:'duel',estado:'activo',jugador1:'a',jugador2:'b',nombre1:'Alumno'
 if(new URLSearchParams(window.location.search).has('direct')) duel.rival.campo=[null,null,null,null,null];
 window.arenaCalls=[];
 const cinematic=new URLSearchParams(window.location.search).has('cinematic');
-window.deliverRemoteCombat=()=>{duel={...duel,version:duel.version+1,eventos:[...(duel.eventos||[]),{id:'remote',tipo:'combate',actor:'b',atacante:{id:'dragon'},defensor:null,directo:true,ataque:2800,danoActor:0,danoRival:2800}]};};
+window.deliverRemoteCombat=(direct=true)=>{duel={...duel,version:duel.version+1,eventos:[...(duel.eventos||[]),{id:'remote',tipo:'combate',actor:'b',atacante:{id:'dragon'},defensor:direct?null:{id:'bowtruckle',posicion:'ataque'},directo:direct,ataque:2800,danoActor:0,danoRival:2800}]};};
 let abierta=true;
 const rpc=async(method,args)=>{
  window.arenaCalls.push({method,args});

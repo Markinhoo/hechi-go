@@ -375,3 +375,39 @@
 }
 @keyframes duel-gold-glint { 0%,100% {opacity:.7} 50% {opacity:1;box-shadow:inset 0 0 12px #fff2ae,0 0 12px #ffcb42} }
 @media(prefers-reduced-motion:reduce) { .duel-fullscreen .duel-hand .is-compatible .duel-card-face::after { animation:none; } }
+.duel-fullscreen .duel-drag-ghost { width:76px; height:114px; opacity:1; }
+.duel-fullscreen .duel-drag-ghost .duel-card,
+.duel-fullscreen .duel-placement-flip .duel-card { width:100%; height:100%; padding:0; border:0; background:none; }
+.duel-fullscreen .duel-placement { width:min(92%,270px); bottom:58px; text-align:center; }
+.duel-placement .duel-controls { justify-content:center; }
+.duel-placement-flip { width:100px; height:150px; margin:6px auto; touch-action:none; }
+.duel-placement-flip[data-face=down] .duel-card-face { animation:placement-turn .22s ease; }
+.duel-flip-controls { display:flex; align-items:center; justify-content:center; gap:8px; }
+.duel-flip-controls small { flex:1; font-size:11px; }
+.duel-flip-controls button { width:38px; padding:0; font-size:28px; }
+@keyframes placement-turn { from { transform:scaleX(.15); } to {transform:scaleX(1);} }
+.duel-fullscreen .duel-hand .is-compatible .duel-card-face::after { border-color:var(--pair-color); box-shadow:inset 0 0 7px var(--pair-color),0 0 9px var(--pair-color); animation:pair-glow 1.8s ease-in-out infinite; }
+@keyframes pair-glow { 0%,100% {opacity:.6} 50% {opacity:1} }
+.duel-pair-tags { position:absolute; top:3px; left:3px; right:3px; display:flex; flex-wrap:wrap; gap:2px; pointer-events:none; }
+.duel-pair-tags > span { min-width:14px; height:15px; padding:1px 3px; border:1px solid #fff9; border-radius:4px; color:#101727; font:bold 10px/11px Arial,sans-serif; box-shadow:0 1px 3px #000a; }
+.duel-combat-pair { position:relative; }
+.is-fusion .duel-combat-pair { display:block; height:235px; isolation:isolate; }
+.is-fusion .duel-combat-pair figure { position:absolute; left:calc(50% - 45px); top:45px; width:90px; z-index:1; }
+.is-fusion .combat-versus { display:none; }
+.is-fusion .combat-attacker { --orbit-start:0deg; animation:fusion-orbit 1.65s ease-in both; }
+.is-fusion .combat-defender { --orbit-start:180deg; animation:fusion-orbit 1.65s ease-in both; }
+.combat-vortex { position:absolute; width:220px; height:220px; left:calc(50% - 110px); top:5px; border-radius:50%; background:repeating-conic-gradient(from 0deg,#95f9ff00 0deg,#65dcffbb 35deg,#e8c276 50deg,#162e7a00 70deg); box-shadow:0 0 35px #48cfff88,inset 0 0 40px #03071e; mask-image:radial-gradient(circle,transparent 5%,#000 28%,#000 52%,transparent 72%); animation:vortex-spin 1.75s ease-in both; }
+.is-fusion .combat-outcome { animation:fusion-reveal 2.4s both; }
+@keyframes fusion-orbit { 0% {transform:rotate(var(--orbit-start)) translateX(85px) rotate(calc(-1 * var(--orbit-start))) scale(1);opacity:1} 80% {opacity:1} 100% {transform:rotate(calc(var(--orbit-start) + 650deg)) translateX(0) rotate(-400deg) scale(.05);opacity:0} }
+@keyframes vortex-spin { 0% {transform:rotate(0) scale(.7);opacity:0} 20% {opacity:1} 85% {opacity:1} 100% {transform:rotate(600deg) scale(.1);opacity:0} }
+@keyframes fusion-reveal { 0%,66% {opacity:0;transform:scale(.6)} 80% {opacity:1;transform:scale(1.08);filter:drop-shadow(0 0 20px #fff4b1)} 100% {opacity:1;transform:scale(1);filter:none} }
+.combat-defender.receives-impact { position:relative; }
+.receives-impact::after { content:''; position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse,#fff 0%,#e7fbffdd 12%,#6ad8ff66 32%,transparent 65%); opacity:0; animation:attack-light 1.6s ease-out both; }
+@keyframes attack-light { 0%,48% {opacity:0;transform:scale(.25)} 60% {opacity:.9;transform:scale(1.12)} 100% {opacity:0;transform:scale(1.5)} }
+@media(max-height:500px) { .duel-placement-flip {width:64px;height:96px;} .duel-fullscreen .duel-placement {bottom:48px;padding:6px;} }
+@media(prefers-reduced-motion:reduce) {
+ .duel-fullscreen .duel-hand .is-compatible .duel-card-face::after,.duel-placement-flip[data-face=down] .duel-card-face,.combat-vortex,.is-fusion .combat-attacker,.is-fusion .combat-defender,.is-fusion .combat-outcome,.receives-impact::after { animation:none; }
+ .combat-vortex,.receives-impact::after { display:none; }
+ .is-fusion .duel-combat-pair {display:grid;grid-template-columns:1fr 1fr;height:auto;}
+ .is-fusion .duel-combat-pair figure {position:static;width:auto;}
+}

@@ -14,8 +14,10 @@ test('combat presentation: fusion, trap, damage, no replay and compact hand',asy
   await page.getByRole('button',{name:'Bowtruckle, ataque 800, defensa 1400',exact:true}).click();
   await page.getByRole('button',{name:'Doxy, ataque 1100, defensa 700',exact:true}).first().click();
   await page.getByRole('button',{name:'Invocar en espacio 1',exact:true}).click();
-  await page.getByRole('button',{name:'Boca arriba',exact:true}).click();
+  await page.getByRole('button',{name:'Colocar boca arriba',exact:true}).click();
   await page.getByRole('dialog',{name:'Fusión de criaturas'}).waitFor();
+  assert.equal(await page.locator('.combat-vortex').count(),1);
+  assert.equal(await page.locator('.combat-attacker').evaluate(el=>getComputedStyle(el).animationName),'fusion-orbit');
   await page.getByRole('button',{name:'Continuar',exact:true}).click();
   await page.waitForTimeout(1900);
   assert.equal(await page.getByRole('dialog').count(),0,'polling must not replay fusion');
@@ -32,9 +34,12 @@ test('combat presentation: fusion, trap, damage, no replay and compact hand',asy
   await page.waitForFunction(()=>!document.querySelector('.duel-combat-overlay'),null,{timeout:5000});
   await page.waitForTimeout(1900);
   assert.equal(await page.getByRole('dialog').count(),0);
-  await page.evaluate(()=>window.deliverRemoteCombat());
+  await page.evaluate(()=>window.deliverRemoteCombat(false));
   await page.getByRole('dialog',{name:'Resolución del combate'}).waitFor();
   await page.getByText('−2800 de vida para ti',{exact:true}).waitFor();
+  assert.equal(await page.locator('.receives-impact').evaluate(el=>getComputedStyle(el,'::after').animationName),'attack-light');
+  await page.emulateMedia({reducedMotion:'reduce'});
+  assert.equal(await page.locator('.receives-impact').evaluate(el=>getComputedStyle(el,'::after').animationName),'none');
   await page.getByRole('button',{name:'Continuar',exact:true}).click();
  }finally{await browser?.close();await server.close();}
 });

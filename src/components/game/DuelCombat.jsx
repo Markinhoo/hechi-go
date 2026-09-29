@@ -13,10 +13,11 @@ export default function DuelCombat({ item, cards, onComplete }) {
     <div className="duel-combat-stage">
       <h2>{fusion ? (e.bonusAtk ? '¡Refuerzo mágico!' : '¡Fusión!') : e.trampa ? '¡Trampa activada!' : e.directo ? '¡Ataque directo!' : '¡Combate!'}</h2>
       <div className="duel-combat-pair">
+        {fusion && <div className="combat-vortex" aria-hidden="true" />}
         <figure className="combat-attacker"><img src={image(fusion ? e.ingredientes[0] : e.atacante.id)} alt={label(fusion ? e.ingredientes[0] : e.atacante.id)} />
           {!fusion && <figcaption>ATQ {e.ataque}</figcaption>}</figure>
         <span className="combat-versus">{fusion ? '+' : '⚔'}</span>
-        <figure className="combat-defender">
+        <figure className={'combat-defender' + (!fusion && !e.directo && !e.trampa ? ' receives-impact' : '')}>
           {fusion || !e.directo ? <img src={image(fusion ? e.ingredientes[1] : e.defensor?.id)} alt={label(fusion ? e.ingredientes[1] : e.defensor?.id)} /> : <div className="combat-direct">VIDA<br />{e.actor === lado ? 'RIVAL' : 'TUYA'}</div>}
           {!fusion && e.defensa != null && <figcaption>{e.defensor?.posicion === 'defensa' ? 'DEF' : 'ATQ'} {e.defensa}</figcaption>}
         </figure>
