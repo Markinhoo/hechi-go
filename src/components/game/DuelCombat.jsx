@@ -11,7 +11,7 @@ export default function DuelCombat({ item, cards, onComplete }) {
   const label = id => cards[id]?.nombre || 'Carta oculta';
   return <div className={'duel-combat-overlay ' + (fusion ? 'is-fusion' : '')} role="dialog" aria-label={fusion ? 'Fusión de criaturas' : 'Resolución del combate'} aria-modal="true">
     <div className="duel-combat-stage">
-      <h2>{fusion ? '¡Fusión!' : e.trampa ? '¡Trampa activada!' : e.directo ? '¡Ataque directo!' : '¡Combate!'}</h2>
+      <h2>{fusion ? (e.bonusAtk ? '¡Refuerzo mágico!' : '¡Fusión!') : e.trampa ? '¡Trampa activada!' : e.directo ? '¡Ataque directo!' : '¡Combate!'}</h2>
       <div className="duel-combat-pair">
         <figure className="combat-attacker"><img src={image(fusion ? e.ingredientes[0] : e.atacante.id)} alt={label(fusion ? e.ingredientes[0] : e.atacante.id)} />
           {!fusion && <figcaption>ATQ {e.ataque}</figcaption>}</figure>
@@ -23,7 +23,7 @@ export default function DuelCombat({ item, cards, onComplete }) {
       </div>
       {e.trampa && <div className="combat-trap"><img src={image(e.trampa)} alt={label(e.trampa)} /><strong>{label(e.trampa)}<small>Ataque cancelado</small></strong></div>}
       <div className="combat-outcome" role="status">
-        {fusion ? <><img src={image(e.resultado)} alt={label(e.resultado)} /><strong>{label(e.resultado)}</strong></> : <>
+        {fusion ? <><img src={image(e.resultado)} alt={label(e.resultado)} /><strong>{label(e.resultado)}{e.bonusAtk > 0 ? ' · +500 ATQ' : ''}</strong></> : <>
           {e.danoActor > 0 && <strong>−{e.danoActor} de vida {e.actor === lado ? 'para ti' : 'para el rival'}</strong>}
           {e.danoRival > 0 && <strong>−{e.danoRival} de vida {e.actor === lado ? 'para el rival' : 'para ti'}</strong>}
           {!e.danoActor && !e.danoRival && <strong>Sin daño a la vida</strong>}

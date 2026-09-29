@@ -270,3 +270,19 @@ muy reducida se conserva el desplazamiento para no reducir controles en exceso.
 
     node --test supabase/tests/duel_combat_events.test.mjs
     node --test tests/ui/arena-combat.test.mjs tests/ui/arena.test.mjs
+
+### Refuerzo antes de invocar y combinaciones de la mano
+
+Aplicar `20260928_b_arena_hand_boost.sql` después de
+`20260928_arena_combat_events.sql`, antes de publicar este frontend.
+Engorgio y una criatura de la mano se pueden seleccionar en cualquier orden:
+la invocación consume ambas cartas y los usos de criatura y magia del turno,
+y coloca la criatura boca arriba con +500 ATQ. La acción es atómica, incluido
+el primer turno, y el aumento participa en el combate. Engorgio conserva su
+uso sobre una criatura que ya está en el campo.
+
+El borde dorado identifica combinaciones disponibles. Al seleccionar una carta,
+se resaltan sus parejas válidas; las cartas incompatibles reemplazan la selección.
+La defensa gira únicamente el marco completo, sin volver a girar la imagen.
+
+    node --test supabase/tests/duel_hand_boost.test.mjs

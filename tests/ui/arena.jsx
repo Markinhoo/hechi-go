@@ -27,9 +27,11 @@ const rpc=async(method,args)=>{
   }
   if(args.p_accion==='invocar'){
    const d=args.p_datos;
+   const boost = d.uid === 'boost' || d.uid2 === 'boost';
    duel={...duel,version:duel.version+1,invoco:true,mensaje:'Fusión: acromantula',
+    hechizo:boost || duel.hechizo,
     yo:{...duel.yo,mano:duel.yo.mano.filter(c=>![d.uid,d.uid2].includes(c.uid)),
-     campo:[{id:d.uid2 ? 'acromantula' : 'bowtruckle',uid:'one',afinidad:d.afinidad,posicion:d.posicion,oculta:d.oculta,ataco:false,cambio:true},null,null,null,null]}};
+     campo:[{id:d.uid2 && !boost ? 'acromantula' : 'bowtruckle',bonusAtk:boost ? 500 : 0,uid:'one',afinidad:d.afinidad,posicion:d.posicion,oculta:d.oculta,ataco:false,cambio:true},null,null,null,null]}};
   }
   if(args.p_accion==='atacar') duel={...duel,version:duel.version+1,turno:'b',ronda:3,mensaje:'Combate completado'};
   if(args.p_accion==='terminar') duel={...duel,version:duel.version+1,turno:'b',mensaje:'Turno del rival'};
@@ -37,7 +39,7 @@ const rpc=async(method,args)=>{
   if(cinematic && args.p_accion==='atacar') duel={...duel,eventos:[...(duel.eventos||[]),{id:'combat-'+duel.version,tipo:'combate',actor:'a',atacante:{id:'acromantula'},defensor:{oculta:true},trampa:'hechizo-patronus',ataque:1600,danoActor:400,danoRival:0}]};
   return {data:duel};
  }
- return {data:{abierta,cupos:2,activo:duel,duelos:[duel],rivales:[]}};
+ return {data:{abierta,cupos:2,activo:duel,duelos:[duel],rivales:[{id:"r1",nombre:"María López",ocupado:false,conPremio:true},{id:"r2",nombre:"Carlos Pérez",ocupado:true},{id:"r3",nombre:"Ana Torres",ocupado:false}]}};
 };
 export default function Fixture(){
  const teacher=new URLSearchParams(window.location.search).has('teacher');
