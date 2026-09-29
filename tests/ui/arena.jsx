@@ -8,11 +8,16 @@ let duel = {id:'duel',estado:'activo',jugador1:'a',jugador2:'b',nombre1:'Alumno'
  rival:{...player,mano:[],campo:[{oculta:true,posicion:'ataque'},null,null,null,null]}};
 if(new URLSearchParams(window.location.search).has('direct')) duel.rival.campo=[null,null,null,null,null];
 window.arenaCalls=[];
+window.expireArenaTurn=()=>{duel={...duel,venceEn:new Date(Date.now()-1000).toISOString()};};
 const cinematic=new URLSearchParams(window.location.search).has('cinematic');
 window.deliverRemoteCombat=(direct=true)=>{duel={...duel,version:duel.version+1,eventos:[...(duel.eventos||[]),{id:'remote',tipo:'combate',actor:'b',atacante:{id:'dragon'},defensor:direct?null:{id:'bowtruckle',posicion:'ataque'},directo:direct,ataque:2800,danoActor:0,danoRival:2800}]};};
 let abierta=true;
 const rpc=async(method,args)=>{
  window.arenaCalls.push({method,args});
+ if(window.arenaFailure && (method==='obtener_arena' || window.failArenaActions)) {
+  if(window.arenaFailure==='throw') throw new TypeError('Failed to fetch');
+  return {data:null,error:{message:'TypeError: Failed to fetch'}};
+ }
  if(method==='configurar_arena') abierta=args.p_abierta;
  if(method==='accion_duelo_arena'){
   if(args.p_accion==='hechizo'){
@@ -56,4 +61,6 @@ export default function Fixture(){
   </section>
  </main>;
 }
-createRoot(document.getElementById('root')).render(<Fixture/>);
+const root=createRoot(document.getElementById('root'));
+window.unmountArena=()=>root.unmount();
+root.render(<Fixture/>);

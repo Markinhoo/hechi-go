@@ -11,6 +11,7 @@ const cards = Object.fromEntries(catalog.cards.map(c => [c.id, { ...bestiario.fi
 const rpcDefault = (name, args) => db.rpc(name, args);
 const name = id => cards[id]?.nombre || id;
 const rarity = { comun: 'Común', rara: 'Especial', epica: 'Épica', legendaria: 'Legendaria' };
+const connectionFailure = error => /fetch|network|abort|conexi[oó]n|internet|timeout|timed out/i.test(error?.message || '');
 
 function Card({ card, selected, onClick, disabled, label, style, browsing, compatible, drop, pairs = [] }) {
   const c = cards[card?.id];
@@ -28,13 +29,14 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
   const teacher = sesion.tipo === 'maestro';
   const [arena, setArena] = useState(null);
   const [error, setError] = useState('');
+  const [syncError, setSyncError] = useState('');
   const [pending, setBusy] = useState(false);
   const [combatQueue, setCombatQueue] = useState([]);
   const [intro, setIntro] = useState(null);
   const [browsing, setBrowsing] = useState(null);
   const handGesture = useRef(null);
   const suppressHandClick = useRef(false);
-  const busy = pending || combatQueue.length > 0;
+  const busy = pending || combatQueue.length > 0 || Boolean(syncError);
   const seenEvents = useRef({duel:null,ids:new Set()});
   const introducedDuels = useRef(new Set());
   const finishCombat = useCallback(() => setCombatQueue(queue => queue.slice(1)), []);
@@ -71,25 +73,35 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
   const args = useCallback(() => ({ p_token: sesion.token, p_alumno_id: teacher ? null : sesion.alumnoId,
     p_password: teacher ? null : sesion.password }), [sesion.token, sesion.alumnoId, sesion.password, teacher]);
   const refresh = useCallback(async () => {
+    if (!alive.current || polling.current) return;
+    polling.current = true;
     const started = revision.current;
-    const { data, error: failure } = await rpc('obtener_arena', args());
-    if (!alive.current || started !== revision.current) return;
-    if (failure) setError(failure.message || 'No se pudo cargar la arena.');
-    else { receiveEvents(data.activo || data.duelos?.find(d=>d.id===seenEvents.current.duel)); setArena(data); if (data.activo) setLastId(data.activo.id); }
+    try {
+      const { data, error: failure } = await rpc('obtener_arena', args());
+      if (!alive.current || started !== revision.current) return;
+      if (failure) throw failure;
+      if (!data) throw new Error('No se pudo cargar la arena.');
+      setSyncError('');
+      receiveEvents(data.activo || data.duelos?.find(d=>d.id===seenEvents.current.duel)); setArena(data); if (data.activo) setLastId(data.activo.id);
+    } catch (failure) {
+      if (alive.current && started === revision.current) setSyncError(connectionFailure(failure)
+        ? 'Se perdió la conexión. Reconectando el duelo…'
+        : failure.message || 'No se pudo cargar la arena. Volveremos a intentarlo.');
+    } finally { polling.current = false; }
   }, [rpc, args, receiveEvents]);
   useEffect(() => {
     alive.current = true;
     let stopped = false;
     const poll = async () => {
-      if (stopped || request.current || polling.current) return;
-      polling.current = true;
-      try { await refresh(); } catch { if (!stopped) setError('No se pudo conectar. Volveremos a intentarlo.'); }
-      finally { polling.current = false; }
+      if (stopped || document.hidden || request.current) return;
+      await refresh();
     };
     void poll();
     const timer = setInterval(poll, 1800);
     const tick = setInterval(() => setClock(Date.now()), 1000);
-    return () => { stopped = true; alive.current = false; clearInterval(timer); clearInterval(tick); };
+    document.addEventListener('visibilitychange', poll);
+    window.addEventListener('online', poll);
+    return () => { stopped = true; alive.current = false; revision.current += 1; clearInterval(timer); clearInterval(tick); document.removeEventListener('visibilitychange', poll); window.removeEventListener('online', poll); };
   }, [refresh]);
   const duel = arena?.activo || arena?.duelos?.find(d => d.id === lastId);
   const playing = duel?.estado === 'activo';
@@ -103,7 +115,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
   const mine = playing && duel.turno === duel.lado;
   const remaining = duel ? Math.max(0, Math.ceil((Date.parse(duel.venceEn) - clock) / 1000)) : 0;
   useEffect(() => {
-    if (playing && remaining === 0 && !request.current) void refresh();
+    if (playing && remaining === 0 && !request.current && !document.hidden) void refresh();
   }, [playing, remaining, refresh]);
   const hand = duel?.yo?.mano || [];
   const chosen = selected.map(uid => hand.find(c => c.uid === uid)).filter(Boolean);
@@ -136,6 +148,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
     setBusy(true); setError('');
     try {
       const { data, error: failure } = await rpc(method, { ...(teacherOnly ? { p_token: sesion.token } : args()), ...extra });
+      if (!alive.current) return;
       if (failure) throw new Error(failure.message);
       if (data?.id) {
         receiveEvents(data);
@@ -146,9 +159,11 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
       setSelected([]); setSlot(extra.p_accion === 'posicion' ? extra.p_datos.casilla : null); setConfirmQuit(false); setPlacement(null);
       await refresh();
     } catch (e) {
-      setError(e.message || 'No se pudo realizar la acción.');
-      await refresh().catch(() => {});
-    } finally { request.current = false; setBusy(false); }
+      if (!alive.current) return;
+      if (connectionFailure(e)) setSyncError('No se pudo confirmar la jugada. Reconectando para comprobar el estado del duelo…');
+      else setError(e.message || 'No se pudo realizar la acción.');
+      await refresh();
+    } finally { request.current = false; if (alive.current) setBusy(false); }
   };
   const action = (p_accion, p_datos = {}) => act('accion_duelo_arena', { p_duelo: duel.id, p_version: duel.version, p_accion, p_datos });
   const choose = uid => {
@@ -197,7 +212,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
 
   const content = <section className={'duel-arena panel student-tab-panel' + (fullscreen ? ' duel-fullscreen' : '')} aria-label="Arena del bestiario">
     {combatQueue[0] && <DuelCombat key={combatQueue[0].event.id} item={combatQueue[0]} cards={cards} onComplete={finishCombat} />}
-    {error && <p className="duel-error" role="alert">{error}</p>}
+    {(error || syncError) && <p className="duel-error" role="alert">{syncError || error}</p>}
     {!arena && <p role="status">Cargando arena…</p>}
     {teacher && arena && <div className="duel-controls">
       <button disabled={busy} onClick={() => act('configurar_arena', { p_abierta: !arena.abierta }, true)}>
