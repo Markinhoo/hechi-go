@@ -1,6 +1,5 @@
 export const CARTAS_ACTIVAS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 22, 26];
 export const TOTAL_CARTAS = CARTAS_ACTIVAS.length;
-export const GALEONES_POR_PARTICIPACION = 37;
 // Base weights: common 45%, special 30%, epic 15%, legendary 10% (400 total).
 // All weights are even so the recent-card penalty can halve them exactly.
 export const CARTAS_PROBABILIDAD = [

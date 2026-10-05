@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FaArrowLeft, FaArrowRight, FaBookOpen, FaHouse, FaScroll, FaTrophy, FaWandMagicSparkles } from 'react-icons/fa6';
-import { bestiario, bonusGaleonesBestia, precioBestia, RAREZAS_BESTIARIO } from '../../data/bestiaryData';
+import { bestiario, precioBestia, RAREZAS_BESTIARIO } from '../../data/bestiaryData';
 import { CARTAS_ACTIVAS, casas, PLAYER_KEY } from '../../data/gameData';
 import { db } from '../../services/hechiApi';
 import { efectoCarta, elegirCartaAleatoria, guardarLocal, obtenerCasa } from '../../utils/gameUtils';
@@ -869,7 +869,6 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         {bestiario.map((bestia) => {
           const comprada = bestiasCompradas.has(bestia.id);
           const precio = precioBestia(bestia);
-          const bonus = bonusGaleonesBestia(bestia);
           const puedeComprar = !comprada && (alumnoActual?.galeones || 0) >= precio;
           const rareza = RAREZAS_BESTIARIO[bestia.rareza];
           return (
@@ -880,7 +879,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
               </button>
               <div>
                 <strong>{bestia.nombre}</strong>
-                <small>{rareza.nombre} - {precio} galeones - bonus +{bonus}</small>
+                <small>{rareza.nombre} - {precio} galeones</small>
               </div>
               <button type='button' disabled={comprada || !puedeComprar} onClick={() => comprarBestia(bestia)}>
                 {comprada ? 'Tuya' : 'Comprar'}
@@ -1251,7 +1250,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
             <span>{RAREZAS_BESTIARIO[bestiaDetalle.rareza].nombre} - {precioBestia(bestiaDetalle)} galeones</span>
             <h2 id='beast-detail-title'>{bestiaDetalle.nombre}</h2>
             <p>{bestiaDetalle.descripcion}</p>
-            <p>Bonus: +{bonusGaleonesBestia(bestiaDetalle)} galeones por participación autorizada.</p>
+            <p>Gana galeones en la arena: 80 por victoria, 50 por empate y 30 por derrota en duelos con recompensa.</p>
             <strong>{bestiasCompradas.has(bestiaDetalle.id) ? 'Ya vive en tu Bestiario Mágico.' : 'Aún no la has comprado.'}</strong>
           </article>
         </div>

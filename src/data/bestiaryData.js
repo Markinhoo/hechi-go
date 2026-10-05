@@ -1,8 +1,8 @@
 export const RAREZAS_BESTIARIO = {
-  comun: { nombre: 'Comun', precio: 30, bonusGaleones: 1 },
-  rara: { nombre: 'Rara', precio: 60, bonusGaleones: 2 },
-  epica: { nombre: 'Epica', precio: 90, bonusGaleones: 3 },
-  legendaria: { nombre: 'Legendaria', precio: 140, bonusGaleones: 5 }
+  comun: { nombre: 'Comun', precio: 100 },
+  rara: { nombre: 'Rara', precio: 250 },
+  epica: { nombre: 'Epica', precio: 500 },
+  legendaria: { nombre: 'Legendaria', precio: 1000 }
 };
 
 export const bestiario = [
@@ -36,9 +36,5 @@ export const bestiario = [
 ];
 
 export function precioBestia(bestia) {
-  return RAREZAS_BESTIARIO[bestia.rareza]?.precio || 30;
-}
-
-export function bonusGaleonesBestia(bestia) {
-  return RAREZAS_BESTIARIO[bestia.rareza]?.bonusGaleones || 0;
+  return RAREZAS_BESTIARIO[bestia.rareza]?.precio || 100;
 }

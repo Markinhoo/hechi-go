@@ -319,3 +319,31 @@ Los tests históricos usan `supabase/tests/fixtures/duelCatalog-v1.json` para
 comprobar las migraciones anteriores; `duel_balance.test.mjs` comprueba el
 catálogo actual, los 20 efectos y sus límites, privacidad y respuestas a las
 criaturas legendarias.
+
+### Galeones por duelos (5 de octubre)
+
+Aplicar `supabase/migrations/20261005_arena_galleon_rewards.sql` después de
+`20260929_arena_balance.sql` y publicar el frontend actualizado.
+Los duelos con recompensa entregan 80 galeones al ganador y 30 al perdedor;
+un empate entrega 50 a cada jugador. El servidor abona ambos saldos y registra
+el recibo en la misma transacción, sin modificar puntos personales, puntajes
+de casa, participaciones u oportunidades de cartas. La vista muestra el importe
+real del recibo; las recompensas históricas no se reinterpretan como galeones.
+
+Se mantienen tres duelos premiados por día y uno por rival. Práctica, rendición
+y cancelación no pagan. Autorizar una participación conserva la oportunidad
+de carta, pero deja de dar los 37 galeones y el bono del bestiario. Los saldos
+y registros históricos se conservan; no hay pagos retroactivos.
+
+    node --test supabase/tests/duel_rewards.test.mjs
+
+### Precios del bestiario (5 de octubre)
+
+Aplicar `supabase/migrations/20261005_b_bestiary_prices.sql` y publicar el
+frontend actualizado. Cada criatura común cuesta 100 galeones, rara 250,
+épica 500 y legendaria 1000. Las 24 criaturas suman 10,250 galeones.
+Las compras anteriores conservan sus criaturas y saldos. Se mantiene la
+elección de hechizo por compra legendaria. La compra bloquea la fila del alumno
+para validar el saldo y evitar cobros simultáneos sobre el mismo saldo.
+
+    node --test supabase/tests/bestiary_prices.test.mjs

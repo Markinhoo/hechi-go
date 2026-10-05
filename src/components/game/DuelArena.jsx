@@ -227,7 +227,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
 
     {!teacher && duel?.estado === 'pendiente' && <article className="duel-invite">
       <h3>{duel.nombre1} desafía a {duel.nombre2}</h3>
-      <p>{duel.recompensa ? 'Con recompensa: al aceptar se reserva un cupo para ambos.' : 'Práctica: sin puntos ni consumo de cupos.'}</p>
+      <p>{duel.recompensa ? 'Con recompensa: al aceptar se reserva un cupo para ambos.' : 'Práctica: sin galeones ni consumo de cupos.'}</p>
       {duel.jugador2 === sesion.alumnoId && <button disabled={busy} onClick={() => act('responder_reto_arena', { p_duelo: duel.id, p_aceptar: true })}>Aceptar duelo</button>}
       <button disabled={busy} onClick={() => act('responder_reto_arena', { p_duelo: duel.id, p_aceptar: false })}>
         {duel.jugador1 === sesion.alumnoId ? 'Cancelar reto' : 'Rechazar'}</button>
@@ -318,12 +318,12 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
 
         <button disabled={busy} onClick={() => setConfirmQuit(true)}>Rendirse</button>
       </div>
-      {confirmQuit && <div className="duel-invite" role="alert"><p>Rendirse cancela el duelo sin puntos para nadie. El cupo reservado sigue consumido.</p>
+      {confirmQuit && <div className="duel-invite" role="alert"><p>Rendirse cancela el duelo sin galeones para nadie. El cupo reservado sigue consumido.</p>
         <button disabled={busy} onClick={() => action('rendirse')}>Confirmar rendición</button><button onClick={() => setConfirmQuit(false)}>Seguir jugando</button></div>}
     </div>}
     {!teacher && duel && !['pendiente', 'activo'].includes(duel.estado) && <article className="duel-invite" role="status">
       <h3>{duel.ganador ? (duel.ganador === sesion.alumnoId ? '¡Victoria!' : 'Duelo terminado') : 'Duelo cerrado'}</h3>
-      <p>{duel.mensaje}</p><p>{duel.premioEntregado ? 'El ganador recibió 3 puntos.' : 'Sin puntos otorgados.'}</p>
+      <p>{duel.mensaje}</p><p>{duel.galeonesGanados != null ? `Recibiste ${duel.galeonesGanados} galeones. No se otorgan puntos ni participaciones.` : duel.premioEntregado ? 'Recompensa histórica ya entregada.' : 'Sin galeones otorgados.'}</p>
       <button onClick={() => setLastId(null)}>Volver a los retos</button></article>}
     {!teacher && arena && (!arena.activo || lobbyOpen) && <div className="duel-lobby">
       <h3>Elige un rival</h3>
@@ -341,14 +341,14 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
     <header className="duel-heading"><div><small>DUELOS DEL BESTIARIO</small><h2>Arena de criaturas</h2></div>
       <span className="duel-badge">{arena?.abierta ? 'Arena abierta' : 'Arena cerrada'}</span></header>
     <p>Las 24 criaturas están disponibles para todos. Cada mazo tiene 75 cartas: 49 criaturas y 26 de magia o trampa, sin necesidad de comprarlas.</p>
-    {!teacher && arena && <p className="duel-reward">{arena.cupos} de 3 duelos con recompensa disponibles hoy · Victoria +3 puntos · Derrota 0</p>}
+    {!teacher && arena && <p className="duel-reward">{arena.cupos} de 3 duelos con recompensa disponibles hoy · Victoria: 80 · Empate: 50 · Derrota: 30 galeones</p>}
     <details className="duel-guide"><summary>Cómo jugar · Mazo y fusiones</summary>
       <p>4,000 de vida, cinco espacios y mano de cinco cartas. Al comenzar tu turno recuperas tu mano hasta cinco. Puedes invocar una criatura o fusionar dos cartas de tu mano por turno, antes de atacar.</p>
       <p>Toca una vez tu criatura para seleccionarla y después toca una criatura rival para atacar. Un segundo toque sobre tu criatura seleccionada alterna su posición entre ataque y defensa. Cada monstruo puede atacar una vez, desde ataque o defensa. Al atacar se pone en ataque automáticamente. El turno pasa cuando todos hayan atacado, o puedes terminarlo antes. En el primer turno no se ataca: al colocar la primera criatura, pasa el turno al rival. Puedes atacar directamente si el campo rival está vacío.</p>
       <p>Contra ataque: gana el ATQ mayor, destruye la criatura menor y la diferencia se resta a su vida. Si empatan, ambas se destruyen. Contra defensa: ATQ mayor destruye sin restar vida; ATQ menor te resta la diferencia, sin destruir tu criatura.</p>
       <p>Cada criatura tiene una afinidad predeterminada; se usa la primera afinidad de su ficha. Cada afinidad vence a la siguiente y recibe +300 en combate: fuego → tierra → aire → agua → sombra → luz → fuego. Las cartas boca abajo revelan su identidad al combatir; las fusiones entran boca arriba.</p>
       <p>Ganas al agotar la vida rival o si el rival no puede completar su mano. Empate al terminar 60 turnos. Cada turno dura hasta 90 segundos; al agotarse el tiempo, pasa automáticamente al rival.</p>
-      <p>Máximo tres duelos con recompensa al día por alumno y uno contra cada rival, ganes o pierdas. Si cualquiera agotó sus cupos, ambos juegan práctica. Se reinician a medianoche de Ciudad de México. Rendirse no devuelve el cupo ni da puntos.</p>
+      <p>Máximo tres duelos con recompensa al día por alumno y uno contra cada rival, ganes o pierdas. Si cualquiera agotó sus cupos, ambos juegan práctica. Se reinician a medianoche de Ciudad de México. Rendirse no devuelve el cupo ni da galeones. Jugar no otorga participaciones ni puntos personales o de casa.</p>
       <div className="duel-catalog">{Object.values(cards).map(c => <article key={c.id}><img loading="lazy" src={c.imagen} alt="" /><strong>{c.nombre}</strong><small>{rarity[c.rareza]} · {c.copies} copias</small><small>{c.tipo === 'criatura' ? c.atk + ' ATQ / ' + c.def + ' DEF · ' + c.stars.join(' / ') : c.tipo + ': ' + c.efecto}</small></article>)}</div>
       <p>Puedes usar una magia o colocar una trampa por turno, además de tu criatura. Los refuerzos se aplican a criaturas propias; las magias de debilitamiento, a criaturas rivales boca arriba; Alohomora, a una trampa rival. Las demás se juegan en un espacio libre de Magia / trampa. Los refuerzos se acumulan hasta +1000 ATQ y +1000 DEF por criatura; el ataque y la defensa nunca bajan de cero. Las trampas se activan automáticamente ante el siguiente ataque rival: una por ataque, de izquierda a derecha, y se consumen al activarse. Solo afectan al duelo.</p>
       <h3>Recetas de fusión</h3><ul>{catalog.fusions.map(([a, b, c]) => <li key={a + b}>{name(a)} + {name(b)} → <strong>{name(c)}</strong></li>)}</ul>
