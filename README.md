@@ -347,3 +347,22 @@ elección de hechizo por compra legendaria. La compra bloquea la fila del alumno
 para validar el saldo y evitar cobros simultáneos sobre el mismo saldo.
 
     node --test supabase/tests/bestiary_prices.test.mjs
+
+### Bonos del bestiario por duelo
+
+Aplicar `supabase/migrations/20261005_c_bestiary_duel_bonus.sql` después de
+las migraciones de recompensas y precios del 5 de octubre, y publicar el frontend.
+Cada criatura comprada añade galeones a los duelos con recompensa: común +1,
+rara +2, épica +3, legendaria +5. La colección completa suma +63 por duelo.
+Se abona el bono propio de cada jugador, tanto por victoria como por derrota
+o empate, además de su premio base. Prácticas, rendiciones y cancelaciones
+no pagan; se mantienen los cupos diarios y por rival.
+
+La colección se consulta al liquidar el duelo, con bloqueo de los alumnos
+para coordinar compras simultáneas. El total y el bono se guardan juntos en el
+recibo: compras posteriores no cambian un premio anterior. No hay pagos
+retroactivos, bonos por participación ni cambios en puntos o estadísticas de
+combate. La tienda muestra el beneficio individual y el bono acumulado; el
+resultado del duelo muestra el desglose del pago.
+
+    node --test supabase/tests/duel_rewards.test.mjs supabase/tests/bestiary_prices.test.mjs

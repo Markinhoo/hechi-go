@@ -1,8 +1,8 @@
 export const RAREZAS_BESTIARIO = {
-  comun: { nombre: 'Comun', precio: 100 },
-  rara: { nombre: 'Rara', precio: 250 },
-  epica: { nombre: 'Epica', precio: 500 },
-  legendaria: { nombre: 'Legendaria', precio: 1000 }
+  comun: { nombre: 'Comun', precio: 100, bonusDuelo: 1 },
+  rara: { nombre: 'Rara', precio: 250, bonusDuelo: 2 },
+  epica: { nombre: 'Epica', precio: 500, bonusDuelo: 3 },
+  legendaria: { nombre: 'Legendaria', precio: 1000, bonusDuelo: 5 }
 };
 
 export const bestiario = [
@@ -37,4 +37,13 @@ export const bestiario = [
 
 export function precioBestia(bestia) {
   return RAREZAS_BESTIARIO[bestia.rareza]?.precio || 100;
+}
+
+export function bonusDueloBestia(bestia) {
+  return RAREZAS_BESTIARIO[bestia.rareza]?.bonusDuelo || 0;
+}
+
+export function bonusDueloBestiario(ids = []) {
+  const compradas = new Set(ids);
+  return bestiario.reduce((total, bestia) => total + (compradas.has(bestia.id) ? bonusDueloBestia(bestia) : 0), 0);
 }

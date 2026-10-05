@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FaArrowLeft, FaArrowRight, FaBookOpen, FaHouse, FaScroll, FaTrophy, FaWandMagicSparkles } from 'react-icons/fa6';
-import { bestiario, precioBestia, RAREZAS_BESTIARIO } from '../../data/bestiaryData';
+import { bestiario, bonusDueloBestia, bonusDueloBestiario, precioBestia, RAREZAS_BESTIARIO } from '../../data/bestiaryData';
 import { CARTAS_ACTIVAS, casas, PLAYER_KEY } from '../../data/gameData';
 import { db } from '../../services/hechiApi';
 import { efectoCarta, elegirCartaAleatoria, guardarLocal, obtenerCasa } from '../../utils/gameUtils';
@@ -861,6 +861,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         <span>
           <strong>Bestiario Mágico</strong>
           <small>{bestiasAlumno.length}/{bestiario.length} criaturas descubiertas</small>
+          <small>Tu bono: +{bonusDueloBestiario(bestiasAlumno)} galeones por duelo con recompensa, ganes, empates o pierdas.</small>
           {eleccionesLegendarias > 0 && <small>{eleccionesLegendarias} elección legendaria pendiente</small>}
         </span>
         <b>{alumnoActual?.galeones || 0} galeones</b>
@@ -880,6 +881,8 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
               <div>
                 <strong>{bestia.nombre}</strong>
                 <small>{rareza.nombre} - {precio} galeones</small>
+                <small>+{bonusDueloBestia(bestia)} galeones por duelo con recompensa</small>
+                {bestia.rareza === 'legendaria' && <small>Incluye una elección de hechizo con autorización del maestro.</small>}
               </div>
               <button type='button' disabled={comprada || !puedeComprar} onClick={() => comprarBestia(bestia)}>
                 {comprada ? 'Tuya' : 'Comprar'}
@@ -1250,7 +1253,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
             <span>{RAREZAS_BESTIARIO[bestiaDetalle.rareza].nombre} - {precioBestia(bestiaDetalle)} galeones</span>
             <h2 id='beast-detail-title'>{bestiaDetalle.nombre}</h2>
             <p>{bestiaDetalle.descripcion}</p>
-            <p>Gana galeones en la arena: 80 por victoria, 50 por empate y 30 por derrota en duelos con recompensa.</p>
+            <p>Esta bestia aporta +{bonusDueloBestia(bestiaDetalle)} galeones por duelo con recompensa. Se suma a los 80 por victoria, 50 por empate o 30 por derrota. Prácticas y rendiciones no dan bono.</p>
             <strong>{bestiasCompradas.has(bestiaDetalle.id) ? 'Ya vive en tu Bestiario Mágico.' : 'Aún no la has comprado.'}</strong>
           </article>
         </div>
