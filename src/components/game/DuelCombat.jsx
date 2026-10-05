@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { combatSoundCues } from '../../utils/duelSounds';
 
 function CombatCard({ src, name, shattered }) {
   return <div className={'combat-card-visual' + (shattered ? ' is-shattered' : '')}>
@@ -11,7 +12,7 @@ function CombatCard({ src, name, shattered }) {
   </div>;
 }
 
-export default function DuelCombat({ item, cards, onComplete }) {
+export default function DuelCombat({ item, cards, onComplete, sound }) {
   const { event: e, lado } = item;
   const fusion = e.tipo === 'fusion';
   const direct = !fusion && e.directo && !e.trampa;
@@ -21,6 +22,10 @@ export default function DuelCombat({ item, cards, onComplete }) {
     const timer = setTimeout(onComplete, duration);
     return () => clearTimeout(timer);
   }, [onComplete, duration]);
+  useEffect(() => {
+    const timers = combatSoundCues(e).map(([delay, kind]) => setTimeout(() => sound?.play(kind), delay));
+    return () => { timers.forEach(clearTimeout); sound?.stop(); };
+  }, [e, sound]);
   const image = id => cards[id]?.imagen || '/hechi/card-back.png';
   const label = id => cards[id]?.nombre || 'Carta oculta';
   if (direct) return null;

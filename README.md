@@ -366,3 +366,19 @@ combate. La tienda muestra el beneficio individual y el bono acumulado; el
 resultado del duelo muestra el desglose del pago.
 
     node --test supabase/tests/duel_rewards.test.mjs supabase/tests/bestiary_prices.test.mjs
+
+### Sonidos de la arena
+
+La arena sintetiza sonidos breves con Web Audio para recorrer y seleccionar la
+mano, girar cartas, colocarlas tras confirmación del servidor, fusionar y atacar.
+La destrucción reproduce un corte de sable a los 900 ms de la animación, o a
+los 1500 ms cuando el atacante recibe un contraataque. Los ataques directos
+usan un barrido breve junto al destello del campo.
+
+El menú del duelo incluye «Sonido: activado / silenciado» y conserva la elección
+en el navegador. El audio se habilita con la primera interacción, se detiene al
+ocultar la pestaña o salir del componente y cancela los sonidos pendientes al
+omitir el combate. No necesita archivos de audio ni migración de base de datos;
+requiere publicar el frontend. Si el navegador no permite audio, el duelo sigue.
+
+    node --test tests/ui/arena-sounds.test.mjs

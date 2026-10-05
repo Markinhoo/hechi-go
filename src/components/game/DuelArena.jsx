@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import DuelCombat from './DuelCombat';
+import { createDuelSounds } from '../../utils/duelSounds';
 import { db } from '../../services/hechiApi';
 import { bestiario } from '../../data/bestiaryData';
 import catalog from '../../data/duelCatalog.json';
@@ -26,6 +27,14 @@ function Card({ card, selected, onClick, disabled, label, style, browsing, compa
 }
 
 export default function DuelArena({ sesion, rpc = rpcDefault }) {
+  const [sound] = useState(createDuelSounds);
+  const [soundEnabled, setSoundEnabled] = useState(() => sound.enabled);
+  useEffect(() => {
+    const quiet = () => { if (document.hidden) sound.stop(); };
+    document.addEventListener('visibilitychange', quiet);
+    return () => { document.removeEventListener('visibilitychange', quiet); sound.dispose(); };
+  }, [sound]);
+  const flipCard = () => { sound.play('flip'); setPlacement(p => ({...p,faceDown:!p.faceDown})); };
   const teacher = sesion.tipo === 'maestro';
   const [arena, setArena] = useState(null);
   const [error, setError] = useState('');
@@ -154,6 +163,8 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
       if (!alive.current) return;
       if (failure) throw new Error(failure.message);
       if (data?.id) {
+        if (extra.p_accion === 'invocar' || extra.p_accion === 'hechizo') sound.play('place');
+        if (extra.p_accion === 'posicion') sound.play('flip');
         receiveEvents(data);
         setLastId(data.id);
         setArena(old => ({ ...old, activo: ['activo', 'pendiente'].includes(data.estado) ? data : null,
@@ -170,6 +181,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
   };
   const action = (p_accion, p_datos = {}) => act('accion_duelo_arena', { p_duelo: duel.id, p_version: duel.version, p_accion, p_datos });
   const choose = uid => {
+    sound.play('browse');
     setPlacement(null);
     const next = hand.find(c => c.uid === uid);
     setSelected(prev => {
@@ -187,6 +199,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
     if (gesture.startY - e.clientY > 18) gesture.dragging = true;
     if (gesture.dragging) { setDrag({uid:gesture.uid,x:e.clientX,y:e.clientY}); return; }
     const nearest = gesture.cards.reduce((best, card) => Math.abs(card.x-e.clientX) < Math.abs(best.x-e.clientX) ? card : best);
+    if (gesture.uid !== nearest.uid) sound.play('browse');
     gesture.uid = nearest.uid;
     setBrowsing(nearest.uid);
   };
@@ -215,8 +228,8 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
     return action('hechizo', { uid: chosen[0].uid, casilla: index, objetivo: target });
   };
 
-  const content = <section className={'duel-arena panel student-tab-panel' + (fullscreen ? ' duel-fullscreen' : '')} aria-label="Arena del bestiario">
-    {combatQueue[0] && <DuelCombat key={combatQueue[0].event.id} item={combatQueue[0]} cards={cards} onComplete={finishCombat} />}
+  const content = <section className={'duel-arena panel student-tab-panel' + (fullscreen ? ' duel-fullscreen' : '')} aria-label="Arena del bestiario" onPointerDownCapture={sound.unlock} onKeyDownCapture={sound.unlock}>
+    {combatQueue[0] && <DuelCombat key={combatQueue[0].event.id} item={combatQueue[0]} cards={cards} sound={sound} onComplete={finishCombat} />}
     {(error || syncError) && <p className="duel-error" role="alert">{syncError || error}</p>}
     {!arena && <p role="status">Cargando arena…</p>}
     {teacher && arena && <div className="duel-controls">
@@ -238,13 +251,13 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
       {placing && result && <aside className="duel-placement" role="dialog" aria-label="Colocar carta" onKeyDown={e=>{if(e.key==='Escape') setPlacement(null);}}>
         <strong>{result.nombre} · Espacio {placement.index + 1}</strong>
         {result.tipo === 'criatura' && <small>{affinity} · ATQ {result.atk + (combination?.bonusAtk || 0)}</small>}
-        <div className="duel-placement-flip" data-face={placement.faceDown ? 'down' : 'up'} onClick={()=>{if(result.tipo!=='criatura' || chosen.length!==1) return;if(flippedBySwipe.current){flippedBySwipe.current=false;return;}setPlacement(p=>({...p,faceDown:!p.faceDown}));}}
+        <div className="duel-placement-flip" data-face={placement.faceDown ? 'down' : 'up'} onClick={()=>{if(result.tipo!=='criatura' || chosen.length!==1) return;if(flippedBySwipe.current){flippedBySwipe.current=false;return;}flipCard();}}
           onPointerDown={e=>{flipStart.current=e.clientX;flippedBySwipe.current=false;e.currentTarget.setPointerCapture(e.pointerId);}}
           onPointerCancel={()=>{flipStart.current=null;}}
-          onPointerUp={e=>{if(flipStart.current!==null && Math.abs(e.clientX-flipStart.current)>30 && result.tipo==='criatura' && chosen.length===1) {flippedBySwipe.current=true;setPlacement(p=>({...p,faceDown:!p.faceDown}));}flipStart.current=null;}}>
+          onPointerUp={e=>{if(flipStart.current!==null && Math.abs(e.clientX-flipStart.current)>30 && result.tipo==='criatura' && chosen.length===1) {flippedBySwipe.current=true;flipCard();}flipStart.current=null;}}>
           <Card card={{id:result.id,oculta:placement.faceDown,bonusAtk:combination?.bonusAtk || 0}} label="Girar carta" disabled={result.tipo!=='criatura' || chosen.length!==1} />
         </div>
-        {result.tipo==='criatura' && chosen.length===1 && <div className="duel-flip-controls"><button aria-label="Girar carta a la izquierda" onClick={()=>setPlacement(p=>({...p,faceDown:!p.faceDown}))}>‹</button><small>Desliza para girar · {placement.faceDown?'Boca abajo':'Boca arriba'}</small><button aria-label="Girar carta a la derecha" onClick={()=>setPlacement(p=>({...p,faceDown:!p.faceDown}))}>›</button></div>}
+        {result.tipo==='criatura' && chosen.length===1 && <div className="duel-flip-controls"><button aria-label="Girar carta a la izquierda" onClick={()=>flipCard()}>‹</button><small>Desliza para girar · {placement.faceDown?'Boca abajo':'Boca arriba'}</small><button aria-label="Girar carta a la derecha" onClick={()=>flipCard()}>›</button></div>}
         <div className="duel-controls">
           <button onClick={()=>confirmPlacement(placement.faceDown)}>Colocar {placement.faceDown?'boca abajo':'boca arriba'}</button>
           <button onClick={()=>setPlacement(null)}>Cancelar</button>
@@ -339,6 +352,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
     </div>}
     <div id="duel-menu" className={fullscreen ? 'duel-menu-panel' : ''} hidden={fullscreen && !menuOpen} onKeyDown={e => { if (e.key === 'Escape') setMenuOpen(false); }}>
     {fullscreen && <div className="duel-controls"><button onClick={() => setMenuOpen(false)}>Cerrar menú</button><button onClick={() => { setLobbyOpen(true); setMenuOpen(false); setSelected([]); setSlot(null); setPlacement(null); }}>Salir al listado de retos</button></div>}
+    <button type="button" aria-pressed={soundEnabled} onClick={() => { const next = !soundEnabled; sound.setEnabled(next); setSoundEnabled(next); }}>Sonido: {soundEnabled ? 'activado' : 'silenciado'}</button>
     <header className="duel-heading"><div><small>DUELOS DEL BESTIARIO</small><h2>Arena de criaturas</h2></div>
       <span className="duel-badge">{arena?.abierta ? 'Arena abierta' : 'Arena cerrada'}</span></header>
     <p>Las 24 criaturas están disponibles para todos. Cada mazo tiene 75 cartas: 49 criaturas y 26 de magia o trampa, sin necesidad de comprarlas.</p>
