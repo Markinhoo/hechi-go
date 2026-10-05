@@ -17,7 +17,7 @@ test('spells: deck, private traps, limits, boosts, healing, target validation an
   assert.equal(d.yo.restantes,70);
   const deck=await q('select hechi.arena_mazo() as data');
   assert.equal(deck.length,75);
-  const catalog=JSON.parse(await readFile(new URL('../../src/data/duelCatalog.json',import.meta.url),'utf8'));
+  const catalog=JSON.parse(await readFile(new URL('./fixtures/duelCatalog-v1.json',import.meta.url),'utf8'));
   for(const c of [...catalog.cards,...catalog.spells]) assert.equal(deck.filter(x=>x.id===c.id).length,c.copies);
   const view=async id=>(await q("select hechi.obtener_arena('TEST',$1,'12345') as data",[id])).activo;
   const action=(id,move,data={})=>q("select hechi.accion_duelo_arena('TEST',$1,'12345',$2,$3,$4,$5::jsonb) as data",[id,d.id,d.version,move,JSON.stringify(data)]);

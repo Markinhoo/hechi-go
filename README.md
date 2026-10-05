@@ -286,3 +286,36 @@ se resaltan sus parejas válidas; las cartas incompatibles reemplazan la selecci
 La defensa gira únicamente el marco completo, sin volver a girar la imagen.
 
     node --test supabase/tests/duel_hand_boost.test.mjs
+
+### Balance y catálogo completo (29 de septiembre)
+
+Aplicar `supabase/migrations/20260929_arena_balance.sql` después de
+`20260928_b_arena_hand_boost.sql`, y después publicar el frontend.
+La migración y el frontend deben actualizarse juntos: las magias nuevas necesitan
+los nuevos destinos de selección y las reglas del servidor.
+
+El catálogo tiene 24 criaturas y los 20 hechizos activos del álbum (14 magias
+y 6 trampas). Los mazos nuevos contienen 75 cartas: 49 criaturas y 26 hechizos.
+Los duelos activos conservan sus manos, mazos y reloj; reciben las estadísticas
+actualizadas y un cambio de versión para refrescar la vista. Para probar la
+distribución completa hay que iniciar una partida nueva.
+
+Dragón queda en 2500 ATQ / 1700 DEF y Troll en 2400 / 1800. Las criaturas de
+menor rareza suben y las nuevas magias ofrecen reducción de estadísticas,
+cambio de postura y destrucción con coste. La ventaja elemental sigue en +300.
+Los aumentos netos tienen un máximo de +1000 ATQ y +1000 DEF por criatura;
+las estadísticas efectivas no bajan de cero. Se mantiene una magia o trampa
+por turno, antes de atacar. Engorgio conserva su combinación previa a invocar.
+
+Las magias de objetivo rival requieren criaturas boca arriba. Alohomora puede
+retirar una trampa oculta sin revelar su identidad. Las mejoras y reducciones
+duran mientras la criatura permanezca en el campo. Este balance es una primera
+versión: conviene observar victorias y duración de partidas antes de reajustarlo.
+
+    node --test --test-concurrency=1 supabase/tests/duel*.test.mjs
+    node --test --test-concurrency=1 tests/ui/arena*.test.mjs
+
+Los tests históricos usan `supabase/tests/fixtures/duelCatalog-v1.json` para
+comprobar las migraciones anteriores; `duel_balance.test.mjs` comprueba el
+catálogo actual, los 20 efectos y sus límites, privacidad y respuestas a las
+criaturas legendarias.

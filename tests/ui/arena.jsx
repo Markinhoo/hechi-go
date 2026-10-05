@@ -8,6 +8,11 @@ let duel = {id:'duel',estado:'activo',jugador1:'a',jugador2:'b',nombre1:'Alumno'
  rival:{...player,mano:[],campo:[{oculta:true,posicion:'ataque'},null,null,null,null]}};
 if(new URLSearchParams(window.location.search).has('direct')) duel.rival.campo=[null,null,null,null,null];
 window.arenaCalls=[];
+const testSpell=new URLSearchParams(window.location.search).get('spell');
+if(testSpell){
+ duel.yo={...player,mano:[{id:testSpell,uid:'test-spell'}],campo:[{id:'bowtruckle',uid:'own',bonusDef:500,posicion:'ataque'},null,null,null,null]};
+ duel.rival={...duel.rival,campo:[{id:'dragon',uid:'enemy',posicion:'ataque'},{oculta:true,posicion:'ataque'},null,null,null],apoyos:[{oculta:true},null,null,null,null]};
+}
 window.deliverCombatEvent=event=>{duel={...duel,version:duel.version+1,eventos:[...(duel.eventos||[]),{...event,id:'effect-'+(duel.version+1),tipo:'combate'}]};window.dispatchEvent(new Event('online'));};
 window.expireArenaTurn=()=>{duel={...duel,venceEn:new Date(Date.now()-1000).toISOString()};};
 const cinematic=new URLSearchParams(window.location.search).has('cinematic');
@@ -25,7 +30,7 @@ const rpc=async(method,args)=>{
    const data=args.p_datos;
    const yo={...duel.yo,mano:duel.yo.mano.filter(c=>c.uid!==data.uid)};
    if(data.uid==='trap') yo.apoyos=Array.from({length:5},(_,i)=>i===data.casilla?{id:'hechizo-invisibilidad',uid:'trap',oculta:true}:null);
-   else yo.campo=yo.campo.map((c,i)=>i===data.objetivo?{...c,bonusAtk:500}:c);
+   else if(data.uid==='boost') yo.campo=yo.campo.map((c,i)=>i===data.objetivo?{...c,bonusAtk:500}:c);
    duel={...duel,yo,hechizo:true,version:duel.version+1};
   }
   if(args.p_accion==='posicion'){

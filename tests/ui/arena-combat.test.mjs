@@ -11,8 +11,8 @@ test('combat presentation: fusion, trap, damage, no replay and compact hand',asy
   const page=await browser.newPage({viewport:{width:390,height:700}});
   page.setDefaultTimeout(6000);
   await page.goto('http://127.0.0.1:'+server.httpServer.address().port+'/tests/ui/arena.html?cinematic');
-  await page.getByRole('button',{name:'Bowtruckle, ataque 800, defensa 1400',exact:true}).click();
-  await page.getByRole('button',{name:'Doxy, ataque 1100, defensa 700',exact:true}).first().click();
+  await page.getByRole('button',{name:'Bowtruckle, ataque 1200, defensa 1600',exact:true}).click();
+  await page.getByRole('button',{name:'Doxy, ataque 1400, defensa 1000',exact:true}).first().click();
   await page.getByRole('button',{name:'Invocar en espacio 1',exact:true}).click();
   await page.getByRole('button',{name:'Colocar boca arriba',exact:true}).click();
   await page.getByRole('dialog',{name:'Fusión de criaturas'}).waitFor();

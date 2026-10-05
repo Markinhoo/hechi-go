@@ -2,127 +2,127 @@
   "cards": [
     {
       "id": "bowtruckle",
-      "atk": 800,
-      "def": 1400,
+      "atk": 1200,
+      "def": 1600,
       "stars": [
         "tierra",
         "luz"
       ],
-      "copies": 4
+      "copies": 3
     },
     {
       "id": "doxy",
-      "atk": 1100,
-      "def": 700,
+      "atk": 1400,
+      "def": 1000,
       "stars": [
         "aire",
         "sombra"
       ],
-      "copies": 4
+      "copies": 3
     },
     {
       "id": "duendecillo",
-      "atk": 1000,
-      "def": 1000,
+      "atk": 1300,
+      "def": 1300,
       "stars": [
         "aire",
         "fuego"
       ],
-      "copies": 4
+      "copies": 3
     },
     {
       "id": "elfo",
-      "atk": 900,
-      "def": 1200,
+      "atk": 1100,
+      "def": 1500,
       "stars": [
         "luz",
         "tierra"
       ],
-      "copies": 4
+      "copies": 3
     },
     {
       "id": "lechuza",
-      "atk": 700,
-      "def": 1300,
+      "atk": 1000,
+      "def": 1600,
       "stars": [
         "aire",
         "luz"
       ],
-      "copies": 4
+      "copies": 3
     },
     {
       "id": "acromantula",
-      "atk": 1600,
-      "def": 1200,
+      "atk": 1800,
+      "def": 1400,
       "stars": [
         "sombra",
         "tierra"
       ],
-      "copies": 3
+      "copies": 2
     },
     {
       "id": "centauro",
-      "atk": 1700,
-      "def": 1400,
+      "atk": 1900,
+      "def": 1500,
       "stars": [
         "tierra",
         "luz"
       ],
-      "copies": 3
+      "copies": 2
     },
     {
       "id": "demiguise",
-      "atk": 1200,
-      "def": 1900,
+      "atk": 1500,
+      "def": 2000,
       "stars": [
         "luz",
         "aire"
       ],
-      "copies": 3
+      "copies": 2
     },
     {
       "id": "dugbog",
-      "atk": 1500,
-      "def": 1700,
+      "atk": 1700,
+      "def": 1900,
       "stars": [
         "agua",
         "tierra"
       ],
-      "copies": 3
+      "copies": 2
     },
     {
       "id": "escarbato",
-      "atk": 1300,
-      "def": 1800,
+      "atk": 1600,
+      "def": 1900,
       "stars": [
         "tierra",
         "sombra"
       ],
-      "copies": 3
+      "copies": 2
     },
     {
       "id": "fwooper",
-      "atk": 1600,
-      "def": 1300,
+      "atk": 1800,
+      "def": 1500,
       "stars": [
         "aire",
         "fuego"
       ],
-      "copies": 3
+      "copies": 2
     },
     {
       "id": "grindylow",
-      "atk": 1700,
-      "def": 1200,
+      "atk": 1800,
+      "def": 1500,
       "stars": [
         "agua",
         "sombra"
       ],
-      "copies": 3
+      "copies": 2
     },
     {
       "id": "basilisco",
-      "atk": 2300,
+      "atk": 2200,
       "def": 1800,
       "stars": [
         "sombra",
@@ -142,7 +142,7 @@
     },
     {
       "id": "dementor",
-      "atk": 2100,
+      "atk": 2000,
       "def": 2300,
       "stars": [
         "sombra",
@@ -152,8 +152,8 @@
     },
     {
       "id": "gigante",
-      "atk": 2400,
-      "def": 1700,
+      "atk": 2300,
+      "def": 1800,
       "stars": [
         "tierra",
         "fuego"
@@ -162,7 +162,7 @@
     },
     {
       "id": "hipogrifo",
-      "atk": 2200,
+      "atk": 2100,
       "def": 1900,
       "stars": [
         "aire",
@@ -172,7 +172,7 @@
     },
     {
       "id": "hombre-lobo",
-      "atk": 2300,
+      "atk": 2200,
       "def": 1600,
       "stars": [
         "sombra",
@@ -202,8 +202,8 @@
     },
     {
       "id": "dragon",
-      "atk": 2800,
-      "def": 2300,
+      "atk": 2500,
+      "def": 1700,
       "stars": [
         "fuego",
         "aire"
@@ -212,8 +212,8 @@
     },
     {
       "id": "fenix",
-      "atk": 2500,
-      "def": 2600,
+      "atk": 2300,
+      "def": 2300,
       "stars": [
         "fuego",
         "luz"
@@ -222,8 +222,8 @@
     },
     {
       "id": "troll",
-      "atk": 2700,
-      "def": 2400,
+      "atk": 2400,
+      "def": 1800,
       "stars": [
         "tierra",
         "sombra"
@@ -232,8 +232,8 @@
     },
     {
       "id": "unicornio",
-      "atk": 2400,
-      "def": 2800,
+      "atk": 2100,
+      "def": 2600,
       "stars": [
         "luz",
         "agua"
@@ -348,34 +348,14 @@
   ],
   "spells": [
     {
-      "id": "hechizo-incendio",
-      "numero": 7,
+      "id": "hechizo-alohomora",
+      "numero": 1,
+      "nombre": "Alohomora",
       "tipo": "magia",
-      "nombre": "Incendio",
-      "rareza": "comun",
-      "copies": 4,
-      "efecto": "Resta 600 de vida al rival.",
-      "objetivo": "zona"
-    },
-    {
-      "id": "hechizo-engorgio",
-      "numero": 11,
-      "tipo": "magia",
-      "nombre": "Engorgio",
-      "rareza": "comun",
-      "copies": 4,
-      "efecto": "Da +500 ATQ a una criatura propia mientras siga en el campo.",
-      "objetivo": "criatura"
-    },
-    {
-      "id": "hechizo-elixir",
-      "numero": 17,
-      "tipo": "magia",
-      "nombre": "Elixir de Vida",
-      "rareza": "epica",
-      "copies": 2,
-      "efecto": "Recupera 800 de vida, hasta 4000.",
-      "objetivo": "zona"
+      "copies": 1,
+      "objetivo": "apoyo_rival",
+      "efecto": "Destruye una trampa rival sin activarla.",
+      "rareza": "epica"
     },
     {
       "id": "hechizo-patronus",
@@ -388,6 +368,16 @@
       "objetivo": "zona"
     },
     {
+      "id": "hechizo-avada",
+      "numero": 3,
+      "nombre": "Avada Kedavra",
+      "tipo": "magia",
+      "copies": 1,
+      "objetivo": "rival",
+      "efecto": "Paga 800 de vida para destruir una criatura rival boca arriba. Debes tener más de 800 de vida.",
+      "rareza": "epica"
+    },
+    {
       "id": "hechizo-confundo",
       "numero": 4,
       "tipo": "trampa",
@@ -398,6 +388,136 @@
       "objetivo": "zona"
     },
     {
+      "id": "hechizo-envejecedora",
+      "numero": 5,
+      "nombre": "Envejecedora",
+      "tipo": "trampa",
+      "copies": 1,
+      "objetivo": "zona",
+      "efecto": "Cancela el ataque y reduce 400 ATQ al atacante mientras siga en el campo.",
+      "rareza": "epica"
+    },
+    {
+      "id": "hechizo-imperio",
+      "numero": 6,
+      "nombre": "Imperio",
+      "tipo": "trampa",
+      "copies": 1,
+      "objetivo": "zona",
+      "efecto": "Cancela el ataque y elimina los aumentos de ATQ y DEF del atacante.",
+      "rareza": "epica"
+    },
+    {
+      "id": "hechizo-incendio",
+      "numero": 7,
+      "tipo": "magia",
+      "nombre": "Incendio",
+      "rareza": "comun",
+      "copies": 2,
+      "efecto": "Resta 600 de vida al rival.",
+      "objetivo": "zona"
+    },
+    {
+      "id": "hechizo-felix",
+      "numero": 8,
+      "nombre": "Felix Felicis",
+      "tipo": "magia",
+      "copies": 1,
+      "objetivo": "zona",
+      "efecto": "Roba una carta después de consumir esta magia, sin superar cinco cartas en mano.",
+      "rareza": "epica"
+    },
+    {
+      "id": "hechizo-crucio",
+      "numero": 9,
+      "nombre": "Crucio",
+      "tipo": "magia",
+      "copies": 2,
+      "objetivo": "rival",
+      "efecto": "Reduce 700 ATQ a una criatura rival boca arriba mientras siga en el campo.",
+      "rareza": "comun"
+    },
+    {
+      "id": "hechizo-morsmordre",
+      "numero": 10,
+      "nombre": "Morsmordre",
+      "tipo": "magia",
+      "copies": 1,
+      "objetivo": "zona",
+      "efecto": "Reduce 300 ATQ a todas las criaturas rivales mientras sigan en el campo.",
+      "rareza": "epica"
+    },
+    {
+      "id": "hechizo-engorgio",
+      "numero": 11,
+      "tipo": "magia",
+      "nombre": "Engorgio",
+      "rareza": "comun",
+      "copies": 3,
+      "efecto": "Da +500 ATQ a una criatura propia mientras siga en el campo.",
+      "objetivo": "criatura"
+    },
+    {
+      "id": "hechizo-sectumsempra",
+      "numero": 12,
+      "nombre": "Sectumsempra",
+      "tipo": "magia",
+      "copies": 1,
+      "objetivo": "rival",
+      "efecto": "Reduce 700 DEF a una criatura rival boca arriba mientras siga en el campo.",
+      "rareza": "epica"
+    },
+    {
+      "id": "hechizo-muertos",
+      "numero": 13,
+      "nombre": "Muertos en Vida",
+      "tipo": "trampa",
+      "copies": 1,
+      "objetivo": "zona",
+      "efecto": "Cancela el ataque y recupera 500 de vida, hasta 4000.",
+      "rareza": "epica"
+    },
+    {
+      "id": "hechizo-riddikulus",
+      "numero": 15,
+      "nombre": "Riddikulus",
+      "tipo": "magia",
+      "copies": 1,
+      "objetivo": "rival",
+      "efecto": "Pone en defensa una criatura rival boca arriba.",
+      "rareza": "epica"
+    },
+    {
+      "id": "hechizo-amortentia",
+      "numero": 16,
+      "nombre": "Amortentia",
+      "tipo": "magia",
+      "copies": 1,
+      "objetivo": "zona",
+      "efecto": "Da +300 ATQ a todas tus criaturas mientras sigan en el campo.",
+      "rareza": "epica"
+    },
+    {
+      "id": "hechizo-elixir",
+      "numero": 17,
+      "tipo": "magia",
+      "nombre": "Elixir de Vida",
+      "rareza": "epica",
+      "copies": 2,
+      "efecto": "Recupera 800 de vida, hasta 4000.",
+      "objetivo": "zona"
+    },
+    {
+      "id": "hechizo-crecehuesos",
+      "numero": 18,
+      "nombre": "Crecehuesos",
+      "tipo": "magia",
+      "copies": 1,
+      "objetivo": "criatura",
+      "efecto": "Da +500 DEF a una criatura propia mientras siga en el campo.",
+      "rareza": "epica"
+    },
+    {
       "id": "hechizo-invisibilidad",
       "numero": 19,
       "tipo": "trampa",
@@ -406,6 +526,26 @@
       "copies": 1,
       "efecto": "Cancela el ataque rival.",
       "objetivo": "zona"
+    },
+    {
+      "id": "hechizo-vigorizante",
+      "numero": 22,
+      "nombre": "Vigorizante",
+      "tipo": "magia",
+      "copies": 1,
+      "objetivo": "criatura",
+      "efecto": "Da +300 ATQ y +300 DEF a una criatura propia mientras siga en el campo.",
+      "rareza": "epica"
+    },
+    {
+      "id": "hechizo-multijugos",
+      "numero": 26,
+      "nombre": "Multijugos",
+      "tipo": "magia",
+      "copies": 1,
+      "objetivo": "criatura",
+      "efecto": "Iguala el ATQ de una criatura propia al mayor ATQ rival boca arriba, hasta 2500 y respetando el límite de refuerzos.",
+      "rareza": "epica"
     }
   ]
 }

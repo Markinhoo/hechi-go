@@ -20,7 +20,7 @@ test('duel server: deck, privacy, validation, fusion, combat, rewards and reset'
   await identity('');
   const deck=await query('select hechi.arena_mazo() as data');
   assert.equal(deck.length,61); assert.equal(new Set(deck.map(c=>c.uid)).size,61);
-  const catalog=JSON.parse(await readFile(new URL('../../src/data/duelCatalog.json',import.meta.url),'utf8'));
+  const catalog=JSON.parse(await readFile(new URL('./fixtures/duelCatalog-v1.json',import.meta.url),'utf8'));
   for(const c of catalog.cards) assert.equal(deck.filter(x=>x.id===c.id).length,c.copies);
   const view = id => query('select hechi.obtener_arena($1,$2,$3) as data',['TEST',id,'12345']);
   const invite = (a=first,b=ale,practice=false) => query('select hechi.retar_arena($1,$2,$3,$4,$5) as data',['TEST',a,'12345',b,practice]);

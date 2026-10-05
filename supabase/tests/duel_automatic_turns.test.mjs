@@ -19,7 +19,7 @@ test('automatic turns: first summon, one attack, fixed timer, timeout race and f
   const action=(id,move,values={},version=d.version)=>q("select hechi.accion_duelo_arena('TEST',$1,'12345',$2,$3,$4,$5::jsonb) as data",[id,d.id,version,move,JSON.stringify(values)]);
   const current=d.turno==='a'?first:ale, rival=current===first?ale:first;
   d=await view(current);
-  const catalog=JSON.parse(await readFile(new URL('../../src/data/duelCatalog.json',import.meta.url),'utf8'));
+  const catalog=JSON.parse(await readFile(new URL('./fixtures/duelCatalog-v1.json',import.meta.url),'utf8'));
   const card=d.yo.mano[0],stats=catalog.cards.find(c=>c.id===card.id);
   d=await action(current,'invocar',{uid:card.uid,casilla:0,afinidad:stats.stars[0],posicion:'ataque',oculta:true});
   assert.equal(d.ronda,2);assert.notEqual(d.turno,d.lado);
