@@ -11,6 +11,7 @@ import CardRoulette from './CardRoulette';
 import KahootPanel from './KahootPanel';
 import DuelArena from './DuelArena';
 import TeacherPointsControl from './TeacherPointsControl';
+import TeacherGalleons from './TeacherGalleons';
 import HouseScoresTable from './HouseScoresTable';
 import ScoreHistory from './ScoreHistory';
 import PeriodBackups from './PeriodBackups';
@@ -208,6 +209,14 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       setDeshaciendo(false);
     }
   };
+  const editarGaleonesAlumno = async (alumno, galeones, anterior) => {
+    if (sesion.tipo !== 'maestro') throw new Error('Solo el maestro puede editar galeones.');
+    const { data, error } = await db.rpc('editar_galeones_alumno', {
+      p_token: sesion.token, p_alumno_id: alumno.id, p_galeones: galeones, p_saldo_anterior: anterior
+    });
+    if (error) throw new Error(error.message);
+    setEstado(data);
+  };
   const ajustarPuntosAlumno = async (alumno, puntos) => {
     if (sesion.tipo !== 'maestro') throw new Error('Solo el maestro puede ajustar puntos.');
     const { data, error } = await db.rpc('ajustar_puntos_alumno', {
@@ -289,7 +298,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const alumnosConfundoDisponibles = (alumnoBase) => {
     if (!alumnoBase) return [];
     const puntosBase = Number(alumnoBase.puntos || 0);
-    return estado.alumnos.filter((item) => item.id !== alumnoBase.id && Number(item.puntos || 0) > puntosBase);
+    return estado.alumnos.filter((item) => item.id !== alumnoBase.id && item.casaId !== estado.casaProtegida && Number(item.puntos || 0) > puntosBase);
   };
 
   const cartaPuedeSalir = (numero, alumnoBase) => {
@@ -905,6 +914,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const teacherTabs = [
     { id: 'inicio', label: 'Inicio', icon: <FaWandMagicSparkles /> },
     { id: 'puntajes', label: 'Puntajes', icon: <FaTrophy /> },
+    { id: 'galeones', label: 'Galeones', icon: <FaTrophy /> },
     { id: 'hechizos', label: 'Hechizos', icon: <FaScroll /> },
     { id: 'kahoot', label: 'Kahoot', icon: <FaTrophy /> },
     { id: 'arena', label: 'Arena', icon: <FaWandMagicSparkles /> }
@@ -1157,7 +1167,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         <>
           <section className='teacher-desktop-tabs-area'>
             <div className='student-tab-switcher teacher-desktop-tab-switcher'>
-              {teacherTabs.filter((tab) => tab.id === 'inicio' || tab.id === 'kahoot' || tab.id === 'arena').map((tab) => (
+              {teacherTabs.filter((tab) => tab.id === 'inicio' || tab.id === 'galeones' || tab.id === 'kahoot' || tab.id === 'arena').map((tab) => (
                 <button key={tab.id} type='button' className={teacherTab === tab.id ? 'active' : ''} onClick={() => setTeacherTab(tab.id)}>
                   {tab.icon}<span>{tab.label}</span>
                 </button>
@@ -1174,6 +1184,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
               </section>
             )}
             {teacherTab === 'puntajes' && houseBoard}
+            {teacherTab === 'galeones' && <TeacherGalleons alumnos={estado.alumnos} onSave={editarGaleonesAlumno} />}
             {teacherTab === 'hechizos' && historyPanel}
             {teacherTab === 'kahoot' && kahootPanel}
             {teacherTab === 'arena' && !arenaMobile && <DuelArena sesion={sesion} />}
@@ -1190,6 +1201,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
             </div>
             {teacherTab === 'inicio' && <div className='teacher-mobile-home-content'>{requestsPanel}{rosterPanel}</div>}
             {teacherTab === 'puntajes' && houseBoard}
+            {teacherTab === 'galeones' && <TeacherGalleons alumnos={estado.alumnos} onSave={editarGaleonesAlumno} />}
             {teacherTab === 'hechizos' && historyPanel}
             {teacherTab === 'kahoot' && kahootPanel}
             {teacherTab === 'arena' && arenaMobile && <DuelArena sesion={sesion} />}

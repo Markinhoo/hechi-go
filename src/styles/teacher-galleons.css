@@ -1,0 +1,11 @@
+.teacher-galleons { max-height:100%; overflow:auto; color:#fff; min-width:0; }
+.teacher-galleons h2,.teacher-galleons h3,.teacher-galleons p,.teacher-galleons label,.teacher-galleons small { color:inherit; }
+.teacher-galleons label { display:grid; gap:6px; }
+.teacher-galleons ul { list-style:none; padding:0; margin:16px 0; }
+.teacher-galleons li { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 0; border-bottom:1px solid #ffffff30; }
+.teacher-galleons li span { min-width:0; overflow-wrap:anywhere; }
+.teacher-galleons small { display:block; margin-top:4px; }
+.teacher-galleons form { padding:14px; margin-top:14px; border:1px solid #cdb778; border-radius:12px; background:#172433; }
+.teacher-galleons form > div { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.teacher-galleons button { flex-shrink:0; }
+.teacher-galleons [role=alert] { color:#ffb7b7; }

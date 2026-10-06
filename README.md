@@ -404,3 +404,36 @@ de los efectos de audio sube a 2.5 veces la anterior (aproximadamente +8 dB).
 
     node --test supabase/tests/duel_confundo_lock.test.mjs supabase/tests/duel_rewards.test.mjs
     node --test tests/ui/arena-fusion-preview.test.mjs tests/ui/arena-sounds.test.mjs
+
+### Galeones en el perfil del maestro
+
+Aplicar `supabase/migrations/20261006_b_teacher_galleons.sql` y publicar el
+frontend. La pestaña «Galeones» del maestro muestra todos los alumnos de la
+clase con su saldo, permite buscar por nombre y reemplazar el saldo de uno
+por un entero de cero o más. La edición no cambia puntos, participaciones,
+cartas ni bestias. Está disponible en móvil y escritorio.
+
+La función exige sesión autenticada del propietario de la clase activa y
+verifica que el alumno pertenezca a esa clase. Bloquea las filas y comprueba
+el saldo que vio el maestro al abrir la edición: si cambió por una compra,
+un premio u otra edición, rechaza el guardado para evitar sobrescribirlo.
+Solo el rol authenticated puede ejecutar la función.
+
+    node --test supabase/tests/teacher_galleons.test.mjs
+    node --test tests/ui/galleons.test.mjs
+
+### Protección de Patronus frente a Confundo
+
+Aplicar `supabase/migrations/20261006_c_patronus_confundo.sql` y publicar el
+frontend. Confundo omitía la comprobación de `casa_protegida`, por lo que podía
+intercambiar o quitar puntos a alumnos protegidos. La migración añade esa
+validación conservando la función instalada y su auditoría; el selector de
+Confundo también excluye alumnos de la casa protegida. Un rechazo no consume
+la oportunidad ni modifica puntos. La migración no corrige historiales pasados.
+
+La prueba reproduce el fallo anterior y comprueba la corrección, activación de
+Patronus, multiplicador de la siguiente acción y protección contra Avada,
+Crucio y Sectumsempra. Se mantiene la regla existente de una sola casa protegida:
+otro Patronus transfiere la protección a la casa que lo obtiene.
+
+    node --test supabase/tests/patronus.test.mjs

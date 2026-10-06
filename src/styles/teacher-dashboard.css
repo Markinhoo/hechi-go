@@ -3798,12 +3798,12 @@ button,
 /* Arena adds one destination to each role's navigation. */
 .student-tab-switcher { grid-template-columns:repeat(6,minmax(0,1fr)) !important; }
 .student-bottom-nav { grid-template-columns:repeat(6,minmax(0,1fr)) !important; }
-.teacher-tab-switcher { grid-template-columns:repeat(5,minmax(0,1fr)) !important; }
+.teacher-tab-switcher { grid-template-columns:repeat(6,minmax(0,1fr)) !important; }
 .teacher-desktop-tab-switcher { grid-template-columns:repeat(3,minmax(0,1fr)) !important; width:min(100%,540px) !important; }
 .student-tab-panel.duel-arena { min-height:0 !important; overflow:auto !important; }
 .student-view .student-tab-switcher,
 .student-view .student-bottom-nav { grid-template-columns:repeat(6,minmax(0,1fr)) !important; }
-.teacher-view .teacher-tab-switcher { grid-template-columns:repeat(5,minmax(0,1fr)) !important; }
+.teacher-view .teacher-tab-switcher { grid-template-columns:repeat(6,minmax(0,1fr)) !important; }
 .teacher-view .teacher-desktop-tab-switcher { grid-template-columns:repeat(3,minmax(0,1fr)) !important; }
 .teacher-view .teacher-desktop-tab-switcher.student-tab-switcher {
   grid-template-columns:repeat(3,minmax(0,1fr)) !important;
