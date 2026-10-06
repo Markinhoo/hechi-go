@@ -60,7 +60,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
     const fresh=events.filter(e=>!seenEvents.current.ids.has(e.id));
     if (!fresh.length) return;
     fresh.forEach(e=>seenEvents.current.ids.add(e.id));
-    setCombatQueue(queue=>[...queue,...fresh.map(event=>({event,lado:d.lado}))]);
+    setCombatQueue(queue=>[...queue,...fresh.filter(event=>event.tipo !== 'fusion' || event.actor === d.lado).map(event=>({event,lado:d.lado}))]);
   }, []);
   const [practice, setPractice] = useState(false);
   const [selected, setSelected] = useState([]);
@@ -152,7 +152,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
   const enemySpell = mine && !busy && remaining > 0 && !duel.hechizo && chosen.length === 1 && result?.objetivo === 'rival';
   const enemyTrapSpell = mine && !busy && remaining > 0 && !duel.hechizo && chosen.length === 1 && result?.objetivo === 'apoyo_rival';
   const ownCard = slot === null ? null : duel?.yo?.campo[slot];
-  const canAttack = mine && remaining > 0 && duel.ronda > 1 && Boolean(ownCard) && !ownCard.ataco && !busy;
+  const canAttack = mine && remaining > 0 && duel.ronda > 1 && Boolean(ownCard) && !ownCard.bloqueada && !ownCard.ataco && !busy;
   const act = async (method, extra = {}, teacherOnly = false) => {
     if (busy || request.current) return;
     request.current = true;
@@ -211,7 +211,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
     if (!card) return;
     const [kind, value] = target.split(':'); const index = Number(value);
     if (kind === 'field' ? card.tipo !== 'criatura' || duel.invoco || duel.yo.campo[index] :
-        kind === 'target' ? card.objetivo !== 'criatura' || !duel.yo.campo[index] :
+        kind === 'target' ? card.objetivo !== 'criatura' || !duel.yo.campo[index] || duel.yo.campo[index].bloqueada :
         kind === 'rival' ? card.objetivo !== 'rival' || !duel.rival.campo[index] || duel.rival.campo[index].oculta :
         kind === 'enemy-support' ? card.objetivo !== 'apoyo_rival' || !duel.rival.apoyos?.[index] :
         kind === 'support' ? card.objetivo !== 'zona' || duel.yo.apoyos?.[index] : true) return;
@@ -285,7 +285,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
       </div>
       <div className="duel-field" aria-label="Tu campo">
         {directEvent && directEvent.event.actor !== directEvent.lado && <span key={directEvent.event.id} className="duel-direct-flash" role="status" aria-label={'Ataque directo: '+directEvent.event.danoRival+' de daño para ti'} />}
-        {duel.yo.campo.map((c, i) => c ? <Card key={i} card={c} drop={'target:'+i} selected={slot === i} disabled={!mine || busy}
+        {duel.yo.campo.map((c, i) => c ? <Card key={i} card={c} drop={'target:'+i} selected={slot === i} disabled={!mine || busy || Boolean(c.bloqueada)}
           label={'Tu espacio ' + (i + 1) + ': ' + name(c.id)} onClick={() => { if (result?.objetivo === 'criatura') { void cast(null, i); } else if (slot === i) { void action('posicion', { casilla: i }); } else { setSelected([]); setSlot(i); setPlacement(null); } }} /> :
           <button key={i} data-drop={'field:'+i} className={'duel-empty ' + (slot === i ? 'is-selected' : '')} disabled={!mine || busy}
             aria-label={'Invocar en espacio ' + (i + 1)} aria-pressed={slot === i} onClick={() => prepareDrop('field:'+i)}>Espacio {i + 1}</button>)}
@@ -324,14 +324,14 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
           onClick={() => { if (suppressHandClick.current) { suppressHandClick.current=false; return; } choose(c.uid); }} />)}
       </div>
       </div>
-      <p className="duel-message" role="status" key={duel.version}>{chosen.length === 1 && result?.tipo !== 'criatura' ? result?.efecto : duel.mensaje}</p>
+      <p className="duel-message" role="status" key={duel.version}>{chosen.length === 2 && result ? `${combination?.bonusAtk ? 'Refuerzo' : 'Fusión'}: ${result.nombre} · ATQ ${result.atk + (combination?.bonusAtk || 0)} · DEF ${result.def}` : chosen.length === 1 && result?.tipo !== 'criatura' ? result?.efecto : duel.mensaje}</p>
       <div className="duel-controls duel-turn">
         <button disabled={!mine || busy || !remaining} onClick={() => action('terminar')}>Terminar turno</button>
         <span>{remaining > 0 ? remaining + "s para jugar · El turno pasa automáticamente" : "Cambiando de turno…"}</span>
 
         <button disabled={busy} onClick={() => setConfirmQuit(true)}>Rendirse</button>
       </div>
-      {confirmQuit && <div className="duel-invite" role="alert"><p>Rendirse cancela el duelo sin galeones para nadie. El cupo reservado sigue consumido.</p>
+      {confirmQuit && <div className="duel-invite" role="alert"><p>Si te rindes, recibes 0 galeones y tu rival gana. En duelos con recompensa, recibe 80 galeones más su bono del bestiario. El cupo reservado sigue consumido.</p>
         <button disabled={busy} onClick={() => action('rendirse')}>Confirmar rendición</button><button onClick={() => setConfirmQuit(false)}>Seguir jugando</button></div>}
     </div>}
     {!teacher && duel && !['pendiente', 'activo'].includes(duel.estado) && <article className="duel-invite" role="status">
@@ -363,7 +363,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
       <p>Contra ataque: gana el ATQ mayor, destruye la criatura menor y la diferencia se resta a su vida. Si empatan, ambas se destruyen. Contra defensa: ATQ mayor destruye sin restar vida; ATQ menor te resta la diferencia, sin destruir tu criatura.</p>
       <p>Cada criatura tiene una afinidad predeterminada; se usa la primera afinidad de su ficha. Cada afinidad vence a la siguiente y recibe +300 en combate: fuego → tierra → aire → agua → sombra → luz → fuego. Las cartas boca abajo revelan su identidad al combatir; las fusiones entran boca arriba.</p>
       <p>Ganas al agotar la vida rival o si el rival no puede completar su mano. Empate al terminar 60 turnos. Cada turno dura hasta 90 segundos; al agotarse el tiempo, pasa automáticamente al rival.</p>
-      <p>Máximo tres duelos con recompensa al día por alumno y uno contra cada rival, ganes o pierdas. Si cualquiera agotó sus cupos, ambos juegan práctica. Se reinician a medianoche de Ciudad de México. Rendirse no devuelve el cupo ni da galeones. Cada bestia comprada añade un bono al premio: común +1, rara +2, épica +3 y legendaria +5 galeones. Se calcula con tu colección al terminar el duelo. Jugar no otorga participaciones ni puntos personales o de casa.</p>
+      <p>Máximo tres duelos con recompensa al día por alumno y uno contra cada rival, ganes o pierdas. Si cualquiera agotó sus cupos, ambos juegan práctica. Se reinician a medianoche de Ciudad de México. Quien se rinde recibe 0 galeones y no recupera el cupo; su rival recibe el premio de victoria si el duelo tiene recompensa. Cada bestia comprada añade un bono al premio: común +1, rara +2, épica +3 y legendaria +5 galeones. Se calcula con tu colección al terminar el duelo. Jugar no otorga participaciones ni puntos personales o de casa.</p>
       <div className="duel-catalog">{Object.values(cards).map(c => <article key={c.id}><img loading="lazy" src={c.imagen} alt="" /><strong>{c.nombre}</strong><small>{rarity[c.rareza]} · {c.copies} copias</small><small>{c.tipo === 'criatura' ? c.atk + ' ATQ / ' + c.def + ' DEF · ' + c.stars.join(' / ') : c.tipo + ': ' + c.efecto}</small></article>)}</div>
       <p>Puedes usar una magia o colocar una trampa por turno, además de tu criatura. Los refuerzos se aplican a criaturas propias; las magias de debilitamiento, a criaturas rivales boca arriba; Alohomora, a una trampa rival. Las demás se juegan en un espacio libre de Magia / trampa. Los refuerzos se acumulan hasta +1000 ATQ y +1000 DEF por criatura; el ataque y la defensa nunca bajan de cero. Las trampas se activan automáticamente ante el siguiente ataque rival: una por ataque, de izquierda a derecha, y se consumen al activarse. Solo afectan al duelo.</p>
       <h3>Recetas de fusión</h3><ul>{catalog.fusions.map(([a, b, c]) => <li key={a + b}>{name(a)} + {name(b)} → <strong>{name(c)}</strong></li>)}</ul>

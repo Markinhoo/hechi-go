@@ -11,6 +11,7 @@ for (const bonuses of [false,true]) test(`arena currency, classroom isolation an
   for(const file of ['20260924_z_score_audit_and_undo.sql','20260924_zz_period_backups.sql','20260924_zzz_duel_arena.sql','20260924_zzz_duel_catalog.sql','20260925_arena_automatic_turns.sql','20260925_b_arena_spells.sql','20260925_c_arena_battlefield.sql','20260925_d_arena_postures.sql','20260928_arena_combat_events.sql','20260928_b_arena_hand_boost.sql','20260929_arena_balance.sql','20261005_arena_galleon_rewards.sql']) await db.exec(await sql(file));
   await db.exec(await sql('20261005_arena_galleon_rewards.sql'));
   if(bonuses) await db.exec(await sql('20261005_c_bestiary_duel_bonus.sql'));
+  if(bonuses) await db.exec(await sql('20261006_arena_confundo_surrender.sql'));
   const q=async(s,a=[])=>(await db.query(s,a)).rows[0]?.data;
   const identity=id=>db.query("select set_config('request.jwt.claim.sub',$1,false)",[id]);
   const balances=()=>q("select jsonb_object_agg(id,galeones) as data from hechi.alumnos");
@@ -49,19 +50,20 @@ for (const bonuses of [false,true]) test(`arena currency, classroom isolation an
    const action=scenario==='surrender'?'rendirse':scenario==='timeout-draw'?'vencido':draw?'terminar':'atacar';
    const old=await balances();
    const result=await q("select hechi.accion_duelo_arena('TEST',$1,'12345',$2,$3,$4,'{\"casilla\":0}') as data",[caller,id,version,action]);
-   const paid=!['practice','surrender'].includes(scenario);
+   const surrendered=scenario==='surrender' && bonuses;
+   const paid=scenario!=='practice' && (scenario!=='surrender' || bonuses);
    const after=await balances();
-   assert.equal(after[first]-old[first],!paid?0:(draw?50:side==='a'?80:30)+(bonuses?10:0),scenario);
-   assert.equal(after[ale]-old[ale],!paid?0:draw?50:side==='b'?80:30,scenario);
+   assert.equal(after[first]-old[first],!paid || surrendered?0:(draw?50:side==='a'?80:30)+(bonuses?10:0),scenario);
+   assert.equal(after[ale]-old[ale],!paid?0:surrendered?80:draw?50:side==='b'?80:30,scenario);
    assert.equal(result.premioEntregado,paid);
-   assert.equal(result.galeonesGanados,paid?((draw?50:80)+(bonuses && caller===first?10:0)):null);
-   if(bonuses) assert.equal(result.bonoBestiario,paid?(caller===first?10:0):null);
+   assert.equal(result.galeonesGanados,paid?(surrendered?0:(draw?50:80)+(bonuses && caller===first && !surrendered?10:0)):null);
+   if(bonuses) assert.equal(result.bonoBestiario,paid?(caller===first && !surrendered?10:0):null);
    assert.deepEqual(await scores(),baseline,'arena never changes classroom records');
    await assert.rejects(q("select hechi.accion_duelo_arena('TEST',$1,'12345',$2,$3,$4,'{\"casilla\":0}') as data",[caller,id,version,action]),/terminó/);
    await q("select hechi.obtener_arena('TEST',$1,'12345')",[first]);
    assert.deepEqual(await balances(),after,'retries and polling do not pay twice');
    const other=await q('select hechi.arena_vista($1,$2) as data',[id,caller===first?ale:first]);
-   assert.equal(other.galeonesGanados,paid?((draw?50:30)+(bonuses && caller!==first?10:0)):null);
+   assert.equal(other.galeonesGanados,paid?((surrendered?80:draw?50:30)+(bonuses && caller!==first?10:0)):null);
   }
   if(bonuses){
    const receipt=await q("select hechi.arena_vista(id,$1) as data from hechi.duelos_arena where premio_entregado order by updated_at desc limit 1",[first]);

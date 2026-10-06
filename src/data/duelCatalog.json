@@ -384,7 +384,7 @@
       "nombre": "Confundo",
       "rareza": "epica",
       "copies": 2,
-      "efecto": "Cancela el ataque y pone al atacante en defensa.",
+      "efecto": "Cancela el ataque, pone al atacante en defensa y lo bloquea hasta su próximo turno.",
       "objetivo": "zona"
     },
     {

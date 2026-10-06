@@ -38,7 +38,7 @@ export function createDuelSounds() {
       const [duration, from, to, pitch, volume] = preset;
       const gain = context.createGain();
       gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(volume, now + 0.008);
+      gain.gain.exponentialRampToValueAtTime(volume * 2.5, now + 0.008);
       gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
       gain.connect(context.destination);
       const filter = context.createBiquadFilter();

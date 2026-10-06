@@ -382,3 +382,25 @@ omitir el combate. No necesita archivos de audio ni migración de base de datos;
 requiere publicar el frontend. Si el navegador no permite audio, el duelo sigue.
 
     node --test tests/ui/arena-sounds.test.mjs
+
+### Confundo, rendición y fusiones (6 de octubre)
+
+Aplicar `supabase/migrations/20261006_arena_confundo_surrender.sql` después de
+`20261005_c_bestiary_duel_bonus.sql` y publicar el frontend.
+Confundo deja al atacante en defensa y bloqueado hasta el comienzo de su
+siguiente turno. La interfaz impide seleccionarlo; el servidor rechaza cambios
+de postura, ataques y magias propias dirigidas a esa criatura mientras dure
+el bloqueo. El resto de criaturas sigue disponible.
+
+Rendirse ahora finaliza el duelo con victoria del oponente. En un duelo con
+recompensa, quien se rinde cobra cero (también cero bono); el ganador cobra 80
+más su bono del bestiario. Prácticas no pagan y se mantienen los cupos existentes.
+No se modifican rendiciones ya resueltas ni participaciones o puntajes de clase.
+
+Solo quien fusiona ve la animación y oye su efecto; el rival recibe el tablero
+actualizado. Seleccionar dos cartas compatibles muestra nombre, ATQ y DEF del
+resultado en la cinta inferior, incluyendo el refuerzo de Engorgio. La amplitud
+de los efectos de audio sube a 2.5 veces la anterior (aproximadamente +8 dB).
+
+    node --test supabase/tests/duel_confundo_lock.test.mjs supabase/tests/duel_rewards.test.mjs
+    node --test tests/ui/arena-fusion-preview.test.mjs tests/ui/arena-sounds.test.mjs

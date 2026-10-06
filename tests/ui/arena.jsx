@@ -13,7 +13,7 @@ if(testSpell){
  duel.yo={...player,mano:[{id:testSpell,uid:'test-spell'}],campo:[{id:'bowtruckle',uid:'own',bonusDef:500,posicion:'ataque'},null,null,null,null]};
  duel.rival={...duel.rival,campo:[{id:'dragon',uid:'enemy',posicion:'ataque'},{oculta:true,posicion:'ataque'},null,null,null],apoyos:[{oculta:true},null,null,null,null]};
 }
-window.deliverCombatEvent=event=>{duel={...duel,version:duel.version+1,eventos:[...(duel.eventos||[]),{...event,id:'effect-'+(duel.version+1),tipo:'combate'}]};window.dispatchEvent(new Event('online'));};
+window.deliverCombatEvent=event=>{duel={...duel,version:duel.version+1,eventos:[...(duel.eventos||[]),{...event,id:'effect-'+(duel.version+1),tipo:event.tipo||'combate'}]};window.dispatchEvent(new Event('online'));};
 window.expireArenaTurn=()=>{duel={...duel,venceEn:new Date(Date.now()-1000).toISOString()};};
 const cinematic=new URLSearchParams(window.location.search).has('cinematic');
 window.deliverRemoteCombat=(direct=true)=>{duel={...duel,version:duel.version+1,eventos:[...(duel.eventos||[]),{id:'remote',tipo:'combate',actor:'b',atacante:{id:'dragon'},defensor:direct?null:{id:'bowtruckle',posicion:'ataque'},directo:direct,ataque:2800,danoActor:0,danoRival:2800}]};};

@@ -1253,7 +1253,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
             <span>{RAREZAS_BESTIARIO[bestiaDetalle.rareza].nombre} - {precioBestia(bestiaDetalle)} galeones</span>
             <h2 id='beast-detail-title'>{bestiaDetalle.nombre}</h2>
             <p>{bestiaDetalle.descripcion}</p>
-            <p>Esta bestia aporta +{bonusDueloBestia(bestiaDetalle)} galeones por duelo con recompensa. Se suma a los 80 por victoria, 50 por empate o 30 por derrota. Prácticas y rendiciones no dan bono.</p>
+            <p>Esta bestia aporta +{bonusDueloBestia(bestiaDetalle)} galeones por duelo con recompensa. Se suma a los 80 por victoria, 50 por empate o 30 por derrota. No recibes bono en prácticas ni si te rindes.</p>
             <strong>{bestiasCompradas.has(bestiaDetalle.id) ? 'Ya vive en tu Bestiario Mágico.' : 'Aún no la has comprado.'}</strong>
           </article>
         </div>
