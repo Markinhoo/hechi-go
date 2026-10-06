@@ -437,3 +437,36 @@ Crucio y Sectumsempra. Se mantiene la regla existente de una sola casa protegida
 otro Patronus transfiere la protección a la casa que lo obtiene.
 
     node --test supabase/tests/patronus.test.mjs
+
+### Bestias con beneficios de un solo uso y exención del parcial
+
+Aplicar `supabase/migrations/20261006_d_bestiary_single_use.sql` después de
+las migraciones anteriores y publicar el frontend en la misma actualización.
+Reemplaza los bonos permanentes de galeones del bestiario: cada común aporta
++1 punto, rara +2 y épica +3 en una única participación; cada legendaria permite
+elegir una carta una sola vez y no añade puntos. El alumno elige una bestia
+disponible, o continuar sin bestia, antes de abrir su carta autorizada.
+
+La selección se guarda sin consumirla. La función del hechizo consume el
+beneficio dentro de la misma transacción, después de aplicar el efecto y
+descontar la oportunidad. Un error conserva el beneficio. El bono se añade al
+alumno y a su casa una vez, después del cálculo del hechizo, sin multiplicarlo
+con Patronus ni convertirlo en daño o en una participación adicional. Las
+acciones con varios destinatarios también consumen una sola bestia.
+
+Las criaturas usadas siguen en la colección como «Beneficio utilizado».
+Al migrar, las comunes/raras/épicas compradas reciben un uso; las elecciones
+legendarias pendientes se conservan y se asignan por ID a las legendarias
+compradas. Los usos anteriores se deducen del contador existente, ya que el
+sistema anterior no guardaba qué criatura había originado cada elección.
+
+Completar las 24 criaturas permite solicitar exención del parcial desde el
+bestiario. El alumno muestra la solicitud al maestro y este la autoriza en
+Galeones → Exenciones del bestiario. El servidor verifica colección completa,
+credenciales y propiedad de la clase; completar el álbum no aprueba por sí
+solo la exención. El reinicio de parcial limpia la solicitud/autorización,
+pero conserva la colección y los usos gastados. Los premios de duelo vuelven
+a sus importes base; los recibos de pagos anteriores se conservan.
+
+    node --test supabase/tests/bestiary_single_use.test.mjs
+    node --test tests/ui/bestiary-benefits.test.mjs

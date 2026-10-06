@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import '../../styles/teacher-galleons.css';
 
-export default function TeacherGalleons({ alumnos = [], onSave }) {
+export default function TeacherGalleons({ alumnos = [], onSave, onExemption, exemptionBusy = false }) {
   const [search, setSearch] = useState('');
   const [edit, setEdit] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -26,6 +26,10 @@ export default function TeacherGalleons({ alumnos = [], onSave }) {
   return <section className="panel teacher-galleons" aria-label="Galeones de los alumnos">
     <h2>Galeones</h2>
     <p>Consulta el saldo de todos tus alumnos. Al editar, escribe el total que deben tener.</p>
+    {onExemption && <section aria-label="Exenciones del bestiario"><h3>Exenciones del bestiario</h3>
+      {alumnos.filter(a => ['pendiente','autorizada'].includes(a.exencionBestiario)).map(a => <p key={a.id}>{a.nombre} · {a.exencionBestiario === 'autorizada' ? 'Exención del parcial autorizada' : <button disabled={exemptionBusy} onClick={() => onExemption(a.id)}>Autorizar exención de {a.nombre}</button>}</p>)}
+      {!alumnos.some(a => ['pendiente','autorizada'].includes(a.exencionBestiario)) && <p>Sin solicitudes de exención.</p>}
+    </section>}
     <label>Buscar alumno<input type="search" value={search} onChange={e => setSearch(e.target.value)} /></label>
     {message && <p role="status">{message}</p>}
     {edit && <form onSubmit={save} aria-label={'Editar galeones de ' + edit.alumno.nombre}>

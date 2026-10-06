@@ -47,3 +47,10 @@ export function bonusDueloBestiario(ids = []) {
   const compradas = new Set(ids);
   return bestiario.reduce((total, bestia) => total + (compradas.has(bestia.id) ? bonusDueloBestia(bestia) : 0), 0);
 }
+
+export function beneficioBestia(bestia) {
+  return {comun:1,rara:2,epica:3,legendaria:0}[bestia.rareza] ?? 0;
+}
+export function textoBeneficioBestia(bestia) {
+  return bestia.rareza === 'legendaria' ? 'Elegir un hechizo en una participación (un uso)' : `+${beneficioBestia(bestia)} puntos en una participación (un uso)`;
+}
