@@ -9,7 +9,8 @@ export default function TeacherGalleons({ alumnos = [], onSave, onExemption, exe
   const [message, setMessage] = useState('');
   const pending = useRef(false);
   const normalize = value => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-  const visible = alumnos.filter(a => normalize(a.nombre).includes(normalize(search.trim())));
+  const visible = alumnos.filter(a => normalize(a.nombre).includes(normalize(search.trim())))
+    .sort((a,b) => (b.galeones ?? 0)-(a.galeones ?? 0) || a.nombre.localeCompare(b.nombre,'es'));
   const amount = Number(edit?.value);
   const valid = edit && /^\d+$/.test(edit.value) && Number.isSafeInteger(amount) && amount <= 2147483647;
   const save = async event => {

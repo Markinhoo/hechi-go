@@ -6,6 +6,8 @@
 .teacher-galleons li span { min-width:0; overflow-wrap:anywhere; }
 .teacher-galleons small { display:block; margin-top:4px; }
 .teacher-galleons form { padding:14px; margin-top:14px; border:1px solid #cdb778; border-radius:12px; background:#172433; }
+.teacher-galleons form input,.teacher-galleons form button { color:#fff; background:#243c55; border:1px solid #93afc9; }
+.teacher-galleons form input::placeholder { color:#d2dfed; }
 .teacher-galleons form > div { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
 .teacher-galleons button { flex-shrink:0; }
 .teacher-galleons [role=alert] { color:#ffb7b7; }

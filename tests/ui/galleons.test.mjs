@@ -13,6 +13,8 @@ test('teacher can find pupils and edit total currency, with validation and recov
   await page.getByLabel('Buscar alumno').fill('maria');
   assert.equal(await page.locator('li').count(),1);
   await page.getByRole('button',{name:'Editar galeones de María López'}).click();
+  assert.equal(await page.getByLabel('Nuevo saldo').evaluate(el=>getComputedStyle(el).color),'rgb(255, 255, 255)');
+  assert.equal(await page.getByRole('button',{name:'Guardar saldo'}).evaluate(el=>getComputedStyle(el).color),'rgb(255, 255, 255)');
   await page.getByLabel('Nuevo saldo').fill('-1');
   assert.equal(await page.getByRole('button',{name:'Guardar saldo'}).isDisabled(),true);
   await page.getByLabel('Nuevo saldo').fill('0');
@@ -26,6 +28,7 @@ test('teacher can find pupils and edit total currency, with validation and recov
   assert.deepEqual(await page.evaluate(()=>window.saved),{id:'a',total:0,previous:240});
   await page.getByLabel('Buscar alumno').fill('');
   await page.getByText('80 galeones',{exact:true}).waitFor();
+  assert.match(await page.locator('li').first().innerText(),/Carlos Pérez/);
   for(const width of [390,1280]){
    await page.setViewportSize({width,height:700});
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);

@@ -161,7 +161,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         if (error) { setAccionError(error.message); return; }
         setEstado(data.estado);
         reinicioSolicitud.current = null;
-        try { descargarRespaldo(data.respaldo); } catch { /* Durable copy remains in Respaldos. */ }
+        try { await descargarRespaldo(data.respaldo); } catch { /* Durable copy remains in Respaldos. */ }
         setMensaje('Nuevo parcial listo. Respaldo guardado; puedes volver a descargarlo desde Respaldos.');
       }
       if (accionMaestro.tipo === 'reiniciar-bestiario') {
@@ -306,7 +306,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
 
   const cartaPuedeSalir = (numero, alumnoBase) => {
     const efecto = efectoCarta(numero);
-    if (efecto.tipo === 'guardable' && tieneCartaGuardada(alumnoBase, numero)) return false;
+    if (numero !== 18 && efecto.tipo === 'guardable' && tieneCartaGuardada(alumnoBase, numero)) return false;
     if (efecto.tipo === 'puntosIntercambio') return alumnosConfundoDisponibles(alumnoBase).length > 0;
     if (efecto.tipo === 'limpiaNegativos') {
       const casaId = alumnoBase?.casaId;
@@ -420,6 +420,10 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       setCartaAbierta({ ...carta, revelada: true });
       setRuleta({ numero, disponibles: cartasDisponibles, elegida: numero === numeroElegido });
     };
+    if (numero === 18) {
+      revelarCarta({numero,...efecto,casaId:alumno.casaId,alumnoId:alumno.id,pendienteCrecehuesos:true});
+      setMensaje('Crecehuesos: elige sumar un punto o guardar para justificar una falta.');return null;
+    }
     if (efecto.tipo === 'rival') {
       revelarCarta({ numero, ...efecto, casaId: alumno.casaId, alumnoId: alumno.id, pendienteRival: true });
       setMensaje(efecto.titulo + ': elige una casa rival.');
@@ -526,6 +530,13 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     return data;
   };
 
+  const resolverCrecehuesos = async (opcion) => {
+    const {data,error}=await db.rpc('resolver_crecehuesos',{p_token:sesion.token,p_alumno_id:sesion.alumnoId,p_password:sesion.password,p_opcion:opcion});
+    if(error) throw new Error(error.message);
+    setEstado(data);
+    setCartaAbierta(prev=>({...prev,pendienteCrecehuesos:false,puntos:opcion==='punto' ? (data.historial?.[0]?.puntos ?? 1) : 0,descripcion:opcion==='punto'?'Elegiste sumar puntos.':'Guardada en tu mochila para justificar una falta. Sin puntos.'}));
+    setMensaje(opcion==='punto'?'Crecehuesos sumó puntos.':'Crecehuesos se guardó para justificar una falta, sin sumar puntos.');
+  };
   const seleccionarCasaRival = async (casaObjetivo) => {
     if (!cartaAbierta || cartaAbierta.tipo !== 'rival' || !cartaAbierta.pendienteRival) return;
     const alumno = estado.alumnos.find((item) => item.id === sesion.alumnoId);
@@ -1341,6 +1352,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
 
       {cartaAbierta && !ruleta && <CardModal
         carta={cartaAbierta}
+        onSelectCrecehuesos={resolverCrecehuesos}
         casasRivales={casas.filter((casa) => casa.id !== alumnoActual?.casaId && casa.id !== estado.casaProtegida)}
         alumnosIntercambio={estado.alumnos}
         casaProtegida={estado.casaProtegida}

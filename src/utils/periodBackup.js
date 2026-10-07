@@ -14,13 +14,13 @@ export function resumenRespaldo(respaldo) {
     '</p><h2>Casas</h2><table><tr><th>Casa</th><th>Positivos</th><th>Negativos</th><th>Total</th></tr>'+casas+
     '</table><h2>Alumnos</h2><table><tr><th>Nombre</th><th>Casa</th><th>Positivos</th><th>Negativos</th><th>Total</th><th>Cartas</th></tr>'+filas+'</table></html>';
 }
-export function descargarRespaldo(respaldo, completo=false) {
-  const contenido=completo ? JSON.stringify(respaldo,null,2) : resumenRespaldo(respaldo);
-  const blob=new Blob([contenido],{type:completo?'application/json':'text/html;charset=utf-8'});
+export async function descargarRespaldo(respaldo, completo=false) {
+  const contenido=completo ? JSON.stringify(respaldo,null,2) : await (await import('./periodBackupExcel')).generarExcelRespaldo(respaldo);
+  const blob=new Blob([contenido],{type:completo?'application/json':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
   const url=URL.createObjectURL(blob);
   const link=document.createElement('a');
   link.href=url;
-  link.download='parcial-'+String(respaldo.nombre).replace(/[^a-zA-Z0-9_-]/g,'_')+'-'+respaldo.id+(completo?'.json':'.html');
+  link.download='parcial-'+String(respaldo.nombre).replace(/[^a-zA-Z0-9_-]/g,'_')+'-'+respaldo.id+(completo?'.json':'.xlsx');
   document.body.appendChild(link);link.click();link.remove();
   setTimeout(()=>URL.revokeObjectURL(url),30000);
 }

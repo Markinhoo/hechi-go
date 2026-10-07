@@ -3,7 +3,7 @@ import { FaXmark } from 'react-icons/fa6';
 import { brilloCarta } from '../../data/cardVisuals';
 import { obtenerCasa } from '../../utils/gameUtils';
 
-function CardModal({ carta, onClose, casasRivales = [], casaProtegida = null, alumnosIntercambio = [], alumnosPuntos = [], alumnosCompanero = [], alumnosReplica = [], alumnosRobo = [], onSelectRival, onSelectExchange, onSelectPointSwap, onSelectCompanionBonus, onSelectReplica, onSelectRobbery }) {
+function CardModal({ carta, onClose, casasRivales = [], casaProtegida = null, alumnosIntercambio = [], alumnosPuntos = [], alumnosCompanero = [], alumnosReplica = [], alumnosRobo = [], onSelectRival, onSelectExchange, onSelectPointSwap, onSelectCompanionBonus, onSelectReplica, onSelectRobbery, onSelectCrecehuesos }) {
   const [companeroProcesando, setCompaneroProcesando] = useState(false);
   const [companeroError, setCompaneroError] = useState('');
   const companeroEnCurso = useRef(false);
@@ -16,6 +16,13 @@ function CardModal({ carta, onClose, casasRivales = [], casaProtegida = null, al
     catch (error) { setCompaneroError(error.message || 'No se pudo aplicar Amortentia.'); }
     finally { companeroEnCurso.current = false; setCompaneroProcesando(false); }
   };
+  const [creceBusy,setCreceBusy]=useState(false);
+  const [creceError,setCreceError]=useState('');
+  const crecePending=useRef(false);
+  const aplicarCrecehuesos=async opcion=>{
+    if(crecePending.current)return;crecePending.current=true;setCreceBusy(true);setCreceError('');
+    try{await onSelectCrecehuesos(opcion);}catch(error){setCreceError(error.message);}finally{crecePending.current=false;setCreceBusy(false);}
+  };
   const [modoImperio, setModoImperio] = useState(null);
   const [companeroId, setCompaneroId] = useState('');
   const [rivalId, setRivalId] = useState('');
@@ -25,7 +32,7 @@ function CardModal({ carta, onClose, casasRivales = [], casaProtegida = null, al
   const roboEnCurso = useRef(false);
   const cartaActiva = carta || { casaId: 'gryffindor', tipo: '', puntos: 0, alumnoId: '' };
   const casa = obtenerCasa(cartaActiva.casaId);
-  const puntosTexto = cartaActiva.tipo === 'proteccion' ? 'Protección activa' : (cartaActiva.tipo === 'intercambio' ? 'Intercambio mágico' : (cartaActiva.tipo === 'puntosIntercambio' ? 'Intercambio de puntos' : (cartaActiva.tipo === 'companeroBonus' ? 'Bonificación compartida' : (cartaActiva.tipo === 'replicaPuntos' ? 'Réplica de puntos' : (cartaActiva.tipo === 'roboMultiple' ? 'Robo de puntos' : (cartaActiva.tipo === 'decisionChiste' ? 'Decisión de chiste' : (cartaActiva.puntos > 0 ? '+' + cartaActiva.puntos + ' puntos' : String(cartaActiva.puntos) + ' puntos')))))));
+  const puntosTexto = cartaActiva.pendienteCrecehuesos ? 'Elige un efecto' : cartaActiva.tipo === 'proteccion' ? 'Protección activa' : (cartaActiva.tipo === 'intercambio' ? 'Intercambio mágico' : (cartaActiva.tipo === 'puntosIntercambio' ? 'Intercambio de puntos' : (cartaActiva.tipo === 'companeroBonus' ? 'Bonificación compartida' : (cartaActiva.tipo === 'replicaPuntos' ? 'Réplica de puntos' : (cartaActiva.tipo === 'roboMultiple' ? 'Robo de puntos' : (cartaActiva.tipo === 'decisionChiste' ? 'Decisión de chiste' : (cartaActiva.puntos > 0 ? '+' + cartaActiva.puntos + ' puntos' : String(cartaActiva.puntos) + ' puntos')))))));
   const esperaRival = cartaActiva.tipo === 'rival' && cartaActiva.pendienteRival;
   const esperaIntercambio = cartaActiva.tipo === 'intercambio' && cartaActiva.pendienteIntercambio;
   const esperaPuntosIntercambio = cartaActiva.tipo === 'puntosIntercambio' && cartaActiva.pendientePuntosIntercambio;
@@ -33,7 +40,7 @@ function CardModal({ carta, onClose, casasRivales = [], casaProtegida = null, al
   const esperaReplicaPuntos = cartaActiva.tipo === 'replicaPuntos' && cartaActiva.pendienteReplicaPuntos;
   const esperaRoboMultiple = cartaActiva.tipo === 'roboMultiple' && cartaActiva.pendienteRoboMultiple;
   const esperaDecisionChiste = cartaActiva.tipo === 'decisionChiste' && cartaActiva.pendienteDecisionChiste;
-  const tieneDecisionPendiente = esperaRival || esperaIntercambio || esperaPuntosIntercambio || esperaCompaneroBonus || esperaReplicaPuntos || esperaRoboMultiple || esperaDecisionChiste;
+  const tieneDecisionPendiente = cartaActiva.pendienteCrecehuesos || esperaRival || esperaIntercambio || esperaPuntosIntercambio || esperaCompaneroBonus || esperaReplicaPuntos || esperaRoboMultiple || esperaDecisionChiste;
   const miCasa = cartaActiva.casaId;
   const alumnosMiCasa = useMemo(() => alumnosIntercambio.filter((alumno) => alumno.casaId === miCasa && alumno.casaId !== casaProtegida && alumno.id !== cartaActiva.alumnoId), [alumnosIntercambio, cartaActiva.alumnoId, miCasa, casaProtegida]);
   const alumnosRivales = useMemo(() => alumnosIntercambio.filter((alumno) => alumno.casaId !== miCasa && alumno.casaId !== casaProtegida), [alumnosIntercambio, miCasa, casaProtegida]);
@@ -72,8 +79,9 @@ function CardModal({ carta, onClose, casasRivales = [], casaProtegida = null, al
   if (!carta) return null;
 
   return (
-    <section className={'card-modal ' + (tieneDecisionPendiente ? 'has-options' : 'simple-card-modal') + (esperaRoboMultiple ? ' morsmordre-modal' : '') + (esperaIntercambio ? ' imperio-modal' : '')} style={{ '--rarity-glow': brilloCarta(carta.numero).color }} data-revealed={carta.revelada ? 'true' : undefined} role='dialog' aria-modal='true'>
-      <button type='button' className='modal-close' onClick={onClose} aria-label='Cerrar carta'><FaXmark /></button>
+    <section className={'card-modal ' + (tieneDecisionPendiente ? 'has-options' : 'simple-card-modal') + (carta.numero === 18 ? ' crecehuesos-modal' : '') + (esperaRoboMultiple ? ' morsmordre-modal' : '') + (esperaIntercambio ? ' imperio-modal' : '')} style={{ '--rarity-glow': brilloCarta(carta.numero).color }} data-revealed={carta.revelada ? 'true' : undefined} role='dialog' aria-modal='true'>
+      <button type='button' disabled={creceBusy} className='modal-close' onClick={onClose} aria-label='Cerrar carta'><FaXmark /></button>
+
       <div className={'modal-card-wrap ' + (!tieneDecisionPendiente ? 'clickable-card' : '')} onClick={!tieneDecisionPendiente ? onClose : undefined} title={!tieneDecisionPendiente ? 'Toca la carta para cerrar' : undefined}>
         <div className='modal-card-flip'>
           <div className='modal-card-face modal-card-back'><img src='/hechi/card-back.png' alt='' /></div>
@@ -84,6 +92,7 @@ function CardModal({ carta, onClose, casasRivales = [], casaProtegida = null, al
         <span>{carta.titulo}</span>
         <h2>{puntosTexto}</h2>
         <p>{carta.descripcion}</p>
+      {cartaActiva.pendienteCrecehuesos && <div className='crecehuesos-options'><h3>¿Cómo quieres usar Crecehuesos?</h3><button disabled={creceBusy} onClick={()=>aplicarCrecehuesos('punto')}>Sumar 1 punto</button><button disabled={creceBusy} onClick={()=>aplicarCrecehuesos('justificar')}>Guardar para justificar una falta</button><p>Justificar no suma puntos. La carta quedará en tu mochila.</p>{creceError && <p role='alert'>{creceError}</p>}</div>}
         {esperaRival && (
           <div className='rival-options' aria-label='Selecciona una casa rival'>
             <small>Elige la casa rival que perdera {Math.abs(carta.puntos)} puntos</small>

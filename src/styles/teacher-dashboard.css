@@ -3815,3 +3815,6 @@ button,
   overflow:hidden;
 }
 .teacher-desktop-tabs-area > .duel-arena { height:100%; max-height:100%; }
+.card-modal.crecehuesos-modal .modal-effect p { display:block !important; }
+.crecehuesos-options { display:grid; gap:10px; margin-top:12px; }
+.crecehuesos-options button { white-space:normal; color:#fff; background:#243c55; border:1px solid #93afc9; padding:12px; }

@@ -19,7 +19,7 @@ function PeriodBackups({ token,onClose }) {
     try {
       const {data,error}=await db.rpc('obtener_respaldo_parcial',{p_id:id});
       if(error)throw new Error(error.message);
-      descargarRespaldo(data,completo);
+      await descargarRespaldo(data,completo);
     } catch(e){setError(e.message);} finally{setOcupado(false);}
   };
   return <div className='unsaved-overlay' role='dialog' aria-modal='true' aria-labelledby='backups-title'>
@@ -31,8 +31,8 @@ function PeriodBackups({ token,onClose }) {
       {lista?.length===0 && <p>El respaldo se creará al iniciar un nuevo parcial.</p>}
       {lista?.map(r=><article key={r.id}>
         <strong>{r.nombre} · {new Date(r.created_at).toLocaleString('es-MX')}</strong>
-        <button type='button' disabled={ocupado} onClick={()=>descargar(r.id,false)}>Descargar resumen</button>
-        <button type='button' disabled={ocupado} onClick={()=>descargar(r.id,true)}>Descargar datos completos</button>
+        <button type='button' disabled={ocupado} onClick={()=>descargar(r.id,false)}>Descargar Excel</button>
+        <button type='button' disabled={ocupado} onClick={()=>descargar(r.id,true)}>Descargar datos completos (JSON)</button>
       </article>)}
     </section>
   </div>;

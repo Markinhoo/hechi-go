@@ -470,3 +470,25 @@ a sus importes base; los recibos de pagos anteriores se conservan.
 
     node --test supabase/tests/bestiary_single_use.test.mjs
     node --test tests/ui/bestiary-benefits.test.mjs
+
+### Galeones, respaldo Excel y Crecehuesos (7 de octubre)
+
+El editor de galeones usa texto blanco sobre controles azules y ordena alumnos
+de mayor a menor saldo, con nombre como desempate. Los respaldos se descargan
+como `.xlsx` con Resumen, Casas, Alumnos, Mochila, Historial y Auditoría; usan
+el historial completo cuando está disponible. Se mantiene la descarga JSON.
+ExcelJS se carga solo al exportar. Los textos se escriben como valores literales,
+los puntajes y galeones como números. Las fechas se muestran en Ciudad de México.
+
+Aplicar `supabase/migrations/20261007_crecehuesos_choice.sql` después de
+`20261006_d_bestiary_single_use.sql` y publicar el frontend. Al obtener
+Crecehuesos, el alumno elige sumar un punto o guardar la carta para justificar
+una falta. Sumar puntos no guarda carta; justificar guarda la carta con cero
+puntos. La opción de puntos conserva el multiplicador de Patronus y el beneficio
+de bestia elegido. Justificar conserva sin gastar las bestias de puntos; una
+legendaria usada para elegir el hechizo sí se consume. El servidor rechaza
+justificantes duplicados y el endpoint anterior que aplicaba ambos efectos.
+Las cartas guardadas anteriormente se conservan.
+
+    node --test supabase/tests/crecehuesos_choice.test.mjs tests/period-backup-excel.test.mjs
+    node --test tests/ui/galleons.test.mjs tests/ui/crecehuesos.test.mjs
