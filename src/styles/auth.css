@@ -10,33 +10,13 @@ input{width:100%;border:1px solid #9b7437;border-radius:7px;padding:12px 13px;co
 
 .auth-card{position:relative;width:min(100%,520px);padding:32px;border:1px solid var(--line);border-radius:8px;color:var(--ink);background:linear-gradient(145deg,rgba(255,244,211,.96),rgba(228,194,126,.92));box-shadow:0 28px 90px rgba(0,0,0,.42),inset 0 0 0 1px rgba(255,255,255,.38)}
 
-/* Stormy magical login background */
-.auth-shell { position: relative; isolation: isolate; overflow: hidden; background: radial-gradient(circle at 50% 110%, rgba(255,214,109,.16), transparent 34%), linear-gradient(145deg, #090712 0%, #1b1022 45%, #081521 100%); }
-.auth-shell::before, .auth-shell::after { content: ''; position: fixed; inset: -20%; pointer-events: none; z-index: -2; }
-.auth-shell::before { background: radial-gradient(ellipse at 18% 30%, rgba(88,84,111,.62) 0 12%, transparent 32%), radial-gradient(ellipse at 75% 22%, rgba(113,111,132,.42) 0 10%, transparent 30%), radial-gradient(ellipse at 48% 55%, rgba(56,58,82,.54) 0 14%, transparent 36%), radial-gradient(ellipse at 28% 72%, rgba(95,87,96,.34) 0 12%, transparent 34%); filter: blur(18px); animation: stormClouds 18s ease-in-out infinite alternate; opacity: .9; }
-.auth-shell::after { z-index: -1; background: linear-gradient(116deg, transparent 0 45%, rgba(255,246,190,0) 46%, rgba(255,246,190,.88) 47%, rgba(143,205,255,.72) 48%, transparent 50% 100%), linear-gradient(64deg, transparent 0 58%, rgba(255,246,190,0) 59%, rgba(255,246,190,.78) 60%, transparent 62% 100%); clip-path: polygon(54% 0, 61% 29%, 56% 29%, 66% 59%, 59% 58%, 70% 100%, 47% 49%, 53% 50%, 43% 16%, 49% 17%); opacity: 0; animation: lightningFlash 5.8s linear infinite; }
-.unified-login-card { overflow: hidden; backdrop-filter: blur(3px); }
-.unified-login-card::after { content: ''; position: absolute; inset: auto -20% -45% -20%; height: 56%; background: radial-gradient(ellipse at 50% 0%, rgba(255,214,109,.22), transparent 56%); pointer-events: none; }
-@keyframes stormClouds { 0% { transform: translate3d(-2%, -1%, 0) scale(1); filter: blur(18px) brightness(.95); } 50% { transform: translate3d(2%, 1%, 0) scale(1.04); filter: blur(22px) brightness(1.08); } 100% { transform: translate3d(4%, -2%, 0) scale(1.02); filter: blur(18px) brightness(.9); } }
-@keyframes lightningFlash { 0%, 8%, 10%, 13%, 100% { opacity: 0; filter: brightness(1); } 8.5% { opacity: .88; filter: brightness(1.8); } 9.2% { opacity: .08; } 11% { opacity: .72; filter: brightness(1.5); } 12% { opacity: 0; } 62% { opacity: 0; } 63% { opacity: .55; } 63.6% { opacity: 0; } }
-@media(prefers-reduced-motion:reduce){ .auth-shell::before, .auth-shell::after { animation: none; } .auth-shell::after { opacity: .08; } }
-
-/* Galaxy login background replaces the previous cloud/lightning layer */
-.galaxy-auth-shell { background: #050611; }
-.galaxy-auth-shell::before, .galaxy-auth-shell::after { display: none; }
-.login-galaxy-bg { position: fixed; inset: 0; z-index: -2; pointer-events: auto; background: radial-gradient(circle at 50% 50%, rgba(35, 18, 64, .65), #050611 58%); }
-.login-galaxy-bg::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at 50% 42%, rgba(255, 214, 109, .14), transparent 30%), linear-gradient(180deg, rgba(5, 6, 17, .08), rgba(5, 6, 17, .48)); }
-.galaxy-auth-shell .unified-login-card { background: linear-gradient(145deg, rgba(255,244,211,.9), rgba(228,194,126,.84)); box-shadow: 0 28px 90px rgba(0,0,0,.52), 0 0 80px rgba(126, 93, 255, .18), inset 0 0 0 1px rgba(255,255,255,.38); }
-@media(prefers-reduced-motion:reduce){ .login-galaxy-bg { opacity: .82; } }
-
-/* Keep special animated backgrounds only on the login screen */
-.auth-shell:not(.galaxy-auth-shell) { background: radial-gradient(circle at 50% 110%, rgba(255,214,109,.08), transparent 34%), linear-gradient(145deg, #120b13 0%, #1b1420 48%, #0d1118 100%); }
-.auth-shell:not(.galaxy-auth-shell)::before,
-.auth-shell:not(.galaxy-auth-shell)::after { display: none; }
-
-
+/* Static backgrounds keep the login light on mobile devices. */
+.auth-shell { position: relative; isolation: isolate; overflow: hidden; background: linear-gradient(145deg,#120b13,#0d1118); }
+.auth-shell::before, .auth-shell::after { display: none; }
+.crest-auth-shell.auth-shell { background: linear-gradient(#100d1240,#100d1240), url('/backgrounds/login-houses-wood.png') center / cover no-repeat; }
+.unified-login-card { overflow: hidden; }
 /* Main login: centered and branded for La Copa de las Casas */
-.galaxy-auth-shell.auth-shell {
+.crest-auth-shell.auth-shell {
   min-height: 100dvh;
   height: auto;
   display: grid;
@@ -48,16 +28,16 @@ input{width:100%;border:1px solid #9b7437;border-radius:7px;padding:12px 13px;co
   padding: clamp(18px, 4vh, 42px) 18px;
 }
 
-.galaxy-auth-shell .unified-login-card {
+.crest-auth-shell .unified-login-card {
   width: min(100%, 720px);
   isolation: isolate;
   text-align: center;
-  background: url('/backgrounds/login-houses-wood.png') center / cover no-repeat;
+  background: rgba(18, 16, 22, .58);
   border-color: rgba(255, 232, 172, .36);
   box-shadow: 0 28px 90px rgba(0,0,0,.62), 0 0 80px rgba(255, 204, 86, .14), inset 0 0 0 1px rgba(255,255,255,.18);
 }
 
-.galaxy-auth-shell .unified-login-card::after {
+.crest-auth-shell .unified-login-card::after {
   content: '';
   position: absolute;
   inset: 14px;
@@ -66,26 +46,26 @@ input{width:100%;border:1px solid #9b7437;border-radius:7px;padding:12px 13px;co
   pointer-events: none;
   border-radius: 10px;
   background: linear-gradient(145deg, rgba(36, 34, 38, .58), rgba(88, 83, 77, .42));
-  backdrop-filter: blur(8px) saturate(.82);
+
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.16), 0 18px 54px rgba(0,0,0,.22);
 }
 
-.galaxy-auth-shell .unified-login-card > * {
+.crest-auth-shell .unified-login-card > * {
   position: relative;
   z-index: 1;
 }
 
-.galaxy-auth-shell .unified-login-card::before {
+.crest-auth-shell .unified-login-card::before {
   border-color: rgba(255, 232, 172, .28);
 }
 
-.galaxy-auth-shell .unified-login-card .eyebrow,
-.galaxy-auth-shell .unified-login-card .field-label {
+.crest-auth-shell .unified-login-card .eyebrow,
+.crest-auth-shell .unified-login-card .field-label {
   color: #f4d585;
   text-shadow: 0 2px 9px rgba(0,0,0,.7);
 }
 
-.galaxy-auth-shell .unified-login-card h1 {
+.crest-auth-shell .unified-login-card h1 {
   max-width: 660px;
   margin-inline: auto;
   font-family: 'Harry P', 'Magic School One', 'Parry Hotter', Georgia, 'Times New Roman', fantasy, serif;
@@ -98,45 +78,45 @@ input{width:100%;border:1px solid #9b7437;border-radius:7px;padding:12px 13px;co
   text-shadow: 0 3px 0 rgba(42, 18, 9, .72), 0 8px 22px rgba(0,0,0,.62), 0 0 28px rgba(255, 204, 86, .22);
 }
 
-.galaxy-auth-shell .unified-login-card h1 span {
+.crest-auth-shell .unified-login-card h1 span {
   display: block;
   margin-top: .14em;
   font-size: .42em;
   letter-spacing: .16em;
 }
 
-.galaxy-auth-shell .unified-login-card p {
+.crest-auth-shell .unified-login-card p {
   color: rgba(255, 245, 219, .92);
   text-shadow: 0 2px 9px rgba(0,0,0,.72);
 }
 
-.galaxy-auth-shell .unified-login-card form {
+.crest-auth-shell .unified-login-card form {
   text-align: left;
 }
 
-.galaxy-auth-shell .unified-login-card input {
+.crest-auth-shell .unified-login-card input {
   background: rgba(245, 240, 229, .86);
   border-color: rgba(255, 219, 132, .72);
   box-shadow: inset 0 1px 12px rgba(0,0,0,.16);
 }
 
 @media (max-width: 720px) {
-  .galaxy-auth-shell.auth-shell {
+  .crest-auth-shell.auth-shell {
     min-height: 100dvh;
     place-items: center;
     padding: 14px;
   }
 
-  .galaxy-auth-shell .unified-login-card {
+  .crest-auth-shell .unified-login-card {
     padding: 24px 20px;
   }
 
-  .galaxy-auth-shell .unified-login-card::after {
+  .crest-auth-shell .unified-login-card::after {
     inset: 10px;
-    backdrop-filter: blur(7px) saturate(.82);
+
   }
 
-  .galaxy-auth-shell .unified-login-card h1 {
+  .crest-auth-shell .unified-login-card h1 {
     font-size: clamp(34px, 13vw, 56px);
   }
 }
