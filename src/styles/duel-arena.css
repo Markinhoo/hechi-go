@@ -438,3 +438,10 @@
  .is-fusion .duel-combat-pair {display:grid;grid-template-columns:1fr 1fr;height:auto;}
  .is-fusion .duel-combat-pair figure {position:static;width:auto;}
 }
+.duel-inspection { width:min(90vw,320px); max-height:90dvh; padding:18px; border:1px solid #8ad9ec; border-radius:16px; background:#0a2138; color:#fff; text-align:center; overflow:auto; }
+.duel-inspection::backdrop { background:#020914b8; backdrop-filter:blur(4px); }
+.duel-inspection h3 { margin:0 0 10px; }
+.duel-inspection img { display:block; width:auto; max-width:100%; height:min(46dvh,330px); object-fit:contain; margin:auto; }
+.duel-inspection small { display:block; margin:10px 0; color:#d9edff; }
+.duel-inspection button { width:100%; }
+.duel-field .duel-card,.duel-supports .duel-card { touch-action:none; user-select:none; -webkit-touch-callout:none; }

@@ -1,0 +1,63 @@
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import { pathToFileURL } from 'node:url';
+import { createServer } from 'vite';
+const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(process.env.PLAYWRIGHT_MODULE).href : 'playwright');
+
+test('private long press inspects hidden creatures and traps without making a move', async () => {
+  const server = await createServer({server:{host:'127.0.0.1',port:0}});
+  let browser;
+  try {
+    await server.listen();
+    browser = await chromium.launch({headless:true,executablePath:process.env.EDGE_PATH});
+    const page = await browser.newPage({viewport:{width:390,height:700},hasTouch:true});
+    await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/tests/ui/arena.html`);
+    await page.getByRole('button',{name:/Invisibilidad, trampa:/}).click();
+    await page.getByRole('button',{name:'Usar magia o trampa en espacio 1',exact:true}).click();
+    await page.getByRole('button',{name:'Bowtruckle, ataque 1200, defensa 1600',exact:true}).click();
+    await page.getByRole('button',{name:'Invocar en espacio 1',exact:true}).click();
+    await page.getByRole('button',{name:'Girar carta a la derecha'}).click();
+    await page.getByRole('button',{name:'Colocar boca abajo',exact:true}).click();
+    const creature = page.getByRole('button',{name:'Tu espacio 1: Bowtruckle',exact:true});
+    const popup = page.getByRole('dialog',{name:'Tu carta boca abajo'});
+    const actions = () => page.evaluate(() => window.arenaCalls.filter(c => c.method === 'accion_duelo_arena').length);
+    const hold = async locator => {
+      const b = await locator.boundingBox();
+      await page.mouse.move(b.x+b.width/2,b.y+b.height/2);
+      await page.mouse.down();
+      await popup.waitFor();
+      await page.mouse.up();
+    };
+    const before = await actions();
+    await hold(creature);
+    assert.equal(await popup.getByRole('heading').textContent(),'Bowtruckle');
+    assert.match(await popup.textContent(),/ATQ 1200 · DEF 1600/);
+    await page.getByRole('button',{name:'Cerrar vista de carta'}).click();
+    assert.equal(await actions(),before);
+    assert.equal(await creature.getAttribute('aria-pressed'),'false');
+    assert.equal(await creature.locator('img').getAttribute('src'),'/hechi/card-back.png');
+    await creature.click();
+    assert.equal(await creature.getAttribute('aria-pressed'),'true','short tap still selects');
+    await page.getByRole('button',{name:'Terminar turno',exact:true}).click();
+    await hold(creature);
+    await page.keyboard.press('Escape');
+    const trap = page.getByRole('button',{name:'Invisibilidad, trampa preparada'});
+    await hold(trap);
+    assert.equal(await popup.getByRole('heading').textContent(),'Invisibilidad');
+    await page.getByRole('button',{name:'Cerrar vista de carta'}).click();
+    assert.equal(await actions(),before+1,'inspection during rival turn sends no action');
+    const rival = page.getByRole('button',{name:'Atacar espacio rival 1: carta oculta',exact:true});
+    await rival.dispatchEvent('pointerdown',{button:0,pointerId:3,clientX:0,clientY:0});
+    await page.waitForTimeout(650);
+    assert.equal(await popup.count(),0,'opponent cards cannot be inspected');
+    await rival.dispatchEvent('pointerup',{pointerId:3});
+    await creature.dispatchEvent('pointerdown',{button:0,pointerId:4,clientX:0,clientY:0});
+    await creature.dispatchEvent('pointercancel',{pointerId:4});
+    await page.waitForTimeout(650);
+    assert.equal(await popup.count(),0,'cancelled hold does not open');
+    await trap.focus();
+    await page.keyboard.press('Enter');
+    await popup.waitFor();
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),true);
+  } finally { await browser?.close(); await server.close(); }
+});

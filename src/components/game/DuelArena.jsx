@@ -14,16 +14,46 @@ const name = id => cards[id]?.nombre || id;
 const rarity = { comun: 'Común', rara: 'Especial', epica: 'Épica', legendaria: 'Legendaria' };
 const connectionFailure = error => /fetch|network|abort|conexi[oó]n|internet|timeout|timed out/i.test(error?.message || '');
 
-function Card({ card, selected, onClick, disabled, label, style, browsing, compatible, drop, pairs = [] }) {
+function Card({ card, selected, onClick, onInspect, disabled, label, style, browsing, compatible, drop, pairs = [] }) {
+  const hold = useRef(null);
+  const held = useRef(false);
+  const cancelHold = () => { clearTimeout(hold.current?.timer); hold.current = null; };
+  useEffect(() => () => clearTimeout(hold.current?.timer), []);
   const c = cards[card?.id];
   return <button type="button" style={style} data-uid={card?.uid} title={compatible ? 'Combinación disponible' : undefined} className={'duel-card ' + (selected ? 'is-selected ' : '') + (browsing ? 'is-browsing ' : '') + (compatible ? 'is-compatible' : '')}
-    data-drop={drop} data-position={card?.posicion} data-rarity={c?.rareza} disabled={disabled} onClick={onClick} aria-pressed={Boolean(selected)}
+    data-drop={drop} data-position={card?.posicion} data-rarity={c?.rareza} disabled={disabled && !onInspect} aria-disabled={disabled || undefined}
+    onPointerDown={e => {
+      held.current = false;
+      if (!onInspect || e.button !== 0) return;
+      cancelHold();
+      hold.current = {x:e.clientX,y:e.clientY,timer:setTimeout(() => { held.current = true; onInspect(); }, 500)};
+    }}
+    onPointerMove={e => { if (hold.current && Math.hypot(e.clientX-hold.current.x,e.clientY-hold.current.y)>10) cancelHold(); }}
+    onPointerUp={cancelHold} onPointerCancel={cancelHold} onPointerLeave={cancelHold}
+    onContextMenu={e => { if (onInspect) e.preventDefault(); }}
+    onKeyDown={e => { if (onInspect && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); held.current = true; onInspect(); } }}
+    onClick={e => { if (held.current) { held.current=false; e.preventDefault(); return; } if (!disabled) onClick?.(e); }} aria-pressed={Boolean(selected)}
     aria-label={label || (c ? c.tipo === 'criatura' ? c.nombre + ', ataque ' + (Math.max(0, c.atk + (card.bonusAtk || 0))) + ', defensa ' + Math.max(0, c.def + (card.bonusDef || 0)) : c.nombre + ', ' + c.tipo + ': ' + c.efecto : 'Carta oculta')}>
     <span className="duel-card-face">{c && !card.oculta ? <><span className="duel-card-art"><img draggable={false} src={c.imagen} alt="" /></span><span className="duel-card-stats">{c.tipo === "criatura" ? <><b>ATQ {Math.max(0, c.atk + (card.bonusAtk || 0))}</b><b>DEF {Math.max(0, c.def + (card.bonusDef || 0))}</b></> : <b>{c.tipo === "magia" ? "MAGIA" : "TRAMPA"}</b>}</span>
       {card.posicion && <small>{card.posicion === 'ataque' ? 'Ataque' : 'Defensa'} · {card.afinidad}{card.oculta ? ' · Oculta' : ''}</small>}
     </> : <><span className="duel-card-art"><img draggable={false} className="duel-card-back" src="/hechi/card-back.png" alt="Carta boca abajo" /></span><small>{card?.posicion}</small></>}</span>
     {pairs.length > 0 && <span className="duel-pair-tags" aria-label={'Parejas compatibles: '+pairs.map(p=>p.number).join(', ')}>{pairs.map(p=><span key={p.number} style={{background:p.color}}>{p.number}</span>)}</span>}
   </button>;
+}
+
+function CardInspection({ card, onClose }) {
+  const dialog = useRef(null);
+  useEffect(() => { dialog.current.showModal(); }, []);
+  const c = cards[card.id];
+  return <dialog ref={dialog} className="duel-inspection" aria-label="Tu carta boca abajo" onCancel={onClose} onClick={e => { if(e.target === e.currentTarget) onClose(); }}>
+    <div>
+      <h3>{c.nombre}</h3>
+      <img src={c.imagen} alt={c.nombre} draggable={false} />
+      {c.tipo === 'criatura' ? <p>ATQ {Math.max(0,c.atk+(card.bonusAtk || 0))} · DEF {Math.max(0,c.def+(card.bonusDef || 0))}</p> : <p>{c.efecto}</p>}
+      <small>Solo tú puedes verla. Sigue boca abajo.</small>
+      <button type="button" autoFocus onClick={onClose}>Cerrar vista de carta</button>
+    </div>
+  </dialog>;
 }
 
 export default function DuelArena({ sesion, rpc = rpcDefault }) {
@@ -67,6 +97,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
   const [slot, setSlot] = useState(null);
   const [rivalSearch, setRivalSearch] = useState('');
   const [placement, setPlacement] = useState(null);
+  const [inspection, setInspection] = useState(null);
   const [drag, setDrag] = useState(null);
   const flipStart = useRef(null);
   const flippedBySwipe = useRef(false);
@@ -115,6 +146,8 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
   const duel = arena?.activo || arena?.duelos?.find(d => d.id === lastId);
   const playing = duel?.estado === 'activo';
   const fullscreen = !teacher && (playing || combatQueue.length > 0) && !lobbyOpen;
+  const inspectedCard = inspection?.duel === duel?.id ? duel?.yo?.[inspection.zone]?.[inspection.index] : null;
+  const inspect = (zone, index, card) => () => setInspection({duel:duel.id,zone,index,uid:card.uid,id:card.id});
   const directEvent = combatQueue[0]?.event.directo && !combatQueue[0].event.trampa ? combatQueue[0] : null;
   useEffect(() => {
     if (!fullscreen) return;
@@ -229,6 +262,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
   };
 
   const content = <section className={'duel-arena panel student-tab-panel' + (fullscreen ? ' duel-fullscreen' : '')} aria-label="Arena del bestiario" onPointerDownCapture={sound.unlock} onKeyDownCapture={sound.unlock}>
+    {fullscreen && !combatQueue.length && inspectedCard?.oculta && inspectedCard.id === inspection.id && inspectedCard.uid === inspection.uid && <CardInspection card={inspectedCard} onClose={() => setInspection(null)} />}
     {combatQueue[0] && <DuelCombat key={combatQueue[0].event.id} item={combatQueue[0]} cards={cards} sound={sound} onComplete={finishCombat} />}
     {(error || syncError) && <p className="duel-error" role="alert">{syncError || error}</p>}
     {!arena && <p role="status">Cargando arena…</p>}
@@ -285,12 +319,12 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
       </div>
       <div className="duel-field" aria-label="Tu campo">
         {directEvent && directEvent.event.actor !== directEvent.lado && <span key={directEvent.event.id} className="duel-direct-flash" role="status" aria-label={'Ataque directo: '+directEvent.event.danoRival+' de daño para ti'} />}
-        {duel.yo.campo.map((c, i) => c ? <Card key={i} card={c} drop={'target:'+i} selected={slot === i} disabled={!mine || busy || Boolean(c.bloqueada)}
+        {duel.yo.campo.map((c, i) => c ? <Card key={c.uid || i} card={c} drop={'target:'+i} selected={slot === i} disabled={!mine || busy || Boolean(c.bloqueada)} onInspect={c.oculta ? inspect('campo',i,c) : undefined}
           label={'Tu espacio ' + (i + 1) + ': ' + name(c.id)} onClick={() => { if (result?.objetivo === 'criatura') { void cast(null, i); } else if (slot === i) { void action('posicion', { casilla: i }); } else { setSelected([]); setSlot(i); setPlacement(null); } }} /> :
           <button key={i} data-drop={'field:'+i} className={'duel-empty ' + (slot === i ? 'is-selected' : '')} disabled={!mine || busy}
             aria-label={'Invocar en espacio ' + (i + 1)} aria-pressed={slot === i} onClick={() => prepareDrop('field:'+i)}>Espacio {i + 1}</button>)}
       </div>
-      <div className="duel-supports" aria-label="Tu zona de magia y trampas">{(duel.yo.apoyos || [null,null,null,null,null]).map((c,i) => c ? <Card key={i} card={c} disabled label={name(c.id) + ", trampa preparada"} /> : <button key={i} data-drop={"support:"+i} className="duel-support-empty" aria-label={"Usar magia o trampa en espacio " + (i+1)} disabled={!mine || busy || !remaining || duel.hechizo || !result || result.objetivo !== "zona"} onClick={() => cast(i)}>Magia / trampa</button>)}</div>
+      <div className="duel-supports" aria-label="Tu zona de magia y trampas">{(duel.yo.apoyos || [null,null,null,null,null]).map((c,i) => c ? <Card key={c.uid || i} card={c} disabled onInspect={c.oculta ? inspect('apoyos',i,c) : undefined} label={name(c.id) + ", trampa preparada"} /> : <button key={i} data-drop={"support:"+i} className="duel-support-empty" aria-label={"Usar magia o trampa en espacio " + (i+1)} disabled={!mine || busy || !remaining || duel.hechizo || !result || result.objetivo !== "zona"} onClick={() => cast(i)}>Magia / trampa</button>)}</div>
       </div>
       <div className="duel-hand-dock">
       <div className="duel-own-life"><small>TÚ</small><strong>VIDA {duel.yo.vida}</strong><span>Mazo {duel.yo.restantes}</span></div>
@@ -360,6 +394,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
     <details className="duel-guide"><summary>Cómo jugar · Mazo y fusiones</summary>
       <p>4,000 de vida, cinco espacios y mano de cinco cartas. Al comenzar tu turno recuperas tu mano hasta cinco. Puedes invocar una criatura o fusionar dos cartas de tu mano por turno, antes de atacar.</p>
       <p>Toca una vez tu criatura para seleccionarla y después toca una criatura rival para atacar. Un segundo toque sobre tu criatura seleccionada alterna su posición entre ataque y defensa. Cada monstruo puede atacar una vez, desde ataque o defensa. Al atacar se pone en ataque automáticamente. El turno pasa cuando todos hayan atacado, o puedes terminarlo antes. En el primer turno no se ataca: al colocar la primera criatura, pasa el turno al rival. Puedes atacar directamente si el campo rival está vacío.</p>
+      <p>Mantén presionada una carta propia boca abajo para consultarla en privado. Puedes hacerlo también durante el turno rival. Con teclado, enfoca la carta y presiona Enter.</p>
       <p>Contra ataque: gana el ATQ mayor, destruye la criatura menor y la diferencia se resta a su vida. Si empatan, ambas se destruyen. Contra defensa: ATQ mayor destruye sin restar vida; ATQ menor te resta la diferencia, sin destruir tu criatura.</p>
       <p>Cada criatura tiene una afinidad predeterminada; se usa la primera afinidad de su ficha. Cada afinidad vence a la siguiente y recibe +300 en combate: fuego → tierra → aire → agua → sombra → luz → fuego. Las cartas boca abajo revelan su identidad al combatir; las fusiones entran boca arriba.</p>
       <p>Ganas al agotar la vida rival o si el rival no puede completar su mano. Empate al terminar 60 turnos. Cada turno dura hasta 90 segundos; al agotarse el tiempo, pasa automáticamente al rival.</p>
