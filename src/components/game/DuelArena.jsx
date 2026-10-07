@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import DuelCombat from './DuelCombat';
 import DuelTutorial from './DuelTutorial';
+import DuelChallenge from './DuelChallenge';
 import { createDuelSounds } from '../../utils/duelSounds';
 import { db } from '../../services/hechiApi';
 import { bestiario } from '../../data/bestiaryData';
@@ -97,6 +98,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
     setCombatQueue(queue=>[...queue,...fresh.filter(event=>event.tipo !== 'fusion' || event.actor === d.lado).map(event=>({event,lado:d.lado}))]);
   }, []);
   const [practice, setPractice] = useState(false);
+  const [challenge, setChallenge] = useState(null);
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [selected, setSelected] = useState([]);
   const [slot, setSlot] = useState(null);
@@ -200,6 +202,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
       const { data, error: failure } = await rpc(method, { ...(teacherOnly ? { p_token: sesion.token } : args()), ...extra });
       if (!alive.current) return;
       if (failure) throw new Error(failure.message);
+      if (method === 'retar_arena') setChallenge(null);
       if (data?.id) {
         if (extra.p_accion === 'invocar' || extra.p_accion === 'hechizo') sound.play('place');
         if (extra.p_accion === 'posicion') sound.play('flip');
@@ -271,6 +274,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
   const content = <section className={'duel-arena panel student-tab-panel' + (fullscreen ? ' duel-fullscreen' : '')} aria-label="Arena del bestiario" onPointerDownCapture={sound.unlock} onKeyDownCapture={sound.unlock}>
     {fullscreen && !combatQueue.length && inspectedCard?.oculta && inspectedCard.id === inspection.id && inspectedCard.uid === inspection.uid && <CardInspection card={inspectedCard} onClose={() => setInspection(null)} />}
     {combatQueue[0] && <DuelCombat key={combatQueue[0].event.id} item={combatQueue[0]} cards={cards} sound={sound} onComplete={finishCombat} />}
+    {challenge && <DuelChallenge rival={arena?.rivales?.find(r=>r.id===challenge.id) || challenge} balance={arena?.galeones} practice={practice || !challenge.conPremio} busy={pending} error={error || syncError} onClose={()=>setChallenge(null)} onSubmit={amount=>{setLobbyOpen(false);void act('retar_arena',{p_rival:challenge.id,p_practica:practice,p_apuesta:amount});}} />}
     {(error || syncError) && <p className="duel-error" role="alert">{syncError || error}</p>}
     {!arena && <p role="status">Cargando arena…</p>}
     {teacher && arena && <div className="duel-controls">
@@ -281,7 +285,8 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
 
     {!teacher && duel?.estado === 'pendiente' && <article className="duel-invite">
       <h3>{duel.nombre1} desafía a {duel.nombre2}</h3>
-      <p>{duel.recompensa ? 'Con recompensa: al aceptar se reserva un cupo para ambos.' : 'Práctica: sin galeones ni consumo de cupos.'}</p>
+      <p>{duel.recompensa ? 'Con recompensa: victoria 80 · empate 50 por alumno · derrota 0. Al aceptar se reserva un cupo para ambos.' : 'Práctica: sin premio base ni consumo de cupos.'}</p>
+      <p>{duel.apuesta>0 ? `Apuesta: ${duel.apuesta} galeones por alumno. Al aceptar se descuentan a ambos. El ganador recibe el fondo de ${duel.apuesta*2}, además del premio base si corresponde. Si empatan, cada uno recupera su apuesta.` : 'Sin apuesta de galeones.'}</p>
       {duel.jugador2 === sesion.alumnoId && <button disabled={busy} onClick={() => act('responder_reto_arena', { p_duelo: duel.id, p_aceptar: true })}>Aceptar duelo</button>}
       <button disabled={busy} onClick={() => act('responder_reto_arena', { p_duelo: duel.id, p_aceptar: false })}>
         {duel.jugador1 === sesion.alumnoId ? 'Cancelar reto' : 'Rechazar'}</button>
@@ -372,15 +377,17 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
 
         <button disabled={busy} onClick={() => setConfirmQuit(true)}>Rendirse</button>
       </div>
-      {confirmQuit && <div className="duel-invite" role="alert"><p>Si te rindes, recibes 0 galeones y tu rival gana. En duelos con recompensa, recibe 80 galeones. El cupo reservado sigue consumido.</p>
+      {confirmQuit && <div className="duel-invite" role="alert"><p>Si te rindes, recibes 0 galeones y tu rival gana. En duelos con recompensa, recibe 80 galeones. El cupo reservado sigue consumido.{duel.apuesta>0 && ` Pierdes tu apuesta de ${duel.apuesta}; el rival recibe el fondo de ${duel.apuesta*2} galeones.`}</p>
         <button disabled={busy} onClick={() => action('rendirse')}>Confirmar rendición</button><button onClick={() => setConfirmQuit(false)}>Seguir jugando</button></div>}
     </div>}
-    {!teacher && duel && !['pendiente', 'activo'].includes(duel.estado) && <article className="duel-invite" role="status">
+    {!teacher && duel && !combatQueue.length && !['pendiente', 'activo'].includes(duel.estado) && <article className="duel-invite" role="status">
       <h3>{duel.ganador ? (duel.ganador === sesion.alumnoId ? '¡Victoria!' : 'Duelo terminado') : 'Duelo cerrado'}</h3>
-      <p>{duel.mensaje}</p><p>{duel.galeonesGanados != null ? `Recibiste ${duel.galeonesGanados} galeones. No se otorgan puntos ni participaciones.` : duel.premioEntregado ? 'Recompensa histórica ya entregada.' : 'Sin galeones otorgados.'}</p>
-      {duel.bonoBestiario != null && <p>Premio base: {duel.galeonesGanados - duel.bonoBestiario} · Bono del bestiario: +{duel.bonoBestiario} galeones</p>}
-      <button onClick={() => setLastId(null)}>Volver a los retos</button></article>}
-    {!teacher && arena && (!arena.activo || lobbyOpen) && <div className="duel-lobby">
+      <p>{duel.mensaje}</p><p>{duel.galeonesGanados != null ? `Premio del duelo: ${duel.galeonesGanados} galeones. No se otorgan puntos ni participaciones.` : duel.premioEntregado ? 'Recompensa histórica ya entregada.' : 'Sin galeones otorgados.'}</p>
+      {duel.apuesta>0 && <p>Apuesta aportada: {duel.apuesta} · {duel.ganador ? 'Fondo recibido' : 'Apuesta devuelta'}: {duel.retornoApuesta??0} galeones. Este importe es adicional al premio del duelo.</p>}
+      {duel.apuesta>0 && duel.retornoApuesta!=null && <p>Total abonado al terminar: {(duel.galeonesGanados??0)+duel.retornoApuesta} galeones.</p>}
+      {duel.bonoBestiario>0 && <p>Bono histórico del bestiario: +{duel.bonoBestiario} galeones</p>}
+      <button onClick={() => {setLastId(null);setLobbyOpen(false);}}>Volver a los retos</button></article>}
+    {!teacher && arena && ((!arena.activo && !duel && !combatQueue.length) || (lobbyOpen && playing)) && <div className="duel-lobby">
       <h3>Elige un rival</h3>
       <article className="duel-invite"><h3>Aprende a jugar</h3><p>Una partida guiada contra la computadora, paso a paso. Sin galeones ni consumo de cupos.</p><button disabled={Boolean(arena.activo) || busy} onClick={() => { setTutorialOpen(true); setMenuOpen(false); }}>Tutorial contra la computadora</button>{arena.activo && <small>Termina tu duelo o reto actual para comenzar el tutorial.</small>}</article>
       {playing && <p>Hay un duelo en curso. <button onClick={() => { setLobbyOpen(false); setMenuOpen(false); }}>Reanudar duelo</button></p>}
@@ -389,7 +396,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
       <label className="duel-rival-search">Buscar rival<input type="search" placeholder="Nombre del jugador" value={rivalSearch} onChange={e=>setRivalSearch(e.target.value)} /></label>
       {arena.rivales.length > 0 && rivals.length === 0 && <p role="status">No hay jugadores con ese nombre.</p>}
       <div className="duel-rivals">{rivals.map(r => <div key={r.id}><span>{r.nombre}<small>{r.ocupado ? 'En otro duelo o reto' : practice || !r.conPremio ? 'Práctica' : 'Con recompensa'}</small></span>
-        <button disabled={busy || Boolean(arena.activo) || r.ocupado || !arena.abierta} onClick={() => { setLobbyOpen(false); void act('retar_arena', { p_rival: r.id, p_practica: practice }); }}>Retar</button></div>)}</div>
+        <button disabled={busy || Boolean(arena.activo) || r.ocupado || !arena.abierta} onClick={() => {setError('');setChallenge(r);}}>Retar</button></div>)}</div>
       {arena.rivales.length === 0 && <p>Aún no hay otros alumnos en la clase.</p>}
     </div>}
     <div id="duel-menu" className={fullscreen ? 'duel-menu-panel' : ''} hidden={fullscreen && !menuOpen} onKeyDown={e => { if (e.key === 'Escape') setMenuOpen(false); }}>
@@ -398,7 +405,8 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
     <header className="duel-heading"><div><small>DUELOS DEL BESTIARIO</small><h2>Arena de criaturas</h2></div>
       <span className="duel-badge">{arena?.abierta ? 'Arena abierta' : 'Arena cerrada'}</span></header>
     <p>Las 24 criaturas están disponibles para todos. Cada mazo tiene 75 cartas: 49 criaturas y 26 de magia o trampa, sin necesidad de comprarlas.</p>
-    {!teacher && arena && <p className="duel-reward">{arena.cupos} de 3 duelos con recompensa disponibles hoy · Victoria: 80 · Empate: 50 · Derrota: 30 galeones</p>}
+    {!teacher && arena && <p className="duel-reward">{arena.cupos} de 3 duelos con recompensa disponibles hoy · Victoria: 80 · Empate: 50 · Derrota: 0 galeones</p>}
+    <p>Al retar puedes apostar desde 1 galeón hasta el saldo disponible de ambos, o elegir 0. Ambos aportan lo mismo al aceptar. El ganador recibe las dos apuestas además del premio que corresponda; en empate se devuelve cada apuesta. En práctica solo se disputa la apuesta, sin premio base.</p>
     <details className="duel-guide"><summary>Cómo jugar · Mazo y fusiones</summary>
       <p>4,000 de vida, cinco espacios y mano de cinco cartas. Al comenzar tu turno recuperas tu mano hasta cinco. Puedes invocar una criatura o fusionar dos cartas de tu mano por turno, antes de atacar.</p>
       <p>Toca una vez tu criatura para seleccionarla y después toca una criatura rival para atacar. Un segundo toque sobre tu criatura seleccionada alterna su posición entre ataque y defensa. Cada monstruo puede atacar una vez, desde ataque o defensa. Al atacar se pone en ataque automáticamente. El turno pasa cuando todos hayan atacado, o puedes terminarlo antes. En el primer turno no se ataca: al colocar la primera criatura, pasa el turno al rival. Puedes atacar directamente si el campo rival está vacío.</p>

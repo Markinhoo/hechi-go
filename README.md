@@ -511,3 +511,27 @@ la ausencia de escrituras y comprueba el ajuste en móvil y horizontal.
 
     node --test tests/duel-tutorial.test.mjs
     node --test tests/ui/arena-tutorial.test.mjs tests/ui/arena-inspection.test.mjs
+
+### Apuestas de galeones en la arena (7 de octubre)
+
+Aplicar `supabase/migrations/20261007_b_arena_wagers.sql` después de
+`20261006_arena_confundo_surrender.sql` y publicar el frontend. Al retar aparece
+un recuadro con el saldo propio y el máximo disponible de ambos jugadores. La
+apuesta es por alumno: 0 para no apostar o cualquier entero desde 1 hasta ese
+máximo. El rival ve el importe antes de aceptar o rechazar.
+
+El servidor vuelve a comprobar los saldos al aceptar y descuenta ambas apuestas
+en una sola transacción. En victoria, el ganador recibe las dos apuestas (incluida
+la propia) más 80 galeones si el duelo tiene recompensa. La derrota paga 0. En
+empate cada uno recupera su apuesta y recibe 50 si corresponde recompensa. La
+rendición pierde la apuesta. En práctica se disputa la apuesta sin premio base;
+se conservan los límites de tres duelos premiados al día y uno por rival. Un reto
+rechazado o vencido no cobra nada; una partida activa cancelada devuelve las
+apuestas sin premio. El cierre guarda recibos y evita pagar dos veces. No cambia
+participaciones ni puntos de casa o alumno, y no añade bonos por bestiario.
+
+El tutorial y el listado de rivales permanecen ocultos en la pantalla de resultado:
+aparecen al pulsar «Volver a los retos».
+
+    node --test supabase/tests/duel_wagers.test.mjs
+    node --test tests/ui/arena-wagers.test.mjs

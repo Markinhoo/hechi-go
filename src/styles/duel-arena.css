@@ -445,3 +445,9 @@
 .duel-inspection small { display:block; margin:10px 0; color:#d9edff; }
 .duel-inspection button { width:100%; }
 .duel-field .duel-card,.duel-supports .duel-card { touch-action:none; user-select:none; -webkit-touch-callout:none; }
+.duel-challenge { width:min(94vw,440px); max-height:90dvh; overflow:auto; border:1px solid #8ad9ec; border-radius:14px; padding:20px; background:#0a2138; color:white; }
+.duel-challenge::backdrop { background:#020914b8; }
+.duel-challenge h3 { margin-top:0; }
+.duel-challenge p,.duel-challenge label,.duel-challenge small { color:#e6f2ff; }
+.duel-challenge input { color:white; background:#183b55; margin:8px 0; }
+.duel-challenge .duel-controls { margin-top:12px; }
