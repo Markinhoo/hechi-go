@@ -492,3 +492,22 @@ Las cartas guardadas anteriormente se conservan.
 
     node --test supabase/tests/crecehuesos_choice.test.mjs tests/period-backup-excel.test.mjs
     node --test tests/ui/galleons.test.mjs tests/ui/crecehuesos.test.mjs
+
+### Tutorial interactivo de la arena (7 de octubre)
+
+El listado de rivales ofrece «Tutorial contra la computadora». Es una partida
+local con una secuencia preparada: invocar mediante arrastre o toque, girar boca
+abajo, consultar con pulsación larga, cambiar a defensa, preparar Invisibilidad,
+fusionar Bowtruckle y Doxy, reforzar con Engorgio y practicar ataques a criaturas
+y directos. La computadora responde en sus turnos y demuestra el daño de retorno.
+Usa las cartas, sonidos y animaciones de la arena. Los bordes dorados y las
+instrucciones indican la acción permitida; el estado rechaza pasos fuera de orden.
+
+No hay límite de tiempo, recompensas, escrituras a Supabase ni consumo de cupos.
+No se puede iniciar mientras exista un duelo o reto activo. Se puede salir al
+listado y repetir desde el principio. No requiere migración SQL; publicar el
+frontend. La prueba del navegador recorre la partida con gestos táctiles, verifica
+la ausencia de escrituras y comprueba el ajuste en móvil y horizontal.
+
+    node --test tests/duel-tutorial.test.mjs
+    node --test tests/ui/arena-tutorial.test.mjs tests/ui/arena-inspection.test.mjs

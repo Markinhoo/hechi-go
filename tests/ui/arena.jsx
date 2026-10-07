@@ -16,6 +16,7 @@ if(testSpell){
 window.deliverCombatEvent=event=>{duel={...duel,version:duel.version+1,eventos:[...(duel.eventos||[]),{...event,id:'effect-'+(duel.version+1),tipo:event.tipo||'combate'}]};window.dispatchEvent(new Event('online'));};
 window.expireArenaTurn=()=>{duel={...duel,venceEn:new Date(Date.now()-1000).toISOString()};};
 const cinematic=new URLSearchParams(window.location.search).has('cinematic');
+const lobby=new URLSearchParams(window.location.search).has('lobby');
 window.deliverRemoteCombat=(direct=true)=>{duel={...duel,version:duel.version+1,eventos:[...(duel.eventos||[]),{id:'remote',tipo:'combate',actor:'b',atacante:{id:'dragon'},defensor:direct?null:{id:'bowtruckle',posicion:'ataque'},directo:direct,ataque:2800,danoActor:0,danoRival:2800}]};};
 let abierta=true;
 const rpc=async(method,args)=>{
@@ -50,7 +51,7 @@ const rpc=async(method,args)=>{
   if(cinematic && args.p_accion==='atacar') duel={...duel,eventos:[...(duel.eventos||[]),{id:'combat-'+duel.version,tipo:'combate',actor:'a',atacante:{id:'acromantula'},defensor:{oculta:true},trampa:'hechizo-patronus',ataque:1600,danoActor:400,danoRival:0}]};
   return {data:duel};
  }
- return {data:{abierta,cupos:2,activo:duel,duelos:[duel],rivales:[{id:"r1",nombre:"María López",ocupado:false,conPremio:true},{id:"r2",nombre:"Carlos Pérez",ocupado:true},{id:"r3",nombre:"Ana Torres",ocupado:false}]}};
+ return {data:{abierta,cupos:2,activo:lobby?null:duel,duelos:lobby?[]:[duel],rivales:[{id:"r1",nombre:"María López",ocupado:false,conPremio:true},{id:"r2",nombre:"Carlos Pérez",ocupado:true},{id:"r3",nombre:"Ana Torres",ocupado:false}]}};
 };
 export default function Fixture(){
  const teacher=new URLSearchParams(window.location.search).has('teacher');

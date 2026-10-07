@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import DuelCombat from './DuelCombat';
+import DuelTutorial from './DuelTutorial';
 import { createDuelSounds } from '../../utils/duelSounds';
 import { db } from '../../services/hechiApi';
 import { bestiario } from '../../data/bestiaryData';
@@ -43,9 +44,12 @@ function Card({ card, selected, onClick, onInspect, disabled, label, style, brow
 
 function CardInspection({ card, onClose }) {
   const dialog = useRef(null);
+  const backdropPressed = useRef(false);
   useEffect(() => { dialog.current.showModal(); }, []);
   const c = cards[card.id];
-  return <dialog ref={dialog} className="duel-inspection" aria-label="Tu carta boca abajo" onCancel={onClose} onClick={e => { if(e.target === e.currentTarget) onClose(); }}>
+  return <dialog ref={dialog} className="duel-inspection" aria-label="Tu carta boca abajo" onCancel={onClose}
+    onPointerDown={e => { backdropPressed.current = e.target === e.currentTarget; }}
+    onClick={e => { if(backdropPressed.current && e.target === e.currentTarget) onClose(); backdropPressed.current = false; }}>
     <div>
       <h3>{c.nombre}</h3>
       <img src={c.imagen} alt={c.nombre} draggable={false} />
@@ -93,6 +97,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
     setCombatQueue(queue=>[...queue,...fresh.filter(event=>event.tipo !== 'fusion' || event.actor === d.lado).map(event=>({event,lado:d.lado}))]);
   }, []);
   const [practice, setPractice] = useState(false);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
   const [selected, setSelected] = useState([]);
   const [slot, setSlot] = useState(null);
   const [rivalSearch, setRivalSearch] = useState('');
@@ -113,7 +118,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
   const args = useCallback(() => ({ p_token: sesion.token, p_alumno_id: teacher ? null : sesion.alumnoId,
     p_password: teacher ? null : sesion.password }), [sesion.token, sesion.alumnoId, sesion.password, teacher]);
   const refresh = useCallback(async () => {
-    if (!alive.current || polling.current) return;
+    if (!alive.current || polling.current || tutorialOpen) return;
     polling.current = true;
     const started = revision.current;
     try {
@@ -128,7 +133,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
         ? 'Se perdió la conexión. Reconectando el duelo…'
         : failure.message || 'No se pudo cargar la arena. Volveremos a intentarlo.');
     } finally { polling.current = false; }
-  }, [rpc, args, receiveEvents]);
+  }, [rpc, args, receiveEvents, tutorialOpen]);
   useEffect(() => {
     alive.current = true;
     let stopped = false;
@@ -261,6 +266,8 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
     return action('hechizo', { uid: chosen[0].uid, casilla: index, objetivo: target });
   };
 
+  if (tutorialOpen) return <DuelTutorial Card={Card} CardInspection={CardInspection} cards={cards} sound={sound} onExit={() => setTutorialOpen(false)} />;
+
   const content = <section className={'duel-arena panel student-tab-panel' + (fullscreen ? ' duel-fullscreen' : '')} aria-label="Arena del bestiario" onPointerDownCapture={sound.unlock} onKeyDownCapture={sound.unlock}>
     {fullscreen && !combatQueue.length && inspectedCard?.oculta && inspectedCard.id === inspection.id && inspectedCard.uid === inspection.uid && <CardInspection card={inspectedCard} onClose={() => setInspection(null)} />}
     {combatQueue[0] && <DuelCombat key={combatQueue[0].event.id} item={combatQueue[0]} cards={cards} sound={sound} onComplete={finishCombat} />}
@@ -375,6 +382,7 @@ export default function DuelArena({ sesion, rpc = rpcDefault }) {
       <button onClick={() => setLastId(null)}>Volver a los retos</button></article>}
     {!teacher && arena && (!arena.activo || lobbyOpen) && <div className="duel-lobby">
       <h3>Elige un rival</h3>
+      <article className="duel-invite"><h3>Aprende a jugar</h3><p>Una partida guiada contra la computadora, paso a paso. Sin galeones ni consumo de cupos.</p><button disabled={Boolean(arena.activo) || busy} onClick={() => { setTutorialOpen(true); setMenuOpen(false); }}>Tutorial contra la computadora</button>{arena.activo && <small>Termina tu duelo o reto actual para comenzar el tutorial.</small>}</article>
       {playing && <p>Hay un duelo en curso. <button onClick={() => { setLobbyOpen(false); setMenuOpen(false); }}>Reanudar duelo</button></p>}
       <label><input type="checkbox" checked={practice} onChange={e => setPractice(e.target.checked)} /> Jugar en práctica</label>
       {!arena.abierta && <p>El maestro abrirá la arena cuando sea momento de jugar.</p>}

@@ -1,0 +1,32 @@
+.duel-tutorial .tutorial-layout { display:grid; grid-template-rows:auto auto minmax(0,1fr) clamp(115px,22dvh,180px) auto; gap:7px; height:100%; max-width:900px; margin:auto; }
+.tutorial-header { display:flex; align-items:center; justify-content:space-between; gap:6px; color:white; }
+.tutorial-header small,.tutorial-header strong { display:block; }
+.tutorial-header strong { font-size:clamp(16px,4vw,25px); }
+.tutorial-header small { font-size:10px; }
+.tutorial-header button { font-size:12px; padding:7px; }
+.tutorial-turn { text-align:center; font-size:12px; }
+.tutorial-guide { background:linear-gradient(120deg,#153b55,#07192de8); border:1px solid #ffd36b; border-radius:12px; padding:10px 13px; box-shadow:0 3px 16px #0005; }
+.tutorial-guide > small { color:#ffe2a0; font-size:10px; letter-spacing:.08em; }
+.tutorial-guide h2 { margin:4px 0; font-size:17px; color:white; }
+.tutorial-guide p { margin:4px 0; font-size:13px; line-height:1.4; }
+.duel-tutorial .tutorial-board { min-height:0; display:grid; grid-template-rows:24px minmax(0,1fr) 18px minmax(0,1fr) minmax(25px,.4fr); gap:4px; }
+.tutorial-card-backs { display:flex; justify-content:center; height:24px; overflow:hidden; }
+.tutorial-card-backs img { width:22px; height:33px; margin:0 -3px; transform:rotate(-8deg); }
+.duel-tutorial .duel-field,.duel-tutorial .duel-supports { min-height:0; margin:0; position:relative; }
+.duel-tutorial .duel-field .duel-card,.duel-tutorial .duel-supports .duel-card { height:100%; }
+.tutorial-divider { text-align:center; font-size:10px; color:#bcdcf2; }
+.duel-tutorial .duel-empty,.duel-tutorial .duel-support-empty { min-height:0; padding:2px; font-size:10px; }
+.duel-tutorial [style*="--tutorial-glow"] { outline:2px solid var(--tutorial-glow) !important; outline-offset:2px; box-shadow:0 0 13px #ffcf6488; animation:tutorial-pulse 1.3s ease-in-out infinite; }
+.duel-tutorial .duel-card[style*="--tutorial-glow"] .duel-card-face { filter:drop-shadow(0 0 5px #ffd36b); }
+.tutorial-footer { display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:11px; color:#ffe2a0; }
+.tutorial-footer button { padding:7px 12px; font-size:12px; }
+.duel-tutorial .tutorial-placement { position:absolute; z-index:100; left:50%; top:50%; transform:translate(-50%,-50%); width:min(88%,280px); padding:14px; text-align:center; color:white; background:#0b223af5; border:1px solid #ffd36b; border-radius:12px; }
+.tutorial-placement strong { display:block; font-size:13px; }
+.tutorial-placement .duel-placement-flip .duel-card { width:100%; height:100%; padding:0; }
+.duel-tutorial .duel-hand { --hand-card-width:clamp(55px,18vw,95px); --hand-step:clamp(29px,11vw,57px); }
+.duel-tutorial .duel-combat-overlay { overflow:auto; }
+.duel-tutorial .duel-combat-stage { max-height:100%; }
+@keyframes tutorial-pulse { 50% { outline-color:#fff2ba; box-shadow:0 0 20px #ffcf64bb; } }
+@media(max-height:620px) { .tutorial-guide {padding:6px 9px;} .tutorial-guide h2 {font-size:14px;margin:2px 0;} .tutorial-guide p {font-size:11px;} .duel-tutorial .tutorial-layout {gap:4px;grid-template-rows:auto auto minmax(0,1fr) 108px auto;} .duel-tutorial .duel-hand {--hand-card-width:58px;} }
+@media(max-height:450px) and (min-width:650px) { .duel-tutorial .tutorial-layout {grid-template-columns:230px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) 100px auto;} .tutorial-header {grid-column:1 / -1;} .tutorial-guide {grid-column:1;grid-row:2 / 5;align-self:start;} .tutorial-board {grid-column:2;grid-row:2;} .duel-tutorial .duel-hand-dock {grid-column:2;grid-row:3;} .tutorial-footer {grid-column:2;grid-row:4;} }
+@media(prefers-reduced-motion:reduce) { .duel-tutorial [style*="--tutorial-glow"] { animation:none; } }
