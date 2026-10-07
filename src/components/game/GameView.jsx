@@ -962,8 +962,10 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         <button key={casa.id} type='button' className='house-card' style={{ '--house': casa.color, '--metal': casa.metal }} onClick={() => protegerSalidaTabla(() => setCasaDetalleId(casa.id))}>
           <img className='house-crest' src={casa.escudo} alt='' />
           <span>{estado.conteos[casa.id]}/{estado.objetivos[casa.id]} aprendices</span>
-          <h2>{casa.nombre}</h2>
-          <strong>{puntajeCasa(casa.id)} pts</strong>
+          <div className='house-card-heading'>
+            <h2>{casa.nombre}</h2>
+            <strong>{puntajeCasa(casa.id)} pts</strong>
+          </div>
           <dl className='house-score-breakdown'>
             <div><dt>+</dt><dd>{estado.puntajesPositivos?.[casa.id] ?? estado.puntajes[casa.id]}</dd></div>
             <div><dt>-</dt><dd>{penalizacionCasa(estado, casa.id)}</dd></div>
