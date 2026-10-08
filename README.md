@@ -535,3 +535,19 @@ aparecen al pulsar «Volver a los retos».
 
     node --test supabase/tests/duel_wagers.test.mjs
     node --test tests/ui/arena-wagers.test.mjs
+
+### Cierre por inactividad (8 de octubre)
+
+Aplicar `supabase/migrations/20261008_arena_inactivity.sql` después de
+`20261007_b_arena_wagers.sql`. Cuatro turnos consecutivos sin jugadas entre ambos
+alumnos cancelan el duelo sin premio ni ganador; se devuelven las apuestas. Los
+cupos reservados siguen consumidos. Invocar, fusionar, usar un hechizo, atacar o
+cambiar posición reinicia el conteo; terminar turno, consultar cartas o actualizar
+la pantalla no lo reinicia. Las acciones rechazadas tampoco cuentan.
+
+Los turnos vencidos conservan sus plazos originales. Si ambos cierran la página,
+la próxima consulta de la arena procesa los plazos transcurridos y cierra el
+duelo cuando corresponda. El cierre por inactividad prevalece sobre el premio
+de empate por límite de turnos. No requiere un proceso programado nuevo.
+
+    node --test supabase/tests/duel_inactivity.test.mjs
