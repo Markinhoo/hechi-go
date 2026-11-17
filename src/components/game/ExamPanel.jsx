@@ -1,8 +1,9 @@
 import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
+import {FaRotateRight} from 'react-icons/fa6';
 import {db} from '../../services/hechiApi';
 import '../../styles/exams.css';
 
-export default function ExamPanel({sesion,alumnos=[]}) {
+export default function ExamPanel({sesion}) {
  const teacher=sesion.tipo==='maestro';
  const [exams,setExams]=useState([]),[draft,setDraft]=useState(null),[title,setTitle]=useState(''),[active,setActive]=useState(null),[answers,setAnswers]=useState({}),[error,setError]=useState(''),[busy,setBusy]=useState(false);
  const activeRef=useRef(null),sent=useRef(false);
@@ -54,9 +55,9 @@ export default function ExamPanel({sesion,alumnos=[]}) {
   </div>}
   {exams.map(exam=><article key={exam.id} className="exam-entry"><h3>{teacher ? exam.titulo : 'Examen parcial'}</h3><p>{exam.total??exam.preguntas.length} preguntas{teacher?` · ${exam.publicado?'Publicado':'Borrador'}`:''}</p>
    {teacher?<><button disabled={busy} onClick={()=>void run('',{p_id:exam.id,p_publicado:!exam.publicado})}>{exam.publicado?'Ocultar':'Publicar'}</button>
-    {exam.intentos?.map(attempt=><div className="exam-attempt" key={attempt.id}><span>{attempt.nombre}: {attempt.estado} · {attempt.aciertos}/{attempt.total}{attempt.motivo&&` · ${attempt.motivo}`}</span>
-      {exam.publicado&&['bloqueado','finalizado'].includes(attempt.estado)&&<button disabled={busy} onClick={()=>void run('',{p_id:exam.id,p_autorizar:attempt.alumnoId})}>Permitir otro intento</button>}</div>)}
-    {alumnos.filter(a=>!exam.intentos?.some(i=>i.alumnoId===a.id)).map(a=><p key={a.id}>{a.nombre}: disponible</p>)}
+    {exam.intentos?.slice().sort((a,b)=>a.nombre.localeCompare(b.nombre,'es',{sensitivity:'base'})).map(attempt=><div className="exam-attempt" key={attempt.alumnoId}>
+      <span><strong>{attempt.nombre}</strong><small>{attempt.estado==='disponible'?'Disponible · Sin presentar':attempt.estado==='en_curso'?'En curso':`${attempt.estado} · ${attempt.aciertos}/${attempt.total}`}{attempt.motivo&&` · ${attempt.motivo}`}</small></span>
+      {exam.publicado&&['bloqueado','finalizado'].includes(attempt.estado)&&<button type='button' className='exam-retry-button' disabled={busy} aria-label={'Habilitar otro intento para '+attempt.nombre} title={'Habilitar otro intento para '+attempt.nombre} onClick={()=>void run('',{p_id:exam.id,p_autorizar:attempt.alumnoId})}><FaRotateRight aria-hidden='true' /></button>}</div>)}
    </>:<>{!exam.intento||exam.intento.estado==='disponible'?<button disabled={busy||Boolean(active)} onClick={async()=>{const data=await run('iniciar',{p_examen:exam.id});if(data){activeRef.current=exam.id;sent.current=false;startedHere.current=true;localStorage.setItem(resumeKey,exam.id);setActive(exam.id);setAnswers({});}}}>Comenzar examen</button>:null}
     {exam.intento?.estado==='bloqueado'&&<p>Calificación: 0. Intento bloqueado. El maestro debe permitir otro intento.</p>}
     {exam.intento?.estado==='finalizado'&&<><p>Calificación: {exam.intento.aciertos}/{exam.total} ({Math.round(exam.intento.aciertos*100/exam.total)}%).</p><div className="exam-results">{exam.preguntas.map((q,i)=>{

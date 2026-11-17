@@ -1336,7 +1336,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
             {teacherTab === 'puntajes' && teacherScoresPanel}
             {teacherTab === 'hechizos' && historyPanel}
             {teacherTab === 'kahoot' && kahootPanel}
-            {teacherTab === 'examen' && <ExamPanel sesion={sesion} alumnos={estado.alumnos} />}
+            {teacherTab === 'examen' && <ExamPanel sesion={sesion} />}
             {teacherTab === 'arena' && !arenaMobile && <DuelArena sesion={sesion} />}
 
           </section>
@@ -1353,7 +1353,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
             {teacherTab === 'puntajes' && teacherScoresPanel}
             {teacherTab === 'hechizos' && historyPanel}
             {teacherTab === 'kahoot' && kahootPanel}
-            {teacherTab === 'examen' && <ExamPanel sesion={sesion} alumnos={estado.alumnos} />}
+            {teacherTab === 'examen' && <ExamPanel sesion={sesion} />}
             {teacherTab === 'arena' && arenaMobile && <DuelArena sesion={sesion} />}
 
           </section>

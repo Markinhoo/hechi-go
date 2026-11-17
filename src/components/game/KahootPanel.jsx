@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { FaFileArrowUp } from 'react-icons/fa6';
 import { db, supabase } from '../../services/hechiApi';
 
 const KAHOOT_FORM_INICIAL = { pregunta: '', opcionA: '', opcionB: '', opcionC: '', opcionD: '', correcta: 'a' };
@@ -296,7 +297,7 @@ const kahootFormPanel = (kahootPuedeAgregarPreguntas || kahootEditandoId) && (
           onDragOver={event => { event.preventDefault(); event.dataTransfer.dropEffect=kahootImportando ? 'none' : 'copy'; }}
           onDragLeave={event => { event.preventDefault(); if (!event.currentTarget.contains(event.relatedTarget)) setKahootArrastrando(false); }}
           onDrop={event => { event.preventDefault(); setKahootArrastrando(false); void importarWordKahoot(event.dataTransfer.files?.[0]); }}>
-          <span aria-hidden='true' className='kahoot-word-drop-icon'>⇧</span>
+          <FaFileArrowUp aria-hidden='true' className='kahoot-word-drop-icon' />
           <b>{kahootImportando ? 'Importando preguntas…' : 'Arrastra aquí tu documento Word'}</b>
           <small>{kahootImportando ? 'Espera un momento' : 'o toca para elegir un archivo .docx'}</small>
           <input type='file' accept='.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document' disabled={kahootImportando} onChange={event => { void importarWordKahoot(event.target.files?.[0]); event.target.value=''; }} />
