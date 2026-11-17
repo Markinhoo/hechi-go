@@ -10,6 +10,7 @@ function HouseScoresTable({ estado, casaId, editable, onSave, ref }) {
   const actual = tablaPuntajesCasa(estado,casaId);
   const tabla = edicion?.tabla ?? actual;
   const nombres = new Map(estado.alumnos.map((a) => [a.id,a.nombre]));
+  const galeones = new Map(estado.alumnos.map((a) => [a.id,a.galeones ?? 0]));
   const participaciones = new Map(estado.alumnos.map((a) => [a.id, a.cartas?.length || 0]));
   const cambiar = (id,campo,valor) => {
     setMensaje('');
@@ -77,7 +78,7 @@ function HouseScoresTable({ estado, casaId, editable, onSave, ref }) {
       <thead><tr><th scope='col'>Nombre</th><th scope='col' aria-label='Participaciones' title='Participaciones'>P</th><th scope='col'>Puntos positivos</th><th scope='col'>Puntos negativos</th><th scope='col'>Total</th></tr></thead>
       <tbody>
         {tabla.alumnos.map((a) => <tr key={a.id}>
-          <td>{nombres.get(a.id) || 'Alumno'}</td>
+          <td><span className='house-score-student-name'>{nombres.get(a.id) || 'Alumno'}</span><small className='house-score-student-galleons'>{Number(galeones.get(a.id) || 0).toLocaleString('es-MX')} galeones</small></td>
           <td>{participaciones.get(a.id) || 0}</td>
           <td>{celda(a.id,'positivos',a.positivos,'Puntos positivos de '+nombres.get(a.id))}</td>
           <td>{celda(a.id,'negativos',a.negativos,'Puntos negativos de '+nombres.get(a.id))}</td>

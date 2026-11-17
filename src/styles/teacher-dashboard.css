@@ -3796,6 +3796,11 @@ button,
 .house-detail-table td:nth-child(2) { width: 8%; }
 .house-detail-table th:last-child,
 .house-detail-table td:last-child { width: 12%; }
+.house-score-student-name { display:block; color:#fff; font-weight:800; }
+.house-score-student-galleons { display:block; margin-top:3px; color:#ffdc82; font:700 12px/1.2 Arial,sans-serif; }
+.teacher-scores-combined { display:grid; align-content:start; gap:18px; min-width:0; max-height:100%; overflow-y:auto; }
+.teacher-scores-combined > h2 { margin:0; color:#ffe1a0; font-size:clamp(22px,2vw,30px); }
+.teacher-scores-combined > .teacher-galleons { max-height:none; overflow:visible; }
 .house-detail-note { margin: 10px 0 0; color: #fff7df; font: 12px/1.4 Arial, sans-serif; }
 @media (max-width: 760px) {
   .house-detail-table-wrap { padding: 0 8px 12px; }

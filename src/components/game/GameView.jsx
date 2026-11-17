@@ -1049,7 +1049,6 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const teacherTabs = [
     { id: 'inicio', label: 'Inicio', icon: <FaWandMagicSparkles /> },
     { id: 'puntajes', label: 'Puntajes', icon: <FaTrophy /> },
-    { id: 'galeones', label: 'Galeones', icon: <FaTrophy /> },
     { id: 'hechizos', label: 'Hechizos', icon: <FaScroll /> },
     { id: 'kahoot', label: 'Kahoot', icon: <FaTrophy /> },
     { id: 'examen', label: 'Examen', icon: <FaScroll /> },
@@ -1076,6 +1075,11 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       ))}
     </section>
   );
+  const teacherScoresPanel = <div className='teacher-scores-combined'>
+    <h2>Puntajes y galeones</h2>
+    {houseBoard}
+    <TeacherGalleons alumnos={estado.alumnos} onSave={editarGaleonesAlumno} onExemption={id => gestionarExencion(id,true)} exemptionBusy={bestiaBusy} />
+  </div>;
   const rosterPanel = (
     <aside className='panel roster hall-panel'>
       <div className='roster-heading'>
@@ -1308,7 +1312,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         <>
           <section className='teacher-desktop-tabs-area'>
             <div className='student-tab-switcher teacher-desktop-tab-switcher'>
-              {teacherTabs.filter((tab) => tab.id === 'inicio' || tab.id === 'galeones' || tab.id === 'kahoot' || tab.id === 'examen' || tab.id === 'arena').map((tab) => (
+              {teacherTabs.filter((tab) => tab.id === 'inicio' || tab.id === 'puntajes' || tab.id === 'kahoot' || tab.id === 'examen' || tab.id === 'arena').map((tab) => (
                 <button key={tab.id} type='button' className={teacherTab === tab.id ? 'active' : ''} onClick={() => setTeacherTab(tab.id)}>
                   {tab.icon}<span>{tab.label}</span>
                 </button>
@@ -1324,8 +1328,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
                 </section>
               </section>
             )}
-            {teacherTab === 'puntajes' && houseBoard}
-            {teacherTab === 'galeones' && <TeacherGalleons alumnos={estado.alumnos} onSave={editarGaleonesAlumno} onExemption={id => gestionarExencion(id,true)} exemptionBusy={bestiaBusy} />}
+            {teacherTab === 'puntajes' && teacherScoresPanel}
             {teacherTab === 'hechizos' && historyPanel}
             {teacherTab === 'kahoot' && kahootPanel}
             {teacherTab === 'examen' && <ExamPanel sesion={sesion} alumnos={estado.alumnos} />}
@@ -1342,8 +1345,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
               ))}
             </div>
             {teacherTab === 'inicio' && <div className='teacher-mobile-home-content'>{requestsPanel}{rosterPanel}</div>}
-            {teacherTab === 'puntajes' && houseBoard}
-            {teacherTab === 'galeones' && <TeacherGalleons alumnos={estado.alumnos} onSave={editarGaleonesAlumno} onExemption={id => gestionarExencion(id,true)} exemptionBusy={bestiaBusy} />}
+            {teacherTab === 'puntajes' && teacherScoresPanel}
             {teacherTab === 'hechizos' && historyPanel}
             {teacherTab === 'kahoot' && kahootPanel}
             {teacherTab === 'examen' && <ExamPanel sesion={sesion} alumnos={estado.alumnos} />}

@@ -12,6 +12,8 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
   const [kahootError, setKahootError] = useState('');
   const [kahootGuardandoPregunta, setKahootGuardandoPregunta] = useState(false);
   const [kahootImportando, setKahootImportando] = useState(false);
+  const [kahootMostrarAyuda, setKahootMostrarAyuda] = useState(false);
+  const [kahootArrastrando, setKahootArrastrando] = useState(false);
   const [kahootFotos, setKahootFotos] = useState({});
 
   useEffect(() => {
@@ -67,10 +69,8 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
     setKahootEditandoId(null);
   };
 
-  const importarWordKahoot = async (event) => {
-    const archivo = event.target.files?.[0];
+  const importarWordKahoot = async (archivo) => {
     if (!archivo || kahootImportando) return;
-    event.target.value = '';
     setKahootImportando(true);
     setKahootError('');
     try {
@@ -288,12 +288,20 @@ const kahootFormPanel = (kahootPuedeAgregarPreguntas || kahootEditandoId) && (
       <div className='kahoot-heading'><span><strong>Kahoot mágico</strong><small>{kahootSubtitulo}</small></span>{kahoot?.estado && <b>{kahoot.estado}</b>}</div>
       {kahootPuedePreparar && <p className='kahoot-note'>{kahoot?.estado === 'finalizada' ? 'Agrega una pregunta para comenzar una nueva actividad.' : (sesion.tipo === 'maestro' && kahootEnBorrador && kahoot?.creadorAlumnoId ? 'Revisa el borrador, agrega preguntas si hace falta y autorízalo cuando esté listo.' : 'Agrega todas las preguntas que quieras antes de iniciar.')}</p>}
       {kahootError && <p className='kahoot-error'>{kahootError}</p>}
-      {kahootPuedeAgregarPreguntas && <label className='kahoot-word-upload'>
-        <strong>Cargar Kahoot desde Word</strong>
-        <span>Documento .docx con preguntas numeradas (1., 2. …), cuatro opciones A), B), C), D) y una sección «Clave rápida de respuestas» con entradas como 01-C. También acepta «Respuesta: C» debajo de cada pregunta. Máximo 100 preguntas.</span>
-        <input type='file' accept='.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document' disabled={kahootImportando} onChange={importarWordKahoot} />
-        {kahootImportando && <em>Importando preguntas...</em>}
-      </label>}
+      {kahootPuedeAgregarPreguntas && <section className='kahoot-word-upload' aria-label='Cargar Kahoot desde Word'>
+        <div className='kahoot-word-heading'><strong>Cargar Kahoot desde Word</strong><button type='button' className='kahoot-word-info' aria-label='Cómo preparar el documento Word' aria-expanded={kahootMostrarAyuda} aria-controls='kahoot-word-help' onClick={() => setKahootMostrarAyuda(actual => !actual)}>ⓘ</button></div>
+        {kahootMostrarAyuda && <p id='kahoot-word-help' className='kahoot-word-help'>Usa un documento .docx con preguntas numeradas (1., 2. …), cuatro opciones A), B), C), D) y una sección «Clave rápida de respuestas» con entradas como 01-C. También acepta «Respuesta: C» debajo de cada pregunta. Máximo 100 preguntas.</p>}
+        <label className={'kahoot-word-dropzone'+(kahootArrastrando ? ' dragging' : '')+(kahootImportando ? ' loading' : '')}
+          onDragEnter={event => { event.preventDefault(); if (!kahootImportando) setKahootArrastrando(true); }}
+          onDragOver={event => { event.preventDefault(); event.dataTransfer.dropEffect=kahootImportando ? 'none' : 'copy'; }}
+          onDragLeave={event => { event.preventDefault(); if (!event.currentTarget.contains(event.relatedTarget)) setKahootArrastrando(false); }}
+          onDrop={event => { event.preventDefault(); setKahootArrastrando(false); void importarWordKahoot(event.dataTransfer.files?.[0]); }}>
+          <span aria-hidden='true' className='kahoot-word-drop-icon'>⇧</span>
+          <b>{kahootImportando ? 'Importando preguntas…' : 'Arrastra aquí tu documento Word'}</b>
+          <small>{kahootImportando ? 'Espera un momento' : 'o toca para elegir un archivo .docx'}</small>
+          <input type='file' accept='.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document' disabled={kahootImportando} onChange={event => { void importarWordKahoot(event.target.files?.[0]); event.target.value=''; }} />
+        </label>
+      </section>}
       {kahootFormPanel}
       {kahootPuedePreparar && (
         <div className='kahoot-draft'>
