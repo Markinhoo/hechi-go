@@ -12,6 +12,7 @@
     "dependencies": {
         "@supabase/supabase-js": "^2.107.0",
         "exceljs": "^4.4.0",
+        "mammoth": "^1.13.0",
         "ogl": "^1.0.11",
         "react": "^19.2.6",
         "react-dom": "^19.2.6",

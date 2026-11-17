@@ -551,3 +551,28 @@ duelo cuando corresponda. El cierre por inactividad prevalece sobre el premio
 de empate por límite de turnos. No requiere un proceso programado nuevo.
 
     node --test supabase/tests/duel_inactivity.test.mjs
+
+### Exámenes de opción múltiple (17 de noviembre)
+
+Aplicar `supabase/migrations/20261117_exams.sql` y publicar el frontend. Maestro y
+alumno tienen una sección «Examen». El maestro importa un `.docx`, revisa preguntas,
+opciones y clave, y guarda un borrador o publica. El importador admite preguntas
+numeradas con opciones A–D y una sección «Clave rápida de respuestas» con entradas
+como `01-C`. El documento «06 Evaluación TI 10A Bis Parcial2 Desarrollo Web Integral
+Marco Antonio Vásquez Orozco.docx» produjo 20 preguntas; las 20 respuestas se
+tomaron de esa clave. También puede crear preguntas a partir de definiciones con
+formato `Concepto: descripción` si hay al menos cuatro.
+
+El servidor nunca envía las respuestas correctas durante el intento. Guarda cada
+respuesta y calcula la nota al entregar. Después muestra aciertos, porcentaje y
+la respuesta correcta de cada reactivo. Los intentos terminados quedan registrados.
+Al cambiar de pestaña o ventana, cerrar la página o dejar de enviar el pulso durante
+25 segundos, el intento queda bloqueado con cero. El maestro puede conceder otro
+intento sin borrar el anterior. Si pg_cron está habilitado, una tarea revisa los
+intentos abandonados cada minuto; sin él se revisan al abrir las vistas de examen.
+
+El navegador no puede detectar el uso de otro dispositivo ni garantizar la entrega
+de una solicitud durante un cierre abrupto; el vencimiento del pulso cubre ese caso.
+Esto no sustituye supervisión presencial para un examen de alto impacto.
+
+    node --test supabase/tests/exams.test.mjs
