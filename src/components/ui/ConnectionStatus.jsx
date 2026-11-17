@@ -1,6 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { leerConexion, suscribirConexion, actualizarConexion } from '../../services/connectionStore';
-function ConnectionStatus() {
+function ConnectionStatus({ showSaved = true }) {
   const estado=useSyncExternalStore(suscribirConexion,leerConexion);
   const [online,setOnline]=useState(()=>navigator.onLine);
   useEffect(()=>{
@@ -13,7 +13,8 @@ function ConnectionStatus() {
     estado.conexion==='reconectando' ? 'Reconectando…' :
     estado.conexion==='error' ? 'No se pudo sincronizar' :
     estado.conexion==='conectando' ? 'Conectando…' :
-    estado.errorGuardado || (estado.guardadoEn ? 'Cambio guardado · '+new Date(estado.guardadoEn).toLocaleTimeString('es-MX') : 'Conectado');
+    estado.errorGuardado || (estado.guardadoEn && showSaved ? 'Cambio guardado · '+new Date(estado.guardadoEn).toLocaleTimeString('es-MX') : showSaved ? 'Conectado' : '');
+  if (!texto) return null;
   return <span className='connection-status' role='status' aria-live='polite' data-warning={!online || Boolean(estado.errorGuardado) || estado.conexion==='error'}>{texto}</span>;
 }
 export default ConnectionStatus;

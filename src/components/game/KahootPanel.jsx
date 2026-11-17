@@ -1,10 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { db, supabase } from '../../services/hechiApi';
 
 const KAHOOT_FORM_INICIAL = { pregunta: '', opcionA: '', opcionB: '', opcionC: '', opcionD: '', correcta: 'a' };
 const KAHOOT_OPCIONES = ['a', 'b', 'c', 'd'];
-const KAHOOT_AUTO_LOCK_MS = 5000;
-let kahootAutoGlobalLock = { key: '', at: 0 };
 
 function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
   const [kahootForm, setKahootForm] = useState(KAHOOT_FORM_INICIAL);
@@ -13,8 +11,8 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
   const [kahootAccion, setKahootAccion] = useState('');
   const [kahootError, setKahootError] = useState('');
   const [kahootGuardandoPregunta, setKahootGuardandoPregunta] = useState(false);
-  const kahootAutoAccionRef = useRef('');
-  const kahootInicioLocalRef = useRef({ preguntaId: '', inicio: 0 });
+  const [kahootImportando, setKahootImportando] = useState(false);
+  const [kahootFotos, setKahootFotos] = useState({});
 
   useEffect(() => {
     const id = window.setInterval(() => setKahootNow(Date.now()), 500);
@@ -34,26 +32,26 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
   const kahootPreguntaActiva = kahootActiva ? kahootPreguntas[kahoot.preguntaActual] : null;
   const kahootActivaSinPregunta = kahootActiva && kahootPreguntas.length > 0 && !kahootPreguntaActiva;
   const kahootRespuestas = kahootPreguntaActiva?.respuestas || [];
-  const kahootInicioLocal = kahootPreguntaActiva && kahootInicioLocalRef.current.preguntaId === kahootPreguntaActiva.id ? kahootInicioLocalRef.current.inicio : null;
-  const kahootInicio = kahootInicioLocal || (kahoot?.iniciadaAt ? new Date(kahoot.iniciadaAt).getTime() : kahootNow);
+  const kahootInicio = kahoot?.iniciadaAt ? new Date(kahoot.iniciadaAt).getTime() : kahootNow;
   const kahootSegundos = kahootPreguntaActiva ? Math.max(0, 20 - Math.floor((kahootNow - kahootInicio) / 1000)) : 0;
   const kahootMiRespuesta = sesion.tipo === 'alumno' && kahootPreguntaActiva ? kahootRespuestas.find((respuesta) => respuesta.alumnoId === sesion.alumnoId) : null;
   const kahootParticipantes = estado.alumnos || [];
   const kahootTodosRespondieron = kahootPreguntaActiva && kahootParticipantes.length > 0 && kahootRespuestas.length >= kahootParticipantes.length;
-  const kahootMostrarResultados = Boolean(kahootPreguntaActiva && (kahootSegundos <= 0 || kahootTodosRespondieron || kahootMiRespuesta || sesion.tipo === 'maestro'));
+  const kahootMostrarResultados = Boolean(kahootPreguntaActiva && (kahootSegundos <= 0 || kahootTodosRespondieron || sesion.tipo === 'maestro'));
   const kahootConteos = KAHOOT_OPCIONES.reduce((resumen, opcion) => ({
     ...resumen,
     [opcion]: kahootRespuestas.filter((respuesta) => respuesta.opcion === opcion)
   }), {});
   const kahootRanking = Object.values((kahootPreguntas || []).flatMap((pregunta) => pregunta.respuestas || []).reduce((resumen, respuesta) => {
-    const previo = resumen[respuesta.alumnoId] || { alumnoId: respuesta.alumnoId, alumno: respuesta.alumno, casaId: respuesta.casaId, aciertos: 0, tiempo: 0 };
+    const previo = resumen[respuesta.alumnoId] || { alumnoId: respuesta.alumnoId, alumno: respuesta.alumno, casaId: respuesta.casaId, aciertos: 0, tiempo: 0, puntosRapidez: 0 };
     resumen[respuesta.alumnoId] = {
       ...previo,
       aciertos: previo.aciertos + (respuesta.correcta ? 1 : 0),
-      tiempo: previo.tiempo + (respuesta.correcta ? respuesta.tiempoMs : 20000)
+      tiempo: previo.tiempo + respuesta.tiempoMs,
+      puntosRapidez: previo.puntosRapidez + (respuesta.correcta ? Math.max(0, 20000 - respuesta.tiempoMs) : 0)
     };
     return resumen;
-  }, {})).sort((a, b) => b.aciertos - a.aciertos || a.tiempo - b.tiempo);
+  }, {})).sort((a, b) => b.aciertos - a.aciertos || b.puntosRapidez - a.puntosRapidez || a.tiempo - b.tiempo || a.alumnoId.localeCompare(b.alumnoId));
   const kahootGanadoresPremio = kahootRanking.filter((item) => item.aciertos > 0).slice(0, 3);
 
   const actualizarKahootForm = (campo, valor) => {
@@ -69,11 +67,40 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
     setKahootEditandoId(null);
   };
 
-  const registrarInicioLocalKahoot = (data) => {
-    const pregunta = data?.kahoot?.estado === 'activa' ? data.kahoot.preguntas?.[data.kahoot.preguntaActual || 0] : null;
-    if (!pregunta?.id) return;
-    kahootInicioLocalRef.current = { preguntaId: pregunta.id, inicio: Date.now() };
+  const importarWordKahoot = async (event) => {
+    const archivo = event.target.files?.[0];
+    if (!archivo || kahootImportando) return;
+    event.target.value = '';
+    setKahootImportando(true);
+    setKahootError('');
+    try {
+      if (!/\.docx$/i.test(archivo.name)) throw new Error('Selecciona un documento .docx.');
+      const { examFromWord } = await import('../../utils/examWord');
+      const preguntas = await examFromWord(archivo);
+      const { data, error } = await db.rpc('kahoot_importar_word', {
+        p_token: sesion.token, p_preguntas: preguntas,
+        p_alumno_id: sesion.tipo === 'alumno' ? sesion.alumnoId : null,
+        p_password: sesion.tipo === 'alumno' ? sesion.password : null
+      });
+      if (error) throw error;
+      setEstado(data);
+      setMensaje(`${preguntas.length} preguntas importadas. Revísalas antes de iniciar.`);
+    } catch (error) {
+      setKahootError(error.message);
+      setMensaje('No se pudo importar el Word: ' + error.message);
+    } finally { setKahootImportando(false); }
   };
+
+  useEffect(() => {
+    if (kahoot?.estado !== 'finalizada' && sesion.tipo !== 'alumno') return;
+    let vigente = true;
+    db.rpc('kahoot_listar_fotos', {
+      p_token: sesion.token,
+      p_alumno_id: sesion.tipo === 'alumno' ? sesion.alumnoId : null,
+      p_password: sesion.tipo === 'alumno' ? sesion.password : null
+    }).then(({ data, error }) => { if (vigente && !error) setKahootFotos(data || {}); });
+    return () => { vigente = false; };
+  }, [kahoot?.estado, sesion.tipo, sesion.token, sesion.alumnoId, sesion.password]);
 
   const crearPreguntaKahoot = async (event) => {
     event?.preventDefault?.();
@@ -160,7 +187,6 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
       setKahootError(error.message);
       return setMensaje('No se pudo iniciar el Kahoot: ' + error.message);
     }
-    registrarInicioLocalKahoot(data);
     setKahootNow(Date.now());
     setEstado(data);
     setMensaje('Kahoot iniciado. Los alumnos ya pueden responder.');
@@ -178,16 +204,6 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
     if (error) return setMensaje(error.message);
     setEstado(data);
     setMensaje('Respuesta enviada.');
-  };
-
-  const siguientePreguntaKahoot = async () => {
-    if (sesion.tipo !== 'maestro') return;
-    const { data, error } = await db.rpc('kahoot_siguiente_pregunta', { p_token: sesion.token });
-    if (error) return setMensaje(error.message);
-    registrarInicioLocalKahoot(data);
-    setKahootNow(Date.now());
-    setEstado(data);
-    setMensaje('Siguiente pregunta.');
   };
 
   const finalizarKahoot = async () => {
@@ -222,107 +238,7 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
     setMensaje('Nueva actividad Kahoot lista para preguntas.');
   };
 
-  useEffect(() => {
-    if (sesion.tipo !== 'maestro' || kahootAccion === 'finalizar') return;
-
-    if (kahootActivaSinPregunta) {
-      const cierreKey = `${kahoot?.id || 'kahoot'}:sin-pregunta:finalizar`;
-      const ahora = Date.now();
-      if (kahootAutoAccionRef.current === cierreKey) return;
-      if (kahootAutoGlobalLock.key === cierreKey && ahora - kahootAutoGlobalLock.at < KAHOOT_AUTO_LOCK_MS) return;
-      kahootAutoAccionRef.current = cierreKey;
-      kahootAutoGlobalLock = { key: cierreKey, at: ahora };
-      setMensaje('Kahoot terminado. Cerrando actividad y premiando...');
-      db.rpc('kahoot_finalizar', { p_token: sesion.token }).then(({ data, error }) => {
-        if (error) {
-          kahootAutoGlobalLock = { key: '', at: 0 };
-          kahootAutoAccionRef.current = '';
-          setKahootError(error.message);
-          return setMensaje('No se pudo cerrar el Kahoot: ' + error.message);
-        }
-        if (data) setEstado(data);
-        setMensaje(kahootGanadoresPremio.length > 0 ? 'Kahoot finalizado. Se repartieron oportunidades solo a quienes tuvieron aciertos.' : 'Kahoot finalizado. No hubo respuestas correctas para premiar.');
-      });
-      return;
-    }
-
-    if (!kahootPreguntaActiva) return;
-
-    const preguntaActual = kahoot?.preguntaActual || 0;
-    const preguntaRecienIniciada = kahootInicioLocal && Date.now() - kahootInicioLocal < 1200;
-    if (preguntaRecienIniciada) return;
-
-    const terminoTiempo = kahootSegundos <= 0;
-    const listoPorRespuestas = Boolean(kahootTodosRespondieron);
-    if (!terminoTiempo && !listoPorRespuestas) return;
-
-    const esUltimaPregunta = preguntaActual + 1 >= kahootPreguntas.length;
-    const accion = esUltimaPregunta ? 'finalizar' : 'siguiente';
-    const motivo = terminoTiempo ? 'tiempo' : 'respuestas';
-    const accionKey = `${kahoot?.id || 'kahoot'}:${kahootPreguntaActiva.id}:${accion}:${motivo}`;
-    const ahora = Date.now();
-
-    if (kahootAutoAccionRef.current === accionKey) return;
-    if (kahootAutoGlobalLock.key === accionKey && ahora - kahootAutoGlobalLock.at < KAHOOT_AUTO_LOCK_MS) return;
-    kahootAutoAccionRef.current = accionKey;
-    kahootAutoGlobalLock = { key: accionKey, at: ahora };
-
-    const ejecutarAvanceAutomatico = async () => {
-      if (esUltimaPregunta) {
-        setKahootAccion('finalizar');
-        setKahootError('');
-        setMensaje('Premiando Kahoot...');
-        const ganadoresConAciertos = kahootRanking.filter((item) => item.aciertos > 0).slice(0, 3);
-        const { data, error } = await db.rpc('kahoot_finalizar', { p_token: sesion.token });
-        setKahootAccion('');
-        if (error) {
-          kahootAutoGlobalLock = { key: '', at: 0 };
-          kahootAutoAccionRef.current = '';
-          setKahootError(error.message);
-          return setMensaje('No se pudo premiar el Kahoot: ' + error.message);
-        }
-        if (!data) {
-          kahootAutoGlobalLock = { key: '', at: 0 };
-          kahootAutoAccionRef.current = '';
-          setKahootError('Supabase no devolvio informacion actualizada. Intenta actualizar la clase.');
-          return setMensaje('No se recibio respuesta al premiar el Kahoot.');
-        }
-        setEstado(data);
-        return setMensaje(ganadoresConAciertos.length > 0 ? 'Kahoot finalizado. Se repartieron oportunidades solo a quienes tuvieron aciertos.' : 'Kahoot finalizado. No hubo respuestas correctas para premiar.');
-      }
-
-      const { data, error } = await db.rpc('kahoot_siguiente_pregunta', { p_token: sesion.token });
-      if (error) {
-        kahootAutoGlobalLock = { key: '', at: 0 };
-        kahootAutoAccionRef.current = '';
-        setKahootError(error.message);
-        return setMensaje('No se pudo avanzar la pregunta: ' + error.message);
-      }
-      registrarInicioLocalKahoot(data);
-      setKahootNow(Date.now());
-      setEstado(data);
-      setMensaje(listoPorRespuestas ? 'Todos respondieron. Siguiente pregunta.' : 'Tiempo terminado. Siguiente pregunta.');
-    };
-
-    ejecutarAvanceAutomatico();
-  }, [
-    sesion.tipo,
-    sesion.token,
-    kahoot?.id,
-    kahoot?.preguntaActual,
-    kahootPreguntaActiva,
-    kahootActivaSinPregunta,
-    kahootInicioLocal,
-    kahootSegundos,
-    kahootTodosRespondieron,
-    kahootPreguntas.length,
-    kahootAccion,
-    kahootRanking,
-    setEstado,
-    setMensaje
-  ]);
-
-  const kahootFormPanel = (kahootPuedeAgregarPreguntas || kahootEditandoId) && (
+const kahootFormPanel = (kahootPuedeAgregarPreguntas || kahootEditandoId) && (
     <form className='kahoot-form' onSubmit={crearPreguntaKahoot}>
       <label>
         <span>Pregunta</span>
@@ -372,6 +288,12 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
       <div className='kahoot-heading'><span><strong>Kahoot mágico</strong><small>{kahootSubtitulo}</small></span>{kahoot?.estado && <b>{kahoot.estado}</b>}</div>
       {kahootPuedePreparar && <p className='kahoot-note'>{kahoot?.estado === 'finalizada' ? 'Agrega una pregunta para comenzar una nueva actividad.' : (sesion.tipo === 'maestro' && kahootEnBorrador && kahoot?.creadorAlumnoId ? 'Revisa el borrador, agrega preguntas si hace falta y autorízalo cuando esté listo.' : 'Agrega todas las preguntas que quieras antes de iniciar.')}</p>}
       {kahootError && <p className='kahoot-error'>{kahootError}</p>}
+      {kahootPuedeAgregarPreguntas && <label className='kahoot-word-upload'>
+        <strong>Cargar Kahoot desde Word</strong>
+        <span>Documento .docx con preguntas numeradas (1., 2. …), cuatro opciones A), B), C), D) y una sección «Clave rápida de respuestas» con entradas como 01-C. También acepta «Respuesta: C» debajo de cada pregunta. Máximo 100 preguntas.</span>
+        <input type='file' accept='.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document' disabled={kahootImportando} onChange={importarWordKahoot} />
+        {kahootImportando && <em>Importando preguntas...</em>}
+      </label>}
       {kahootFormPanel}
       {kahootPuedePreparar && (
         <div className='kahoot-draft'>
@@ -411,19 +333,24 @@ function KahootPanel({ sesion, estado, setEstado, setMensaje }) {
           )}
           {kahootMiRespuesta && <p className='kahoot-answer-state'>Contestaste {kahootMiRespuesta.opcion.toUpperCase()}.</p>}
           {kahootMostrarResultados && kahootResults}
-          {sesion.tipo === 'maestro' && kahootMostrarResultados && (
-            <div className='kahoot-controls'>
-              {(kahoot.preguntaActual || 0) + 1 < kahootPreguntas.length && <button type='button' onClick={siguientePreguntaKahoot}>Siguiente pregunta</button>}
-              <button type='button' className='danger-soft' onClick={finalizarKahoot} disabled={kahootAccion === 'finalizar'}>{kahootAccion === 'finalizar' ? 'Premiando...' : 'Finalizar y premiar'}</button>
-            </div>
-          )}
+          <p className='kahoot-note'>La siguiente pregunta aparece cuando todos respondan o termine el tiempo.</p>
         </div>
       )}
       {kahoot?.estado === 'finalizada' && (
         <div className='kahoot-ranking'>
           <h2>Ganadores</h2>
           {kahootGanadoresPremio.length === 0 && <p className='empty'>No hubo respuestas correctas para premiar.</p>}
-          {kahootGanadoresPremio.map((item, index) => <article key={item.alumnoId}><strong>{index + 1}. {item.alumno}</strong><span>{item.aciertos} acierto{item.aciertos === 1 ? '' : 's'} - premio: {index === 0 ? 3 : index === 1 ? 2 : 1} carta{index === 2 ? '' : 's'}</span></article>)}
+          <div className='kahoot-podium'>
+            {[kahootGanadoresPremio[1], kahootGanadoresPremio[0], kahootGanadoresPremio[2]].map((item, podiumIndex) => item && (
+              <article className={`kahoot-podium-place place-${podiumIndex === 1 ? 1 : podiumIndex === 0 ? 2 : 3}`} key={item.alumnoId}>
+                <div className='kahoot-podium-avatar'>{kahootFotos[item.alumnoId] ? <img src={kahootFotos[item.alumnoId]} alt={`Foto de ${item.alumno}`} /> : <span>{item.alumno?.charAt(0) || '?'}</span>}</div>
+                <b>{podiumIndex === 1 ? '🥇' : podiumIndex === 0 ? '🥈' : '🥉'}</b>
+                <strong>{item.alumno}</strong>
+                <span>{item.aciertos} aciertos · {item.puntosRapidez.toLocaleString('es-MX')} puntos de rapidez</span>
+                <small>Premio: {podiumIndex === 1 ? 3 : podiumIndex === 0 ? 2 : 1} {podiumIndex === 2 ? 'oportunidad' : 'oportunidades'}</small>
+              </article>
+            ))}
+          </div>
           {sesion.tipo === 'maestro' && <button type='button' onClick={nuevaActividadKahoot}>Nueva actividad</button>}
         </div>
       )}

@@ -43,7 +43,7 @@ function LoginAcceso({ onAlumno, onMaestro, mensaje, setMensaje }) {
         <p>Entra con tu correo si eres maestro, o con tu usuario y token si eres alumno.</p>
         <form onSubmit={entrar}>
           <label className='field-label'>Correo o usuario</label>
-          <input value={identificador} onChange={(event) => setIdentificador(event.target.value)} placeholder='maestro@correo.com o nombre del alumno' required />
+          <input value={identificador} onChange={(event) => setIdentificador(event.target.value)} placeholder='maestro@correo.com o nombre de usuario' required />
           <label className='field-label'>Contraseña</label>
           <input type='password' value={password} onChange={(event) => setPassword(event.target.value)} placeholder={esCorreo ? 'Contraseña de maestro' : 'Contraseña de alumno'} required />
           {!esCorreo && (

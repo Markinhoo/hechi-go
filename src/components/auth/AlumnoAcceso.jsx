@@ -28,7 +28,7 @@ function AlumnoAcceso({ onEntrar, mensaje, setMensaje }) {
         <p>Tu usuario solo sirve para entrar a la clase del token. No puede crear clases.</p>
         <form onSubmit={entrar}>
           <input value={token} onChange={(event) => setToken(event.target.value.toUpperCase())} placeholder='Token de clase' required />
-          <input value={nombre} onChange={(event) => setNombre(event.target.value)} placeholder='Nombre del alumno' required />
+          <input value={nombre} onChange={(event) => setNombre(event.target.value)} placeholder='Nombre de usuario' required />
           <input type='password' value={password} onChange={(event) => setPassword(event.target.value)} placeholder='Contraseña' required />
           <button type='submit'>Entrar al gran salón</button>
         </form>

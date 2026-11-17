@@ -576,3 +576,52 @@ de una solicitud durante un cierre abrupto; el vencimiento del pulso cubre ese c
 Esto no sustituye supervisión presencial para un examen de alto impacto.
 
     node --test supabase/tests/exams.test.mjs
+
+### Kahoot desde Word y podio con fotos (17 de noviembre)
+
+Aplicar `supabase/migrations/20261117_kahoot_word_timing_podium.sql` antes de publicar
+el frontend. El maestro o un alumno importa un `.docx` con preguntas A–D y su
+clave rápida; el maestro autoriza el borrador antes de iniciar. El documento lleva
+preguntas numeradas (1., 2. …), cuatro opciones A), B), C), D) y una sección
+«Clave rápida de respuestas» con pares como 01-C. También admite «Respuesta: C»
+debajo de cada pregunta. Cada pregunta dura 20 segundos y avanza
+cuando respondieron todos los alumnos de la clase o vence el tiempo. El avance
+también se revisa desde el refresco general de la clase, aunque el maestro cambie
+de sección. Si nadie tiene la app abierta, se procesa al siguiente refresco.
+
+El primer criterio del podio son los aciertos; en empate gana quien acumuló más
+puntos de rapidez en respuestas correctas. Los tres primeros con aciertos reciben
+3, 2 y 1 oportunidades. Cada alumno puede editar su foto, nombre y contraseña
+desde el perfil general. La foto se reduce a JPEG de 160 × 160 píxeles y se muestra
+en su identificación y sobre su lugar en el podio. La clave de
+la pregunta activa se oculta a los alumnos hasta pasar a la siguiente.
+
+    node --test supabase/tests/kahoot_word_timing_podium.test.mjs
+
+### Asistencias del parcial
+
+Aplicar `supabase/migrations/20261117_attendance.sql` antes de publicar el frontend.
+En «Gran salón», el maestro abre «Pasar lista y ver asistencias», prepara las fechas
+del 9 de noviembre al 4 de diciembre de 2026 y marca presente, falta o justificada.
+Puede corregir cualquier marca. Si un alumno conserva Crecehuesos para justificar,
+el maestro puede aplicarla a una falta concreta; la carta se consume en la misma
+operación. Las asistencias no modifican los puntos.
+
+El alumno ve sus asistencias, faltas sin justificar y faltas justificadas en Inicio,
+con el detalle por fecha. Al iniciar otro parcial, aparece un registro nuevo; los
+anteriores permanecen en la base de datos. Las 160 marcas iniciales del 9 al 13 de
+noviembre se cargaron directamente en la base de 9ABis. El CSV fuente está excluido
+de Git porque contiene datos personales de alumnos. Si todavía no hay marcas para un alumno,
+Inicio muestra un aviso y guiones en lugar de cifras que parezcan definitivas.
+
+### Identidad y perfil del alumno
+
+Aplicar `supabase/migrations/20261117_profile_real_names.sql` antes de publicar el
+frontend. `hechi.alumnos.nombre_real` conserva el nombre de la lista; `nombre` sigue
+siendo el usuario visible y de acceso. En 9ABis se vincularon los 32 nombres reales
+desde una correspondencia privada excluida de Git. La foto se cambia desde el botón
+de cámara sobre el avatar y el cuadro del perfil usa los colores de la casa.
+Para cuentas nuevas, `nombre_real` inicia con el usuario registrado y debe vincularse
+con la lista oficial cuando el maestro lo confirme.
+
+    node --test supabase/tests/attendance.test.mjs

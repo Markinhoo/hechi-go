@@ -4,6 +4,7 @@ dist-ssr
 .env
 *.local
 *.log
+private-imports/
 .DS_Store
 .vscode/*
 !.vscode/extensions.json

@@ -317,3 +317,27 @@
   cursor: wait;
   filter: grayscale(.25);
 }
+
+.kahoot-word-upload {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid rgba(255,214,109,.4);
+  border-radius: 12px;
+  background: rgba(255,238,202,.1);
+  color: #fff7df;
+}
+
+.kahoot-word-upload strong { color: #ffd66d; font-size: 1.15em; }
+.kahoot-word-upload input { color: #fff7df; max-width: 100%; }
+
+.kahoot-podium { display: flex; align-items: end; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.kahoot-podium .kahoot-podium-place { flex: 1 1 180px; max-width: 290px; text-align: center; justify-items: center; padding: 18px 12px; }
+.kahoot-podium .place-1 { min-height: 255px; border-color: #ffd66d; background: linear-gradient(160deg,rgba(122,83,12,.65),rgba(12,7,14,.65)); }
+.kahoot-podium .place-2 { min-height: 220px; border-color: #d7e0ee; }
+.kahoot-podium .place-3 { min-height: 205px; border-color: #d79a70; }
+.kahoot-podium-avatar { width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 3px solid #ffd66d; background: #25354d; display: grid; place-items: center; font-size: 48px; }
+.kahoot-podium-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.kahoot-podium-place b { font-size: 32px; }
+.kahoot-podium-place small { color: #fff7df; }
+@media(max-width: 650px) { .kahoot-podium .kahoot-podium-place { flex-basis: 100%; max-width: none; min-height: 0; } .kahoot-podium .place-1 { order: -1; } }

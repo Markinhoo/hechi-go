@@ -1,7 +1,7 @@
 // A Word document can contain numbered questions with four labelled choices and
 // a "Respuesta: B" line, or definitions in the form "Concepto: descripción".
 export async function examFromWord(file) {
- const mammoth=await import('mammoth/mammoth.browser');
+ const mammoth=await import('mammoth/mammoth.browser.js');
  const result=await mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()});
  const lines=result.value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
  const keyStart=lines.findIndex(line=>/clave\s+r[aá]pida\s+de\s+respuestas/i.test(line));

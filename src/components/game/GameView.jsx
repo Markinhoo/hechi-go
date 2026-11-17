@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FaArrowLeft, FaArrowRight, FaBookOpen, FaHouse, FaScroll, FaTrophy, FaWandMagicSparkles } from 'react-icons/fa6';
+import { FaArrowLeft, FaArrowRight, FaBookOpen, FaCalendarDays, FaCamera, FaHouse, FaScroll, FaTrophy, FaWandMagicSparkles } from 'react-icons/fa6';
 import { bestiario, textoBeneficioBestia, precioBestia, RAREZAS_BESTIARIO } from '../../data/bestiaryData';
 import { CARTAS_ACTIVAS, casas, PLAYER_KEY } from '../../data/gameData';
 import { db } from '../../services/hechiApi';
@@ -10,6 +10,7 @@ import CardModal from './CardModal';
 import CardRoulette from './CardRoulette';
 import KahootPanel from './KahootPanel';
 import ExamPanel from './ExamPanel';
+import AttendancePanel from './AttendancePanel';
 import DuelArena from './DuelArena';
 import TeacherPointsControl from './TeacherPointsControl';
 import TeacherGalleons from './TeacherGalleons';
@@ -31,11 +32,17 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const tablaPuntajesRef = useRef(null);
   const reinicioSolicitud = useRef(null);
   const [mostrarRespaldos,setMostrarRespaldos] = useState(false);
+  const [mostrarAsistencias,setMostrarAsistencias] = useState(false);
   const protegerSalidaTabla = (continuar) => {
     if (tablaPuntajesRef.current) tablaPuntajesRef.current.requestClose(continuar);
     else continuar();
   };
-  const [mostrarCambioPassword, setMostrarCambioPassword] = useState(false);
+  const [mostrarPerfil, setMostrarPerfil] = useState(false);
+  const [fotoPerfil, setFotoPerfil] = useState(null);
+  const [identidadPerfil, setIdentidadPerfil] = useState(null);
+  const [nombrePerfil, setNombrePerfil] = useState('');
+  const [perfilGuardando, setPerfilGuardando] = useState(false);
+  const [perfilError, setPerfilError] = useState('');
   const [passwordNuevaAlumno, setPasswordNuevaAlumno] = useState('');
   const [passwordConfirmacionAlumno, setPasswordConfirmacionAlumno] = useState('');
   const [busquedaAlumno, setBusquedaAlumno] = useState('');
@@ -236,25 +243,87 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     if (sesion.tipo !== 'alumno') return;
     const passwordNueva = passwordNuevaAlumno.trim();
     const passwordConfirmacion = passwordConfirmacionAlumno.trim();
-    if (!passwordNueva) return setMensaje('Escribe tu nueva contraseña.');
-    if (passwordNueva.length < 3) return setMensaje('La nueva contraseña debe tener al menos 3 caracteres.');
-    if (passwordNueva !== passwordConfirmacion) return setMensaje('La confirmación no coincide.');
-    setMensaje('Actualizando tu contraseña...');
+    if (!passwordNueva) return setPerfilError('Escribe tu nueva contraseña.');
+    if (passwordNueva.length < 3) return setPerfilError('La nueva contraseña debe tener al menos 3 caracteres.');
+    if (passwordNueva !== passwordConfirmacion) return setPerfilError('La confirmación no coincide.');
+    setPerfilError('');
     const { data, error } = await db.rpc('cambiar_password_propia', {
       p_token: sesion.token,
       p_alumno_id: sesion.alumnoId,
       p_password_actual: sesion.password,
       p_password_nueva: passwordNueva
     });
-    if (error) return setMensaje(error.message);
+    if (error) return setPerfilError(error.message);
     const sesionActualizada = { ...sesion, password: passwordNueva };
     setSesion(sesionActualizada);
     guardarLocal(PLAYER_KEY, sesionActualizada);
     setEstado(data);
-    setMostrarCambioPassword(false);
+    setMostrarPerfil(false);
     setPasswordNuevaAlumno('');
     setPasswordConfirmacionAlumno('');
     setMensaje('Tu contraseña fue actualizada.');
+  };
+
+  useEffect(() => {
+    if (sesion.tipo !== 'alumno') return;
+    let activo = true;
+    db.rpc('perfil_obtener_foto', { p_token: sesion.token, p_alumno_id: sesion.alumnoId, p_password: sesion.password })
+      .then(({ data, error }) => { if (activo && !error) setFotoPerfil(data || null); });
+    return () => { activo = false; };
+  }, [sesion.tipo, sesion.token, sesion.alumnoId, sesion.password]);
+
+  const abrirPerfil = () => {
+    setNombrePerfil(estado.alumnos.find((item) => item.id === sesion.alumnoId)?.nombre || sesion.nombre || '');
+    setPerfilError('');
+    setMostrarPerfil(true);
+    if (!identidadPerfil) {
+      db.rpc('perfil_obtener_identidad', { p_token: sesion.token, p_alumno_id: sesion.alumnoId, p_password: sesion.password })
+        .then(({ data, error }) => { if (error) setPerfilError(error.message); else setIdentidadPerfil(data); });
+    }
+  };
+
+  const guardarNombrePerfil = async (event) => {
+    event.preventDefault();
+    if (perfilGuardando) return;
+    setPerfilGuardando(true);
+    setPerfilError('');
+    const { data, error } = await db.rpc('perfil_cambiar_nombre', {
+      p_token: sesion.token, p_alumno_id: sesion.alumnoId, p_password: sesion.password, p_nombre: nombrePerfil.trim()
+    });
+    setPerfilGuardando(false);
+    if (error) return setPerfilError(error.message);
+    const sesionActualizada = { ...sesion, nombre: nombrePerfil.trim() };
+    setSesion(sesionActualizada);
+    guardarLocal(PLAYER_KEY, sesionActualizada);
+    setEstado(data);
+    setIdentidadPerfil(actual => actual ? {...actual,usuario:nombrePerfil.trim()} : actual);
+    setMensaje('Nombre de usuario actualizado.');
+  };
+
+  const guardarFotoPerfil = async (event) => {
+    const archivo = event.target.files?.[0];
+    if (!archivo || perfilGuardando) return;
+    event.target.value = '';
+    setPerfilGuardando(true);
+    setPerfilError('');
+    try {
+      if (!archivo.type.startsWith('image/') || archivo.size > 5_000_000) throw new Error('Elige una imagen de hasta 5 MB.');
+      const bitmap = await createImageBitmap(archivo);
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = 160;
+      const ctx = canvas.getContext('2d');
+      const lado = Math.min(bitmap.width, bitmap.height);
+      ctx.drawImage(bitmap, (bitmap.width - lado) / 2, (bitmap.height - lado) / 2, lado, lado, 0, 0, 160, 160);
+      bitmap.close();
+      const foto = canvas.toDataURL('image/jpeg', 0.75);
+      const { error } = await db.rpc('perfil_guardar_foto', {
+        p_token: sesion.token, p_alumno_id: sesion.alumnoId, p_password: sesion.password, p_foto: foto
+      });
+      if (error) throw error;
+      setFotoPerfil(foto);
+      setMensaje('Foto de perfil actualizada.');
+    } catch (error) { setPerfilError(error.message); }
+    finally { setPerfilGuardando(false); }
   };
 
 
@@ -811,7 +880,24 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
           p_alumno_id:sesion.tipo==='alumno'?sesion.alumnoId:null,
           p_password:sesion.tipo==='alumno'?sesion.password:null
         });
-        if(activo && !error && data && revision===leerConexion().revision && !leerConexion().pendientes) setEstado(data);
+        if(activo && !error && data && revision===leerConexion().revision && !leerConexion().pendientes) {
+          let vigente=data;
+          const kahoot=data.kahoot;
+          if(kahoot?.estado==='activa') {
+            const pregunta=kahoot.preguntas?.[kahoot.preguntaActual];
+            const vencida=!pregunta || Date.now()-new Date(kahoot.iniciadaAt).getTime()>=20000;
+            const respondieronTodos=pregunta && data.alumnos?.length>0 && (pregunta.respuestas?.length || 0)>=data.alumnos.length;
+            if(vencida || respondieronTodos) {
+              const avance=await db.rpc('kahoot_avanzar_si_listo',{
+                p_token:sesion.token,
+                p_alumno_id:sesion.tipo==='alumno'?sesion.alumnoId:null,
+                p_password:sesion.tipo==='alumno'?sesion.password:null
+              });
+              if(!avance.error && avance.data) vigente=avance.data;
+            }
+          }
+          if(activo) setEstado(vigente);
+        }
       } finally {cargando=false;}
     };
     const id=window.setInterval(sincronizar,900);
@@ -885,7 +971,9 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
             <article className='stored-card' key={carta.id}>
               <img src={'/hechi/card-' + carta.numero + '.png'} alt={carta.titulo} />
               <span><b>{carta.titulo}</b><small>{carta.descripcion}</small></span>
-              <button type='button' onClick={() => usarCartaGuardada(carta)}>Usar</button>
+              {Number(carta.numero) === 18
+                ? <small>Preséntala al maestro para justificar una falta.</small>
+                : <button type='button' onClick={() => usarCartaGuardada(carta)}>Usar</button>}
             </article>
           ))}
         </div>
@@ -893,7 +981,16 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   );
   const panelAlumno = (
     <aside className='panel student-help-panel'>
+      <AttendancePanel sesion={sesion} />
       {cartasGuardadasAlumno}
+      <details className='student-spell-history'>
+        <summary>Ver hechizos que han salido ({estado.historial?.length || 0})</summary>
+        {!estado.historial?.length && <p>Aún no han salido hechizos.</p>}
+        {(estado.historial || []).map((item) => <article key={item.id}>
+          <strong>{item.alumno} · {item.titulo || 'Carta'}</strong>
+          <p>{item.descripcion}</p>
+        </article>)}
+      </details>
     </aside>
   );
   const bestiaryPanel = (
@@ -945,7 +1042,6 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     { id: 'inicio', label: 'Inicio', icon: <FaHouse /> },
     { id: 'puntaje', label: 'Puntaje', icon: <FaTrophy /> },
     { id: 'bestiario', label: 'Bestiario', icon: <FaBookOpen /> },
-    { id: 'hechizos', label: 'Hechizos', icon: <FaScroll /> },
     { id: 'kahoot', label: 'Kahoot', icon: <FaTrophy /> },
     { id: 'examen', label: 'Examen', icon: <FaScroll /> },
     { id: 'arena', label: 'Arena', icon: <FaWandMagicSparkles /> }
@@ -986,6 +1082,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         <h2>Gran salón</h2>
         <span>{alumnosFiltrados.length}/{estado.alumnos.length}</span>
       </div>
+      <button type='button' className='authorize attendance-open' onClick={() => setMostrarAsistencias(true)}><FaCalendarDays /> Pasar lista y ver asistencias</button>
       {estado.historialPuntajes?.find((op) => op.puedeDeshacer) && (
         <button type='button' className='authorize' disabled={deshaciendo}
           onClick={() => deshacerAjuste(estado.historialPuntajes.find((op) => op.puedeDeshacer).id)}>
@@ -1122,14 +1219,16 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     <main className={'game-shell app-fixed mobile-scroll-page ' + (sesion.tipo === 'alumno' ? 'student-view' : 'teacher-view') + ((sesion.tipo === 'alumno' ? studentTab : teacherTab) === 'arena' ? ' arena-focus' : '')}>
       {(sesion.tipo === 'alumno' ? studentTab : teacherTab) !== 'arena' && <header className='hero compact-hero house-cup-hero' style={heroStyle}>
         <div>
-          <span className='eyebrow'><FaWandMagicSparkles /> {sesion.tipo === 'maestro' ? 'Vista maestro' : 'Vista alumno'}</span>
+          {sesion.tipo === 'maestro' && <span className='eyebrow'><FaWandMagicSparkles /> Vista maestro</span>}
           <h1>{tituloClase}</h1>
-          <ConnectionStatus />
+          <ConnectionStatus showSaved={sesion.tipo !== 'alumno'} />
           <p className={sesion.tipo === 'alumno' ? 'student-token-hint' : ''}>{sesion.tipo === 'maestro' ? ('Token de clase: ' + estado.token + (casaGanadora ? ' - Va ganando ' + casaGanadora.nombre : '')) : ('Token ' + estado.token + ' - espera autorización para abrir carta.')}</p>
         </div>
         <div className='hero-actions'>
-          {sesion.tipo === 'alumno' && <span className='player-badge' style={{ '--house': casaActual.color, '--metal': casaActual.metal }}>{alumnoActual?.nombre} - {casaActual.nombre} - {alumnoActual?.oportunidades || 0} oportunidades</span>}
-          {sesion.tipo === 'alumno' && <button type='button' className='ghost change-own-password' onClick={() => setMostrarCambioPassword(true)}>Cambiar contraseña</button>}
+          {sesion.tipo === 'alumno' && <button type='button' className='student-profile-id' style={{ '--house': casaActual.color, '--metal': casaActual.metal }} onClick={abrirPerfil} aria-label='Abrir mi perfil y editar foto, usuario o contraseña'>
+            <span className='student-profile-avatar'>{fotoPerfil ? <img src={fotoPerfil} alt='' /> : <span>{alumnoActual?.nombre?.charAt(0) || '?'}</span>}</span>
+            <span className='student-profile-info'><strong>{alumnoActual?.nombre}</strong><small>{casaActual.nombre} · {alumnoActual?.oportunidades || 0} oportunidades</small></span>
+          </button>}
           {sesion.tipo === 'maestro' && <button type='button' className='ghost' onClick={() => abrirAccionMaestro({ tipo: 'nuevo-parcial' })}>Nuevo parcial</button>}
           {sesion.tipo === 'maestro' && <button type='button' className='ghost' onClick={() => setMostrarRespaldos(true)}>Respaldos</button>}
           {sesion.tipo === 'maestro' && <button type='button' className='ghost' onClick={() => abrirAccionMaestro({ tipo: 'reiniciar-bestiario' })}>Reiniciar bestiario</button>}
@@ -1192,7 +1291,6 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
 
           {studentTab === 'puntaje' && houseBoard}
 
-          {studentTab === 'hechizos' && <ScoreHistory estado={estado} className='student-tab-panel' />}
 
           {studentTab === 'kahoot' && kahootPanel}
           {studentTab === 'examen' && <ExamPanel sesion={sesion} />}
@@ -1257,6 +1355,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       )}
 
       {mostrarRespaldos && <PeriodBackups token={sesion.token} onClose={() => setMostrarRespaldos(false)} />}
+      {mostrarAsistencias && <AttendancePanel sesion={sesion} alumnos={estado.alumnos} onClose={() => setMostrarAsistencias(false)} />}
 
       {casaDetalle && (
         <div className='house-detail-modal' role='dialog' aria-modal='true' aria-labelledby='house-detail-title'>
@@ -1284,21 +1383,28 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         </div>
       )}
 
-      {mostrarCambioPassword && (
-        <div className='password-modal' role='dialog' aria-modal='true' aria-labelledby='password-modal-title'>
-          <form className='password-card' onSubmit={cambiarPasswordPropia}>
-            <button type='button' className='house-detail-close' onClick={() => setMostrarCambioPassword(false)} aria-label='Cerrar cambio de contraseña'>x</button>
-            <h2 id='password-modal-title'>Cambiar contraseña</h2>
-            <label>
-              <span>Nueva contraseña</span>
-              <input type='password' value={passwordNuevaAlumno} onChange={(event) => setPasswordNuevaAlumno(event.target.value)} minLength='3' autoComplete='new-password' />
+      {mostrarPerfil && (
+        <div className='password-modal' role='dialog' aria-modal='true' aria-labelledby='profile-modal-title'>
+          <div className='password-card student-profile-editor' style={{ '--house': casaActual.color, '--metal': casaActual.metal }}>
+            <button type='button' className='house-detail-close' onClick={() => setMostrarPerfil(false)} aria-label='Cerrar perfil'>×</button>
+            <h2 id='profile-modal-title'>Mi perfil</h2>
+            <label className='student-profile-photo-picker' aria-label='Cambiar foto de perfil'>
+              <span className='student-profile-avatar'>{fotoPerfil ? <img src={fotoPerfil} alt='Tu foto actual' /> : <span>{alumnoActual?.nombre?.charAt(0) || '?'}</span>}</span>
+              <span className='student-profile-camera'><FaCamera aria-hidden='true' /></span>
+              <input className='student-profile-photo-input' type='file' accept='image/*' disabled={perfilGuardando} onChange={guardarFotoPerfil} />
             </label>
-            <label>
-              <span>Confirmar contraseña</span>
-              <input type='password' value={passwordConfirmacionAlumno} onChange={(event) => setPasswordConfirmacionAlumno(event.target.value)} minLength='3' autoComplete='new-password' />
-            </label>
-            <button type='submit' className='authorize password'>Guardar contraseña</button>
-          </form>
+            {perfilError && <p className='student-profile-error' role='alert'>{perfilError}</p>}
+            <div className='student-profile-real-name'><span>Nombre</span><strong>{identidadPerfil?.nombreReal || 'Cargando nombre…'}</strong><small>Vinculado a la lista de clase</small></div>
+            <form onSubmit={guardarNombrePerfil}>
+              <label><span>Nombre de usuario</span><input value={nombrePerfil} onChange={(event) => setNombrePerfil(event.target.value)} minLength='2' maxLength='70' required /></label>
+              <button type='submit' className='authorize password' disabled={perfilGuardando}>Guardar usuario</button>
+            </form>
+            <form onSubmit={cambiarPasswordPropia}>
+              <label><span>Nueva contraseña</span><input type='password' value={passwordNuevaAlumno} onChange={(event) => setPasswordNuevaAlumno(event.target.value)} minLength='3' autoComplete='new-password' required /></label>
+              <label><span>Confirmar contraseña</span><input type='password' value={passwordConfirmacionAlumno} onChange={(event) => setPasswordConfirmacionAlumno(event.target.value)} minLength='3' autoComplete='new-password' required /></label>
+              <button type='submit' className='authorize password' disabled={perfilGuardando}>Guardar contraseña</button>
+            </form>
+          </div>
         </div>
       )}
 

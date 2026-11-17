@@ -1735,6 +1735,78 @@ button,
   width: 100%;
 }
 
+.student-view .hero-actions .student-profile-id {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(42vw, 380px);
+  min-height: 76px;
+  padding: 5px 14px 5px 5px;
+  border: 1px solid var(--metal);
+  border-radius: 999px 12px 12px 999px;
+  background: linear-gradient(110deg, var(--house), #1d1220);
+  color: #fff7df;
+  text-align: left;
+  cursor: pointer;
+}
+
+.student-profile-avatar {
+  flex: 0 0 66px;
+  width: 66px;
+  height: 66px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 2px solid #ffd66d;
+  border-radius: 50%;
+  background: #25354d;
+  color: #fff7df;
+  font: 800 32px/1 system-ui, sans-serif;
+}
+
+.student-profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.student-profile-info { min-width: 0; display: grid; gap: 2px; }
+.student-profile-info strong, .student-profile-info small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.student-profile-info strong { font: 800 clamp(17px, 1.4vw, 22px)/1.1 system-ui, sans-serif; }
+.student-profile-info small { color: #ffeeca; font: 600 clamp(12px, 1vw, 15px)/1.1 system-ui, sans-serif; }
+
+.student-profile-editor {
+  max-height: min(90dvh, 680px);
+  overflow-y: auto;
+  border-color: color-mix(in srgb, var(--metal) 55%, white);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--house) 53%, #0a1427), color-mix(in srgb, var(--house) 17%, #0a1427));
+  color: #fff8e8;
+}
+.student-profile-editor h2 { color: #fff8e8; }
+.student-profile-editor .house-detail-close { color: #fff8e8; }
+.student-profile-editor form { display: grid; gap: 10px; padding-top: 12px; border-top: 1px solid #ffffff40; }
+.student-profile-editor form label { color: #fff8e8; }
+.student-profile-editor form input { border: 1px solid #c7d5e0; border-radius: 7px; background: #fffdf5; color: #172234; }
+.student-profile-editor .student-profile-photo-picker {
+  position: relative;
+  justify-self: center;
+  width: 124px;
+  height: 124px;
+  cursor: pointer;
+  border-radius: 50%;
+}
+.student-profile-photo-picker .student-profile-avatar { width: 112px; height: 112px; font-size: 52px; border-color: color-mix(in srgb, var(--metal) 55%, white); }
+.student-profile-camera { position: absolute; right: 2px; bottom: 5px; display: grid; place-items: center; width: 37px; height: 37px; border: 2px solid #fff; border-radius: 50%; background: color-mix(in srgb, var(--house) 65%, #0a1427); color: #fff; box-shadow: 0 3px 10px #0008; }
+.student-profile-photo-input { position: absolute; width: 1px !important; height: 1px; overflow: hidden; clip-path: inset(50%); opacity: 0; }
+.student-profile-photo-picker:focus-within { outline: 3px solid #fff; outline-offset: 4px; }
+.student-profile-real-name { display: grid; gap: 3px; padding: 10px 12px; border: 1px solid #ffffff55; border-radius: 9px; background: #07132366; }
+.student-profile-real-name span { color: #ffe7ad; font-size: 13px; font-weight: 800; }
+.student-profile-real-name strong { color: #fff; font: 700 18px/1.25 system-ui, sans-serif; overflow-wrap: anywhere; }
+.student-profile-real-name small { color: #dce8f3; }
+.student-profile-error { margin: 0; color: #ffe1a0; font-weight: 800; }
+
+@media(max-width:760px) {
+  .student-view .hero-actions .student-profile-id { max-width: calc(100% - 82px); min-height: 68px; gap: 9px; padding-right: 10px; }
+  .student-view .hero-actions .student-profile-avatar { flex-basis: 58px; width: 58px; height: 58px; font-size: 28px; }
+  .student-profile-info strong { font-size: clamp(17px, 4.5vw, 21px); }
+  .student-profile-info small { font-size: 12px; }
+}
+
 @media(max-width:760px) {
   .student-view > .pocket-layout > .student-help-panel {
     display: none !important;
@@ -3717,14 +3789,29 @@ button,
 
 .house-detail-table { table-layout: fixed; }
 .house-detail-table th:first-child,
-.house-detail-table td:first-child { width: 46%; overflow-wrap: anywhere; }
+.house-detail-table td:first-child { width: 32%; overflow-wrap: anywhere; }
 .house-detail-table th:not(:first-child),
-.house-detail-table td:not(:first-child) { width: 18%; overflow-wrap: anywhere; }
+.house-detail-table td:not(:first-child) { width: 24%; overflow-wrap: anywhere; }
+.house-detail-table th:nth-child(2),
+.house-detail-table td:nth-child(2) { width: 8%; }
+.house-detail-table th:last-child,
+.house-detail-table td:last-child { width: 12%; }
 .house-detail-note { margin: 10px 0 0; color: #fff7df; font: 12px/1.4 Arial, sans-serif; }
 @media (max-width: 760px) {
   .house-detail-table-wrap { padding: 0 8px 12px; }
+  .house-detail-table { min-width: 0; width: 100%; }
+  .house-detail-table th:first-child,
+  .house-detail-table td:first-child { width: 42%; }
+  .house-detail-table th:nth-child(2),
+  .house-detail-table td:nth-child(2) { width: 8%; }
+  .house-detail-table th:nth-child(3),
+  .house-detail-table td:nth-child(3),
+  .house-detail-table th:nth-child(4),
+  .house-detail-table td:nth-child(4) { width: 17%; }
+  .house-detail-table th:last-child,
+  .house-detail-table td:last-child { width: 16%; }
   .house-detail-table th,
-  .house-detail-table td { padding: 7px 4px; }
+  .house-detail-table td { padding: 6px 2px; font-size: 11px; }
 }
 
 
@@ -3811,6 +3898,34 @@ button,
 .teacher-view .teacher-desktop-tab-switcher.student-tab-switcher {
   grid-template-columns:repeat(3,minmax(0,1fr)) !important;
   width:min(100%,540px) !important;
+}
+
+@media (max-width: 760px) {
+  .student-view .house-cup-hero {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 7px !important;
+    padding: 9px 12px !important;
+  }
+  .student-view .house-cup-hero .hero-actions {
+    order: -1;
+    width: 100% !important;
+    max-width: none !important;
+    justify-content: space-between !important;
+    flex-wrap: nowrap !important;
+  }
+  .student-view .house-cup-hero > div:first-child { min-width: 0; width: 100%; }
+  .student-view .house-cup-hero h1 {
+    width: 100%;
+    max-width: 100% !important;
+    margin: 0 !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap !important;
+    font-size: clamp(15px, 4.3vw, 21px) !important;
+    line-height: 1.15 !important;
+  }
 }
 .teacher-desktop-tabs-area:has(> .duel-arena) {
   grid-template-rows:auto minmax(0,1fr);
