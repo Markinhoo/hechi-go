@@ -13,7 +13,6 @@ import ExamPanel from './ExamPanel';
 import AttendancePanel from './AttendancePanel';
 import DuelArena from './DuelArena';
 import TeacherPointsControl from './TeacherPointsControl';
-import TeacherGalleons from './TeacherGalleons';
 import HouseScoresTable from './HouseScoresTable';
 import ScoreHistory from './ScoreHistory';
 import PeriodBackups from './PeriodBackups';
@@ -1078,7 +1077,13 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const teacherScoresPanel = <div className='teacher-scores-combined'>
     <h2>Puntajes y galeones</h2>
     {houseBoard}
-    <TeacherGalleons alumnos={estado.alumnos} onSave={editarGaleonesAlumno} onExemption={id => gestionarExencion(id,true)} exemptionBusy={bestiaBusy} />
+    <details className='teacher-exemptions'>
+      <summary>Exenciones del bestiario ({estado.alumnos.filter(a => a.exencionBestiario === 'pendiente').length} pendientes)</summary>
+      {estado.alumnos.filter(a => ['pendiente','autorizada'].includes(a.exencionBestiario)).map(a =>
+        <p key={a.id}>{a.nombre} · {a.exencionBestiario === 'autorizada' ? 'Exención autorizada' :
+          <button type='button' disabled={bestiaBusy} onClick={() => gestionarExencion(a.id,true)}>Autorizar exención</button>}</p>)}
+      {!estado.alumnos.some(a => ['pendiente','autorizada'].includes(a.exencionBestiario)) && <p>Sin solicitudes de exención.</p>}
+    </details>
   </div>;
   const rosterPanel = (
     <aside className='panel roster hall-panel'>
@@ -1372,7 +1377,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
               </div>
             </header>
             <HouseScoresTable ref={tablaPuntajesRef} key={casaDetalle.id} estado={estado} casaId={casaDetalle.id}
-              editable={sesion.tipo === 'maestro'} onSave={async (tabla, original) => {
+              editable={sesion.tipo === 'maestro'} onSaveGalleons={editarGaleonesAlumno} onSave={async (tabla, original) => {
                 const { data, error } = await db.rpc('actualizar_tabla_puntajes', {
                   p_token: sesion.token, p_casa_id: casaDetalle.id, p_alumnos: tabla.alumnos,
                   p_original: original, p_general_negativo: tabla.generalNegativo,

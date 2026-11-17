@@ -3798,9 +3798,19 @@ button,
 .house-detail-table td:last-child { width: 12%; }
 .house-score-student-name { display:block; color:#fff; font-weight:800; }
 .house-score-student-galleons { display:block; margin-top:3px; color:#ffdc82; font:700 12px/1.2 Arial,sans-serif; }
+.house-score-galleons-display { display:flex; flex-wrap:wrap; align-items:center; gap:3px 6px; }
+.house-detail-table .house-score-galleons-display button,
+.house-detail-table .house-score-galleons-editor button { min-height:24px; padding:2px 5px; border:1px solid #e1bc68; border-radius:5px; background:#3b5262; color:#fff4d4; font:700 11px/1.1 Arial,sans-serif; cursor:pointer; }
+.house-detail-table .house-score-galleons-display button:disabled,
+.house-detail-table .house-score-galleons-editor button:disabled { opacity:.5; cursor:default; }
+.house-score-galleons-editor { display:grid; gap:4px; margin-top:4px; }
+.house-score-galleons-editor > span { display:flex; flex-wrap:wrap; gap:3px; }
+.house-detail-table .house-score-galleons-input { width:100%; min-height:28px; padding:3px 5px; border:1px solid #ffdc82; border-radius:5px; background:#f8f0d6; color:#1c2934; font:700 13px Arial,sans-serif; }
 .teacher-scores-combined { display:grid; align-content:start; gap:18px; min-width:0; max-height:100%; overflow-y:auto; }
 .teacher-scores-combined > h2 { margin:0; color:#ffe1a0; font-size:clamp(22px,2vw,30px); }
-.teacher-scores-combined > .teacher-galleons { max-height:none; overflow:visible; }
+.teacher-exemptions { padding:12px; border:1px solid #b9975c; border-radius:10px; background:#203548; color:#fff4dc; }
+.teacher-exemptions summary { cursor:pointer; color:#ffe1a0; font:700 16px Arial,sans-serif; }
+.teacher-exemptions button { min-height:32px; margin-left:6px; border:1px solid #b9975c; border-radius:6px; background:#e0ad4f; color:#261809; font-weight:700; }
 .house-detail-note { margin: 10px 0 0; color: #fff7df; font: 12px/1.4 Arial, sans-serif; }
 @media (max-width: 760px) {
   .house-detail-table-wrap { padding: 0 8px 12px; }
