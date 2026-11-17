@@ -3873,6 +3873,19 @@ button,
 .score-history-legacy summary { cursor: pointer; }
 .score-history-legacy div { padding: 8px 0; }
 .score-history-legacy strong, .score-history-legacy small { display: block; }
+.score-history { color:#fff3d7; background:#1d2f42; border:1px solid #b99a63; }
+.score-history h2 { color:#ffe0a0; font-size:clamp(24px,2vw,32px); }
+.score-history .score-history-intro { color:#e7f2fa; font:16px/1.4 Arial,sans-serif; }
+.spell-history-list { display:grid; gap:10px; max-height:65dvh; overflow:auto; padding:2px; }
+.spell-history-entry { padding:13px 15px; border:1px solid #7494a9; border-left:5px solid #e5af4a; border-radius:9px; background:#29445a; }
+.spell-history-entry strong { display:block; color:#ffe0a0; font:700 19px/1.3 Arial,sans-serif; }
+.spell-history-entry span { display:block; margin-top:3px; color:#a9d9f7; font:700 15px/1.3 Arial,sans-serif; }
+.spell-history-entry p { margin:7px 0 0; color:#fff; font:16px/1.45 Arial,sans-serif; }
+.score-history-adjustments { margin-top:16px; padding:12px; border:1px solid #9cb9c8; border-radius:9px; }
+.score-history-adjustments summary { cursor:pointer; color:#ffe0a0; font:700 17px Arial,sans-serif; }
+.score-history-operation { color:#fff; font:15px/1.4 Arial,sans-serif; }
+.score-history-operation > strong { color:#ffe0a0; font-size:17px; }
+.score-history-operation > time,.score-history-operation li small { color:#d5e5f0; font-size:14px; }
 
 
 .connection-status { display: inline-block; font: 12px/1.3 Arial,sans-serif; padding: 4px 8px; border: 1px solid #bbddc766; border-radius: 8px; background: #14291d; color: #e6ffed; }
