@@ -4022,3 +4022,164 @@ button,
   }
 }
 .crecehuesos-options button { white-space:normal; color:#fff; background:#243c55; border:1px solid #93afc9; padding:12px; }
+
+/* Compact teacher header and desktop navigation drawer. */
+@media (min-width: 761px) {
+  .teacher-view .house-cup-hero {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 8px 14px !important;
+  }
+
+  .teacher-view .house-cup-hero .eyebrow {
+    display: none !important;
+  }
+
+  .teacher-view .house-cup-hero h1 {
+    font-size: clamp(26px, 2.4vw, 38px) !important;
+    line-height: 1.05 !important;
+    margin: 0 0 2px !important;
+    padding: 0 !important;
+  }
+
+  .teacher-view .house-cup-hero p {
+    margin: 2px 0 0 !important;
+    font-size: 14px !important;
+    line-height: 1.2 !important;
+  }
+
+  .teacher-view .hero-actions {
+    width: auto !important;
+    justify-content: flex-end !important;
+  }
+
+  .teacher-view .hero-actions .teacher-mobile-action {
+    display: none !important;
+  }
+
+  .teacher-view .hero-actions .teacher-menu-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 42px;
+    padding: 8px 14px;
+    border: 1px solid #d8b46c;
+    border-radius: 9px;
+    background: #172b3d;
+    color: #fff0ca;
+    font: 700 16px/1.2 Arial, sans-serif;
+    cursor: pointer;
+  }
+
+  .teacher-view .teacher-menu-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 130;
+    width: 100%;
+    height: 100dvh;
+    padding: 0;
+    border: 0;
+    background: rgba(5, 8, 17, .62);
+    cursor: default;
+  }
+
+  .teacher-view .teacher-desktop-menu {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 131;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    width: min(380px, 100vw);
+    height: 100dvh;
+    padding: 20px;
+    overflow-y: auto;
+    background: linear-gradient(160deg, #192b3d, #211327 75%);
+    border-left: 1px solid #d3a856;
+    box-shadow: -18px 0 42px rgba(0, 0, 0, .4);
+    color: #fff;
+  }
+
+  .teacher-menu-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .teacher-menu-heading h2 {
+    margin: 0;
+    color: #ffe0a0;
+    font: 700 23px/1.2 Arial, sans-serif;
+  }
+
+  .teacher-menu-heading button {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid #d3a856;
+    border-radius: 8px;
+    background: #253c50;
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .teacher-desktop-menu nav,
+  .teacher-menu-actions {
+    display: grid;
+    gap: 8px;
+  }
+
+  .teacher-desktop-menu nav button,
+  .teacher-menu-actions button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 13px;
+    border: 1px solid #bda46c88;
+    border-radius: 9px;
+    background: #ffffff14;
+    color: #f7f2e8;
+    text-align: left;
+    font: 700 16px/1.2 Arial, sans-serif;
+    cursor: pointer;
+  }
+
+  .teacher-desktop-menu nav button.active {
+    background: linear-gradient(120deg, #f4c85e, #cf902f);
+    color: #25150d;
+  }
+
+  .teacher-menu-actions {
+    padding-top: 15px;
+    border-top: 1px solid #ffffff3d;
+  }
+
+  .teacher-menu-actions > span {
+    margin-bottom: 2px;
+    color: #ffe0a0;
+    font: 700 14px/1.2 Arial, sans-serif;
+  }
+
+  .teacher-menu-actions button.danger-soft {
+    border-color: #d98585;
+    background: #62252f;
+  }
+
+  .teacher-view .teacher-menu-trigger:focus-visible,
+  .teacher-desktop-menu button:focus-visible {
+    outline: 3px solid #f4c85e;
+    outline-offset: 2px;
+  }
+}
+
+@media (max-width: 760px) {
+  .teacher-view .hero-actions .teacher-menu-trigger {
+    display: none !important;
+  }
+}

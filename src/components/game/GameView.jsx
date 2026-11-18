@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FaArrowLeft, FaArrowRight, FaBookOpen, FaCalendarDays, FaCamera, FaHouse, FaScroll, FaTrophy, FaWandMagicSparkles } from 'react-icons/fa6';
+import { FaArrowLeft, FaArrowRight, FaBars, FaBookOpen, FaCalendarDays, FaCamera, FaHouse, FaScroll, FaTrophy, FaWandMagicSparkles, FaXmark } from 'react-icons/fa6';
 import { bestiario, textoBeneficioBestia, precioBestia, RAREZAS_BESTIARIO } from '../../data/bestiaryData';
 import { CARTAS_ACTIVAS, casas, PLAYER_KEY } from '../../data/gameData';
 import { db } from '../../services/hechiApi';
@@ -56,13 +56,31 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const [chisteProcesando, setChisteProcesando] = useState(null);
   const chisteEnCurso = useRef(false);
   const [teacherTab, setTeacherTab] = useState('inicio');
+  const [teacherMenuOpen, setTeacherMenuOpen] = useState(false);
+  const teacherMenuTriggerRef = useRef(null);
+  const teacherMenuCloseRef = useRef(null);
   const [arenaMobile, setArenaMobile] = useState(() => window.matchMedia('(max-width: 760px)').matches);
   useEffect(() => {
     const screen = window.matchMedia('(max-width: 760px)');
-    const update = () => setArenaMobile(screen.matches);
+    const update = () => {
+      setArenaMobile(screen.matches);
+      if (screen.matches) setTeacherMenuOpen(false);
+    };
     screen.addEventListener('change', update);
     return () => screen.removeEventListener('change', update);
   }, []);
+  useEffect(() => {
+    if (!teacherMenuOpen) return undefined;
+    teacherMenuCloseRef.current?.focus();
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') {
+        setTeacherMenuOpen(false);
+        teacherMenuTriggerRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [teacherMenuOpen]);
   const [accionMaestro, setAccionMaestro] = useState(null);
   const [deshaciendo, setDeshaciendo] = useState(false);
   const deshacerEnCurso = useRef(false);
@@ -1238,20 +1256,39 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
             <span className='student-profile-avatar'>{fotoPerfil ? <img src={fotoPerfil} alt='' /> : <span>{alumnoActual?.nombre?.charAt(0) || '?'}</span>}</span>
             <span className='student-profile-info'><strong>{alumnoActual?.nombre}</strong><small>{casaActual.nombre} · {alumnoActual?.oportunidades || 0} oportunidades</small></span>
           </button>}
-          {sesion.tipo === 'maestro' && <button type='button' className='ghost' onClick={() => abrirAccionMaestro({ tipo: 'nuevo-parcial' })}>Nuevo parcial</button>}
-          {sesion.tipo === 'maestro' && <button type='button' className='ghost' onClick={() => setMostrarRespaldos(true)}>Respaldos</button>}
-          {sesion.tipo === 'maestro' && <button type='button' className='ghost' onClick={() => abrirAccionMaestro({ tipo: 'reiniciar-bestiario' })}>Reiniciar bestiario</button>}
-          {sesion.tipo === 'maestro' && <button type='button' className='ghost danger-soft' onClick={() => abrirAccionMaestro({ tipo: 'eliminar-clase' })}>Eliminar clase</button>}
-          <button type='button' className='ghost' onClick={salir}>Salir</button>
+          {sesion.tipo === 'maestro' && <button type='button' className='teacher-menu-trigger' ref={teacherMenuTriggerRef} onClick={() => setTeacherMenuOpen(true)} aria-expanded={teacherMenuOpen} aria-controls='teacher-desktop-menu'><FaBars /> Menú</button>}
+          {sesion.tipo === 'maestro' && <button type='button' className='ghost teacher-mobile-action' onClick={() => abrirAccionMaestro({ tipo: 'nuevo-parcial' })}>Nuevo parcial</button>}
+          {sesion.tipo === 'maestro' && <button type='button' className='ghost teacher-mobile-action' onClick={() => setMostrarRespaldos(true)}>Respaldos</button>}
+          {sesion.tipo === 'maestro' && <button type='button' className='ghost teacher-mobile-action' onClick={() => abrirAccionMaestro({ tipo: 'reiniciar-bestiario' })}>Reiniciar bestiario</button>}
+          {sesion.tipo === 'maestro' && <button type='button' className='ghost danger-soft teacher-mobile-action' onClick={() => abrirAccionMaestro({ tipo: 'eliminar-clase' })}>Eliminar clase</button>}
+          <button type='button' className={'ghost' + (sesion.tipo === 'maestro' ? ' teacher-mobile-action' : '')} onClick={salir}>Salir</button>
         </div>
-        {sesion.tipo === 'maestro' && <nav className='student-tab-switcher teacher-desktop-tab-switcher' aria-label='Secciones del maestro'>
-          {teacherTabs.filter((tab) => tab.id !== 'hechizos').map((tab) => (
-            <button key={tab.id} type='button' className={teacherTab === tab.id ? 'active' : ''} onClick={() => setTeacherTab(tab.id)}>
-              {tab.icon}<span>{tab.label}</span>
-            </button>
-          ))}
-        </nav>}
       </header>}
+
+      {sesion.tipo === 'maestro' && !arenaMobile && teacherMenuOpen && <>
+        <button type='button' className='teacher-menu-backdrop' aria-label='Cerrar menú del maestro' onClick={() => setTeacherMenuOpen(false)} />
+        <aside id='teacher-desktop-menu' className='teacher-desktop-menu' role='dialog' aria-modal='true' aria-label='Menú del maestro'>
+          <div className='teacher-menu-heading'>
+            <h2>Menú del maestro</h2>
+            <button type='button' ref={teacherMenuCloseRef} onClick={() => setTeacherMenuOpen(false)} aria-label='Cerrar menú'><FaXmark /></button>
+          </div>
+          <nav aria-label='Secciones del maestro'>
+            {teacherTabs.filter((tab) => tab.id !== 'hechizos').map((tab) => (
+              <button key={tab.id} type='button' className={teacherTab === tab.id ? 'active' : ''} onClick={() => { setTeacherTab(tab.id); setTeacherMenuOpen(false); }}>
+                {tab.icon}<span>{tab.label}</span>
+              </button>
+            ))}
+          </nav>
+          <div className='teacher-menu-actions'>
+            <span>Administración</span>
+            <button type='button' onClick={() => { setTeacherMenuOpen(false); abrirAccionMaestro({ tipo: 'nuevo-parcial' }); }}>Nuevo parcial</button>
+            <button type='button' onClick={() => { setTeacherMenuOpen(false); setMostrarRespaldos(true); }}>Respaldos</button>
+            <button type='button' onClick={() => { setTeacherMenuOpen(false); abrirAccionMaestro({ tipo: 'reiniciar-bestiario' }); }}>Reiniciar bestiario</button>
+            <button type='button' className='danger-soft' onClick={() => { setTeacherMenuOpen(false); abrirAccionMaestro({ tipo: 'eliminar-clase' }); }}>Eliminar clase</button>
+            <button type='button' onClick={() => { setTeacherMenuOpen(false); salir(); }}>Salir</button>
+          </div>
+        </aside>
+      </>}
 
       {sesion.tipo === 'alumno' ? (
         <section className='student-tabs-area'>
