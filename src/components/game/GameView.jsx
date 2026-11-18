@@ -19,6 +19,7 @@ import PeriodBackups from './PeriodBackups';
 import ConnectionStatus from '../ui/ConnectionStatus';
 import { leerConexion } from '../../services/connectionStore';
 import { descargarRespaldo } from '../../utils/periodBackup';
+import { moveProfilePhoto, saveProfilePhoto } from '../../utils/profilePhotoCache';
 import { esDuplicadoDeMochila, tieneCartaGuardada } from '../../utils/backpackCards';
 
 function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setMensaje, onCameraFlash }) {
@@ -282,9 +283,14 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     if (sesion.tipo !== 'alumno') return;
     let activo = true;
     db.rpc('perfil_obtener_foto', { p_token: sesion.token, p_alumno_id: sesion.alumnoId, p_password: sesion.password })
-      .then(({ data, error }) => { if (activo && !error) setFotoPerfil(data || null); });
+      .then(({ data, error }) => {
+        if (activo && !error) {
+          setFotoPerfil(data || null);
+          if (data) saveProfilePhoto(sesion.token, sesion.nombre, data);
+        }
+      });
     return () => { activo = false; };
-  }, [sesion.tipo, sesion.token, sesion.alumnoId, sesion.password]);
+  }, [sesion.tipo, sesion.token, sesion.alumnoId, sesion.password, sesion.nombre]);
 
   const abrirPerfil = () => {
     setNombrePerfil(estado.alumnos.find((item) => item.id === sesion.alumnoId)?.nombre || sesion.nombre || '');
@@ -307,6 +313,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     setPerfilGuardando(false);
     if (error) return setPerfilError(error.message);
     const sesionActualizada = { ...sesion, nombre: nombrePerfil.trim() };
+    moveProfilePhoto(sesion.token, sesion.nombre, nombrePerfil.trim());
     setSesion(sesionActualizada);
     guardarLocal(PLAYER_KEY, sesionActualizada);
     setEstado(data);
@@ -335,6 +342,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       });
       if (error) throw error;
       setFotoPerfil(foto);
+      saveProfilePhoto(sesion.token, sesion.nombre, foto);
       setMensaje('Foto de perfil actualizada.');
     } catch (error) { setPerfilError(error.message); }
     finally { setPerfilGuardando(false); }

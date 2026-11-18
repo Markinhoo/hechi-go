@@ -7,7 +7,7 @@ export function actualizarConexion(cambios) {
   for (const fn of escuchas) fn();
 }
 export const rpcEsLectura = (nombre) => /^(cargar_|estado_|listar_|obtener_)/.test(nombre) ||
-  ['riddikulus_pendientes','riddikulus_sigue_pendiente','kahoot_listar_fotos','perfil_obtener_foto','perfil_obtener_identidad','asistencia_estado'].includes(nombre);
+  ['riddikulus_pendientes','riddikulus_sigue_pendiente','kahoot_listar_fotos','perfil_obtener_foto','perfil_vista_login','perfil_obtener_identidad','asistencia_estado'].includes(nombre);
 export function iniciarPeticion(escritura) {
   if (escritura) actualizarConexion({pendientes:estado.pendientes+1,revision:estado.revision+1,errorGuardado:''});
 }

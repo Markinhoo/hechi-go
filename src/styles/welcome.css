@@ -1,0 +1,105 @@
+.crest-auth-shell .unified-login-card .login-identity {
+  display: grid;
+  place-items: center;
+  width: clamp(104px, 13vw, 142px);
+  height: clamp(104px, 13vw, 142px);
+  margin: 0 auto 14px;
+  padding: 5px;
+  border: 2px solid #f2cc70;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 5px #f7d98229, 0 10px 30px #0008;
+  overflow: hidden;
+}
+
+.login-identity img,
+.welcome-avatar-ring img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.login-profile-photo,
+.welcome-profile-photo { object-fit: cover; }
+.login-crest-photo,
+.welcome-crest-photo { object-fit: contain; background: #fff; }
+
+.welcome-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: radial-gradient(circle at 50% 48%, #295350ba, #101827ec 58%, #0b1024f7);
+  backdrop-filter: blur(16px);
+  animation: welcome-dismiss .5s ease 1.6s forwards;
+}
+
+.welcome-content {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  text-align: center;
+  animation: welcome-arrive .65s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+.welcome-content::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 10%;
+  left: 50%;
+  width: min(72vw, 390px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffdf8c55, #72d9c722 42%, transparent 70%);
+  transform: translate(-50%, -27%);
+  animation: welcome-halo 1.8s ease-out both;
+}
+
+.welcome-avatar-ring {
+  position: relative;
+  width: clamp(128px, 20vw, 180px);
+  height: clamp(128px, 20vw, 180px);
+  padding: 8px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 32px #ffd98388, 0 22px 55px #0009;
+}
+
+.welcome-avatar-ring::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: conic-gradient(#f7c75e, #fef2bf, #3ad6b9, #f7c75e);
+  z-index: -1;
+  animation: welcome-spin 1.5s linear infinite;
+}
+
+.welcome-content p {
+  margin: 12px 0 0;
+  color: #ffe5a5;
+  font: 400 clamp(42px, 8vw, 72px)/1 'Harry P', Georgia, serif;
+  text-shadow: 0 4px 18px #000a;
+}
+
+.welcome-content strong {
+  max-width: min(90vw, 600px);
+  color: #fff;
+  font: 400 clamp(25px, 5vw, 42px)/1.1 'Harry P', Georgia, serif;
+  overflow-wrap: anywhere;
+}
+
+@keyframes welcome-arrive { from { opacity: 0; transform: translateY(26px) scale(.78); filter: blur(10px); } to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } }
+@keyframes welcome-halo { from { opacity: 0; scale: .5; } to { opacity: 1; scale: 1.2; } }
+@keyframes welcome-spin { to { transform: rotate(360deg); } }
+@keyframes welcome-dismiss { to { opacity: 0; visibility: hidden; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .welcome-screen { animation: none; }
+  .welcome-content, .welcome-content::before, .welcome-avatar-ring::before { animation: none; }
+}

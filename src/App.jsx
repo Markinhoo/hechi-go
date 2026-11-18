@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import LoginAcceso from './components/auth/LoginAcceso';
+import WelcomeTransition from './components/auth/WelcomeTransition';
 import MaestroAcceso from './components/auth/MaestroAcceso';
 import GameView from './components/game/GameView';
 import MagicSurface from './components/layout/MagicSurface';
@@ -11,6 +12,8 @@ function App() {
   const [mensaje, setMensaje] = useState('');
   const [destellos, setDestellos] = useState([]);
   const [flashesPantalla, setFlashesPantalla] = useState([]);
+  const [bienvenida, setBienvenida] = useState(null);
+  const cerrarBienvenida = useCallback(() => setBienvenida(null), []);
 
   const crearDestello = (event, intenso = false) => {
     const x = event.clientX;
@@ -60,16 +63,19 @@ function App() {
     setEstado(data);
     setModo('juego');
     setMensaje('Comparte este token con tus alumnos: ' + data.token);
+    setBienvenida({ name: 'Maestro', photo: null });
   };
 
-  const entrarAlumno = (data, credenciales) => {
+  const entrarAlumno = (data, credenciales, photo) => {
     setSesion({ tipo: 'alumno', ...credenciales });
     setEstado(data);
     setModo('juego');
     setMensaje('Bienvenido al gran salon. Espera autorizacion para abrir carta.');
+    setBienvenida({ name: data.alumnos?.find((item) => item.id === credenciales.alumnoId)?.nombre || credenciales.nombre, photo });
   };
 
   const volverLoginPrincipal = () => {
+    setBienvenida(null);
     setSesion(null);
     setEstado(null);
     setModo('inicio');
@@ -95,7 +101,10 @@ function App() {
     );
   }
 
-  return <MagicSurface destellos={destellos} flashesPantalla={flashesPantalla} onSpark={crearDestello}>{contenido}</MagicSurface>;
+  return <MagicSurface destellos={destellos} flashesPantalla={flashesPantalla} onSpark={crearDestello}>
+    {contenido}
+    {bienvenida && <WelcomeTransition name={bienvenida.name} photo={bienvenida.photo} onComplete={cerrarBienvenida} />}
+  </MagicSurface>;
 }
 
 export default App;
