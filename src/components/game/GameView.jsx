@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FaArrowLeft, FaArrowRight, FaBookOpen, FaCalendarDays, FaCamera, FaHouse, FaPlus, FaScroll, FaTrophy, FaWandMagicSparkles, FaXmark } from 'react-icons/fa6';
+import { FaArrowLeft, FaArrowRight, FaBookOpen, FaCalendarDays, FaCamera, FaDoorOpen, FaGamepad, FaHouse, FaPlus, FaScroll, FaTrophy, FaWandMagicSparkles, FaXmark } from 'react-icons/fa6';
 import { bestiario, textoBeneficioBestia, precioBestia, RAREZAS_BESTIARIO } from '../../data/bestiaryData';
 import { CARTAS_ACTIVAS, casas, PLAYER_KEY } from '../../data/gameData';
 import { db } from '../../services/hechiApi';
@@ -1056,7 +1056,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     { id: 'inicio', label: 'Inicio', icon: <FaHouse /> },
     { id: 'puntaje', label: 'Puntaje', icon: <FaTrophy /> },
     { id: 'bestiario', label: 'Bestiario', icon: <FaBookOpen /> },
-    { id: 'kahoot', label: 'Kahoot', icon: <FaTrophy /> },
+    { id: 'kahoot', label: 'Kahoot', icon: <FaGamepad /> },
     { id: 'examen', label: 'Examen', icon: <FaScroll /> },
     { id: 'arena', label: 'Arena', icon: <FaWandMagicSparkles /> }
   ];
@@ -1064,7 +1064,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
     { id: 'inicio', label: 'Inicio', icon: <FaWandMagicSparkles /> },
     { id: 'puntajes', label: 'Puntajes', icon: <FaTrophy /> },
     { id: 'hechizos', label: 'Hechizos', icon: <FaScroll /> },
-    { id: 'kahoot', label: 'Kahoot', icon: <FaTrophy /> },
+    { id: 'kahoot', label: 'Kahoot', icon: <FaGamepad /> },
     { id: 'examen', label: 'Examen', icon: <FaScroll /> },
     { id: 'arena', label: 'Arena', icon: <FaWandMagicSparkles /> }
   ];
@@ -1281,7 +1281,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
             <button type='button' onClick={() => { setTeacherMenuOpen(false); setMostrarRespaldos(true); }} aria-label='Respaldos' data-tooltip='Respaldos'><FaBookOpen /><span className='teacher-menu-label'>Respaldos</span></button>
             <button type='button' onClick={() => { setTeacherMenuOpen(false); abrirAccionMaestro({ tipo: 'reiniciar-bestiario' }); }} aria-label='Reiniciar bestiario' data-tooltip='Reiniciar bestiario'><FaWandMagicSparkles /><span className='teacher-menu-label'>Reiniciar bestiario</span></button>
             <button type='button' className='danger-soft' onClick={() => { setTeacherMenuOpen(false); abrirAccionMaestro({ tipo: 'eliminar-clase' }); }} aria-label='Eliminar clase' data-tooltip='Eliminar clase'><FaXmark /><span className='teacher-menu-label'>Eliminar clase</span></button>
-            <button type='button' onClick={() => { setTeacherMenuOpen(false); salir(); }} aria-label='Salir' data-tooltip='Salir'><FaArrowRight /><span className='teacher-menu-label'>Salir</span></button>
+            <button type='button' onClick={() => { setTeacherMenuOpen(false); salir(); }} aria-label='Salir' data-tooltip='Salir'><FaDoorOpen /><span className='teacher-menu-label'>Salir</span></button>
           </div>
         </aside>
       }

@@ -4059,27 +4059,26 @@ button,
   }
 
   .teacher-view.game-shell {
-    padding-left: 70px !important;
+    padding-left: 82px !important;
   }
 
   .teacher-view .teacher-desktop-menu {
     position: fixed;
-    top: 50%;
-    left: 12px;
+    top: 8px;
+    bottom: 8px;
+    left: 8px;
     z-index: 110;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    width: 44px;
-    max-height: calc(100dvh - 24px);
-    padding: 6px 5px;
+    gap: 8px;
+    width: 62px;
+    padding: 10px 7px;
     overflow: visible;
     background: linear-gradient(165deg, #203c7c, #111e4a 56%, #0b1739);
     border: 1px solid #5268a466;
-    border-radius: 24px;
+    border-radius: 30px;
     box-shadow: 0 14px 30px #08143555, inset 0 1px #ffffff38;
     color: #fff;
-    transform: translateY(-50%);
     transition: width .24s ease, box-shadow .24s ease;
   }
 
@@ -4095,14 +4094,16 @@ button,
   }
 
   .teacher-view .teacher-desktop-menu .teacher-menu-trigger {
-    background: #778de0a8;
     color: #fff;
   }
 
   .teacher-desktop-menu nav,
   .teacher-menu-actions {
-    display: grid;
-    gap: 4px;
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    justify-content: space-around;
+    gap: 3px;
   }
 
   .teacher-desktop-menu button {
@@ -4112,36 +4113,60 @@ button,
     justify-content: center;
     gap: 10px;
     width: 100%;
-    height: 32px;
-    min-height: 32px;
+    height: 46px;
+    min-height: 46px;
     padding: 0;
     border: 0;
-    border-radius: 50%;
+    border-radius: 0;
     background: transparent;
     color: #aebee5;
     text-align: left;
     font: 700 14px/1.2 Arial, sans-serif;
     cursor: pointer;
-    transition: background .2s ease, color .2s ease, transform .2s ease, box-shadow .2s ease;
+    transition: color .2s ease, transform .2s ease;
   }
 
   .teacher-desktop-menu button svg {
-    flex: 0 0 14px;
-    width: 14px;
-    height: 14px;
+    position: relative;
+    z-index: 1;
+    flex: 0 0 20px;
+    width: 20px;
+    height: 20px;
+    transition: filter .2s ease, transform .2s ease;
   }
 
   .teacher-desktop-menu button:hover {
-    background: #c7d4ff3d;
+    background: transparent;
     color: #fff;
-    transform: scale(1.09);
-    box-shadow: 0 0 11px #adc3ff66;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .teacher-desktop-menu button:hover svg,
+  .teacher-desktop-menu button:focus-visible svg {
+    transform: scale(1.16);
+    filter: drop-shadow(0 0 6px #d8e6ff);
   }
 
   .teacher-desktop-menu nav button.active {
+    color: #fff;
+  }
+
+  .teacher-desktop-menu nav button.active::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 1px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
     background: radial-gradient(circle at 35% 28%, #fff, #e5ecff 55%, #bacaf5);
-    color: #14213b;
     box-shadow: 0 0 0 3px #dfe9ff25, 0 0 15px 4px #b9c9ffbd;
+    transform: translateY(-50%);
+  }
+
+  .teacher-desktop-menu nav button.active svg {
+    color: #14213b;
   }
 
   .teacher-desktop-menu:not(.is-expanded) button::after {
@@ -4183,14 +4208,11 @@ button,
 
   .teacher-desktop-menu.is-expanded button {
     justify-content: flex-start;
-    height: 38px;
-    min-height: 38px;
-    padding: 0 12px;
-    border-radius: 12px;
+    padding: 0 13px;
   }
 
   .teacher-menu-actions {
-    padding-top: 6px;
+    padding-top: 8px;
     border-top: 1px solid #dce6ff24;
   }
 
@@ -4205,8 +4227,15 @@ button,
   }
 
   .teacher-desktop-menu button:focus-visible {
-    outline: 2px solid #fff0b8;
-    outline-offset: -2px;
+    outline: none;
+  }
+
+  @media (max-height: 620px) {
+    .teacher-view .teacher-desktop-menu { overflow-y: auto; }
+    .teacher-desktop-menu nav,
+    .teacher-menu-actions { flex: 0 0 auto; gap: 2px; }
+    .teacher-desktop-menu button { height: 38px; min-height: 38px; }
+    .teacher-desktop-menu nav button.active::before { width: 38px; height: 38px; left: 4px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
