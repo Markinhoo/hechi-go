@@ -4119,6 +4119,7 @@ button,
     border: 0;
     border-radius: 0;
     background: transparent;
+    box-shadow: none;
     color: #aebee5;
     text-align: left;
     font: 700 14px/1.2 Arial, sans-serif;
@@ -4194,16 +4195,12 @@ button,
   }
 
   .teacher-desktop-menu .teacher-menu-label {
-    width: 0;
-    opacity: 0;
+    display: none;
     white-space: nowrap;
-    overflow: hidden;
-    transition: opacity .15s ease;
   }
 
   .teacher-desktop-menu.is-expanded .teacher-menu-label {
-    width: auto;
-    opacity: 1;
+    display: inline;
   }
 
   .teacher-desktop-menu.is-expanded button {
@@ -4213,7 +4210,6 @@ button,
 
   .teacher-menu-actions {
     padding-top: 8px;
-    border-top: 1px solid #dce6ff24;
   }
 
   .teacher-menu-actions > span {
@@ -4240,8 +4236,7 @@ button,
 
   @media (prefers-reduced-motion: reduce) {
     .teacher-desktop-menu,
-    .teacher-desktop-menu button,
-    .teacher-desktop-menu .teacher-menu-label {
+    .teacher-desktop-menu button {
       transition: none;
     }
   }
