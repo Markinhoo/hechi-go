@@ -57,8 +57,6 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   const chisteEnCurso = useRef(false);
   const [teacherTab, setTeacherTab] = useState('inicio');
   const [teacherMenuOpen, setTeacherMenuOpen] = useState(false);
-  const teacherMenuTriggerRef = useRef(null);
-  const teacherMenuCloseRef = useRef(null);
   const [arenaMobile, setArenaMobile] = useState(() => window.matchMedia('(max-width: 760px)').matches);
   useEffect(() => {
     const screen = window.matchMedia('(max-width: 760px)');
@@ -71,11 +69,10 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
   }, []);
   useEffect(() => {
     if (!teacherMenuOpen) return undefined;
-    teacherMenuCloseRef.current?.focus();
     const closeOnEscape = (event) => {
       if (event.key === 'Escape') {
         setTeacherMenuOpen(false);
-        teacherMenuTriggerRef.current?.focus();
+        if (document.activeElement?.closest?.('#teacher-desktop-menu')) document.activeElement.blur();
       }
     };
     document.addEventListener('keydown', closeOnEscape);
@@ -1256,7 +1253,6 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
             <span className='student-profile-avatar'>{fotoPerfil ? <img src={fotoPerfil} alt='' /> : <span>{alumnoActual?.nombre?.charAt(0) || '?'}</span>}</span>
             <span className='student-profile-info'><strong>{alumnoActual?.nombre}</strong><small>{casaActual.nombre} · {alumnoActual?.oportunidades || 0} oportunidades</small></span>
           </button>}
-          {sesion.tipo === 'maestro' && <button type='button' className='teacher-menu-trigger' ref={teacherMenuTriggerRef} onClick={() => setTeacherMenuOpen(true)} aria-expanded={teacherMenuOpen} aria-controls='teacher-desktop-menu'><FaBars /> Menú</button>}
           {sesion.tipo === 'maestro' && <button type='button' className='ghost teacher-mobile-action' onClick={() => abrirAccionMaestro({ tipo: 'nuevo-parcial' })}>Nuevo parcial</button>}
           {sesion.tipo === 'maestro' && <button type='button' className='ghost teacher-mobile-action' onClick={() => setMostrarRespaldos(true)}>Respaldos</button>}
           {sesion.tipo === 'maestro' && <button type='button' className='ghost teacher-mobile-action' onClick={() => abrirAccionMaestro({ tipo: 'reiniciar-bestiario' })}>Reiniciar bestiario</button>}
@@ -1265,30 +1261,30 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
         </div>
       </header>}
 
-      {sesion.tipo === 'maestro' && !arenaMobile && teacherMenuOpen && <>
-        <button type='button' className='teacher-menu-backdrop' aria-label='Cerrar menú del maestro' onClick={() => setTeacherMenuOpen(false)} />
-        <aside id='teacher-desktop-menu' className='teacher-desktop-menu' role='dialog' aria-modal='true' aria-label='Menú del maestro'>
+      {sesion.tipo === 'maestro' && !arenaMobile &&
+        <aside id='teacher-desktop-menu' className={'teacher-desktop-menu' + (teacherMenuOpen ? ' is-expanded' : '')} aria-label='Menú del maestro'>
           <div className='teacher-menu-heading'>
-            <h2>Menú del maestro</h2>
-            <button type='button' ref={teacherMenuCloseRef} onClick={() => setTeacherMenuOpen(false)} aria-label='Cerrar menú'><FaXmark /></button>
+            <button type='button' className='teacher-menu-trigger' onClick={(event) => { setTeacherMenuOpen((open) => !open); if (teacherMenuOpen) event.currentTarget.blur(); }} aria-expanded={teacherMenuOpen} aria-controls='teacher-desktop-menu' aria-label={teacherMenuOpen ? 'Contraer menú' : 'Expandir menú'} title={teacherMenuOpen ? 'Contraer menú' : 'Expandir menú'}>
+              {teacherMenuOpen ? <FaXmark /> : <FaBars />}<span className='teacher-menu-label'>Menú</span>
+            </button>
           </div>
           <nav aria-label='Secciones del maestro'>
             {teacherTabs.filter((tab) => tab.id !== 'hechizos').map((tab) => (
-              <button key={tab.id} type='button' className={teacherTab === tab.id ? 'active' : ''} onClick={() => { setTeacherTab(tab.id); setTeacherMenuOpen(false); }}>
-                {tab.icon}<span>{tab.label}</span>
+              <button key={tab.id} type='button' className={teacherTab === tab.id ? 'active' : ''} onClick={() => { setTeacherTab(tab.id); setTeacherMenuOpen(false); }} aria-label={tab.label} title={tab.label} aria-current={teacherTab === tab.id ? 'page' : undefined}>
+                {tab.icon}<span className='teacher-menu-label'>{tab.label}</span>
               </button>
             ))}
           </nav>
           <div className='teacher-menu-actions'>
-            <span>Administración</span>
-            <button type='button' onClick={() => { setTeacherMenuOpen(false); abrirAccionMaestro({ tipo: 'nuevo-parcial' }); }}>Nuevo parcial</button>
-            <button type='button' onClick={() => { setTeacherMenuOpen(false); setMostrarRespaldos(true); }}>Respaldos</button>
-            <button type='button' onClick={() => { setTeacherMenuOpen(false); abrirAccionMaestro({ tipo: 'reiniciar-bestiario' }); }}>Reiniciar bestiario</button>
-            <button type='button' className='danger-soft' onClick={() => { setTeacherMenuOpen(false); abrirAccionMaestro({ tipo: 'eliminar-clase' }); }}>Eliminar clase</button>
-            <button type='button' onClick={() => { setTeacherMenuOpen(false); salir(); }}>Salir</button>
+            <span className='teacher-menu-label'>Administración</span>
+            <button type='button' onClick={() => { setTeacherMenuOpen(false); abrirAccionMaestro({ tipo: 'nuevo-parcial' }); }} aria-label='Nuevo parcial' title='Nuevo parcial'><FaCalendarDays /><span className='teacher-menu-label'>Nuevo parcial</span></button>
+            <button type='button' onClick={() => { setTeacherMenuOpen(false); setMostrarRespaldos(true); }} aria-label='Respaldos' title='Respaldos'><FaBookOpen /><span className='teacher-menu-label'>Respaldos</span></button>
+            <button type='button' onClick={() => { setTeacherMenuOpen(false); abrirAccionMaestro({ tipo: 'reiniciar-bestiario' }); }} aria-label='Reiniciar bestiario' title='Reiniciar bestiario'><FaWandMagicSparkles /><span className='teacher-menu-label'>Reiniciar bestiario</span></button>
+            <button type='button' className='danger-soft' onClick={() => { setTeacherMenuOpen(false); abrirAccionMaestro({ tipo: 'eliminar-clase' }); }} aria-label='Eliminar clase' title='Eliminar clase'><FaXmark /><span className='teacher-menu-label'>Eliminar clase</span></button>
+            <button type='button' onClick={() => { setTeacherMenuOpen(false); salir(); }} aria-label='Salir' title='Salir'><FaArrowRight /><span className='teacher-menu-label'>Salir</span></button>
           </div>
         </aside>
-      </>}
+      }
 
       {sesion.tipo === 'alumno' ? (
         <section className='student-tabs-area'>
