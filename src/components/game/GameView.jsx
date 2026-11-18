@@ -1226,7 +1226,7 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
 
   return (
     <main className={'game-shell app-fixed mobile-scroll-page ' + (sesion.tipo === 'alumno' ? 'student-view' : 'teacher-view') + ((sesion.tipo === 'alumno' ? studentTab : teacherTab) === 'arena' ? ' arena-focus' : '')}>
-      {(sesion.tipo === 'alumno' ? studentTab : teacherTab) !== 'arena' && <header className='hero compact-hero house-cup-hero' style={heroStyle}>
+      {((sesion.tipo === 'alumno' ? studentTab : teacherTab) !== 'arena' || (sesion.tipo === 'maestro' && !arenaMobile)) && <header className='hero compact-hero house-cup-hero' style={heroStyle}>
         <div>
           {sesion.tipo === 'maestro' && <span className='eyebrow'><FaWandMagicSparkles /> Vista maestro</span>}
           <h1>{tituloClase}</h1>
@@ -1244,6 +1244,13 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
           {sesion.tipo === 'maestro' && <button type='button' className='ghost danger-soft' onClick={() => abrirAccionMaestro({ tipo: 'eliminar-clase' })}>Eliminar clase</button>}
           <button type='button' className='ghost' onClick={salir}>Salir</button>
         </div>
+        {sesion.tipo === 'maestro' && <nav className='student-tab-switcher teacher-desktop-tab-switcher' aria-label='Secciones del maestro'>
+          {teacherTabs.filter((tab) => tab.id !== 'hechizos').map((tab) => (
+            <button key={tab.id} type='button' className={teacherTab === tab.id ? 'active' : ''} onClick={() => setTeacherTab(tab.id)}>
+              {tab.icon}<span>{tab.label}</span>
+            </button>
+          ))}
+        </nav>}
       </header>}
 
       {sesion.tipo === 'alumno' ? (
@@ -1316,13 +1323,6 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       ) : (
         <>
           <section className='teacher-desktop-tabs-area'>
-            <div className='student-tab-switcher teacher-desktop-tab-switcher'>
-              {teacherTabs.filter((tab) => tab.id === 'inicio' || tab.id === 'puntajes' || tab.id === 'kahoot' || tab.id === 'examen' || tab.id === 'arena').map((tab) => (
-                <button key={tab.id} type='button' className={teacherTab === tab.id ? 'active' : ''} onClick={() => setTeacherTab(tab.id)}>
-                  {tab.icon}<span>{tab.label}</span>
-                </button>
-              ))}
-            </div>
             {teacherTab === 'inicio' && (
               <section className='teacher-desktop-class-layout'>
                 {houseBoard}

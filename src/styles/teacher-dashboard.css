@@ -3956,7 +3956,7 @@ button,
   }
 }
 .teacher-desktop-tabs-area:has(> .duel-arena) {
-  grid-template-rows:auto minmax(0,1fr);
+  grid-template-rows:minmax(0,1fr);
   min-height:0;
   overflow:hidden;
 }
@@ -3981,6 +3981,33 @@ button,
     min-width: 0 !important;
     flex-wrap: wrap !important;
     gap: 7px !important;
+  }
+
+  .teacher-view .house-cup-hero .teacher-desktop-tab-switcher.student-tab-switcher {
+    grid-column: 1 / -1;
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    width: min(100%, 980px) !important;
+    margin: 4px auto 0 !important;
+    gap: 8px !important;
+  }
+
+  .teacher-view .house-cup-hero .teacher-desktop-tab-switcher button {
+    min-width: 0;
+  }
+
+  .teacher-view.game-shell.arena-focus.app-fixed {
+    grid-template-rows: auto minmax(0, 1fr) !important;
+  }
+
+  .teacher-desktop-tabs-area {
+    grid-template-rows: minmax(0, 1fr) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .teacher-view .house-cup-hero .teacher-desktop-tab-switcher {
+    display: none !important;
   }
 }
 
