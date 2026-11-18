@@ -4059,34 +4059,34 @@ button,
   }
 
   .teacher-view.game-shell {
-    padding-left: 88px !important;
+    padding-left: 70px !important;
   }
 
   .teacher-view .teacher-desktop-menu {
     position: fixed;
-    top: 12px;
-    bottom: 12px;
-    left: 10px;
+    top: 50%;
+    left: 12px;
     z-index: 110;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    width: 64px;
-    padding: 10px 7px;
-    overflow-x: hidden;
-    overflow-y: auto;
-    background: linear-gradient(160deg, rgba(18, 41, 75, .94), rgba(21, 21, 56, .96));
-    border: 1px solid #d3beef55;
-    border-radius: 22px;
-    box-shadow: 0 14px 35px #03071877, inset 0 1px #ffffff38;
-    backdrop-filter: blur(18px);
+    gap: 6px;
+    width: 44px;
+    max-height: calc(100dvh - 24px);
+    padding: 6px 5px;
+    overflow: visible;
+    background: linear-gradient(165deg, #203c7c, #111e4a 56%, #0b1739);
+    border: 1px solid #5268a466;
+    border-radius: 24px;
+    box-shadow: 0 14px 30px #08143555, inset 0 1px #ffffff38;
     color: #fff;
-    transition: width .25s ease, box-shadow .25s ease;
+    transform: translateY(-50%);
+    transition: width .24s ease, box-shadow .24s ease;
   }
 
-  .teacher-view .teacher-desktop-menu:is(:hover, :focus-within, .is-expanded) {
-    width: 260px;
-    box-shadow: 12px 16px 40px #03071888, inset 0 1px #ffffff38;
+  .teacher-view .teacher-desktop-menu.is-expanded {
+    width: 238px;
+    padding-inline: 7px;
+    box-shadow: 9px 16px 34px #08143577, inset 0 1px #ffffff38;
   }
 
   .teacher-menu-heading {
@@ -4095,50 +4095,77 @@ button,
   }
 
   .teacher-view .teacher-desktop-menu .teacher-menu-trigger {
-    border-color: #d7e4ff66;
-    background: #cdd7ff2b;
+    background: #778de0a8;
     color: #fff;
   }
 
   .teacher-desktop-menu nav,
   .teacher-menu-actions {
     display: grid;
-    gap: 5px;
+    gap: 4px;
   }
 
   .teacher-desktop-menu button {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 13px;
+    justify-content: center;
+    gap: 10px;
     width: 100%;
-    min-height: 47px;
-    padding: 10px 14px;
-    border: 1px solid transparent;
-    border-radius: 14px;
+    height: 32px;
+    min-height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
     background: transparent;
-    color: #dce7ff;
+    color: #aebee5;
     text-align: left;
-    font: 700 15px/1.2 Arial, sans-serif;
+    font: 700 14px/1.2 Arial, sans-serif;
     cursor: pointer;
-    transition: background .18s ease, transform .18s ease, box-shadow .18s ease;
+    transition: background .2s ease, color .2s ease, transform .2s ease, box-shadow .2s ease;
   }
 
   .teacher-desktop-menu button svg {
-    flex: 0 0 20px;
-    width: 20px;
-    height: 20px;
+    flex: 0 0 14px;
+    width: 14px;
+    height: 14px;
   }
 
   .teacher-desktop-menu button:hover {
-    background: #d4ddff24;
-    transform: translateX(2px);
+    background: #c7d4ff3d;
+    color: #fff;
+    transform: scale(1.09);
+    box-shadow: 0 0 11px #adc3ff66;
   }
 
   .teacher-desktop-menu nav button.active {
-    border-color: #e1dcff99;
-    background: linear-gradient(135deg, #e4e3ff, #9cb5f0);
+    background: radial-gradient(circle at 35% 28%, #fff, #e5ecff 55%, #bacaf5);
     color: #14213b;
-    box-shadow: 0 0 17px #b9c9ff9c, 0 6px 14px #06122f77;
+    box-shadow: 0 0 0 3px #dfe9ff25, 0 0 15px 4px #b9c9ffbd;
+  }
+
+  .teacher-desktop-menu:not(.is-expanded) button::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: 50%;
+    left: calc(100% + 12px);
+    z-index: 1;
+    width: max-content;
+    padding: 6px 9px;
+    border-radius: 7px;
+    background: #0a1533;
+    box-shadow: 0 5px 14px #06112c66;
+    color: #fff;
+    font: 700 12px/1.2 Arial, sans-serif;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-4px, -50%);
+    transition: opacity .16s ease, transform .16s ease;
+  }
+
+  .teacher-desktop-menu:not(.is-expanded) button:is(:hover, :focus-visible)::after {
+    opacity: 1;
+    transform: translate(0, -50%);
   }
 
   .teacher-desktop-menu .teacher-menu-label {
@@ -4149,15 +4176,22 @@ button,
     transition: opacity .15s ease;
   }
 
-  .teacher-desktop-menu:is(:hover, :focus-within, .is-expanded) .teacher-menu-label {
+  .teacher-desktop-menu.is-expanded .teacher-menu-label {
     width: auto;
     opacity: 1;
   }
 
+  .teacher-desktop-menu.is-expanded button {
+    justify-content: flex-start;
+    height: 38px;
+    min-height: 38px;
+    padding: 0 12px;
+    border-radius: 12px;
+  }
+
   .teacher-menu-actions {
-    margin-top: auto;
-    padding-top: 10px;
-    border-top: 1px solid #ffffff35;
+    padding-top: 6px;
+    border-top: 1px solid #dce6ff24;
   }
 
   .teacher-menu-actions > span {
@@ -4167,7 +4201,7 @@ button,
   }
 
   .teacher-menu-actions button.danger-soft {
-    color: #ffb9c0;
+    color: #e9a6b3;
   }
 
   .teacher-desktop-menu button:focus-visible {

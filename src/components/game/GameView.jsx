@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FaArrowLeft, FaArrowRight, FaBars, FaBookOpen, FaCalendarDays, FaCamera, FaHouse, FaScroll, FaTrophy, FaWandMagicSparkles, FaXmark } from 'react-icons/fa6';
+import { FaArrowLeft, FaArrowRight, FaBookOpen, FaCalendarDays, FaCamera, FaHouse, FaPlus, FaScroll, FaTrophy, FaWandMagicSparkles, FaXmark } from 'react-icons/fa6';
 import { bestiario, textoBeneficioBestia, precioBestia, RAREZAS_BESTIARIO } from '../../data/bestiaryData';
 import { CARTAS_ACTIVAS, casas, PLAYER_KEY } from '../../data/gameData';
 import { db } from '../../services/hechiApi';
@@ -1264,24 +1264,24 @@ function GameView({ sesion, setSesion, estado, setEstado, setModo, mensaje, setM
       {sesion.tipo === 'maestro' && !arenaMobile &&
         <aside id='teacher-desktop-menu' className={'teacher-desktop-menu' + (teacherMenuOpen ? ' is-expanded' : '')} aria-label='Menú del maestro'>
           <div className='teacher-menu-heading'>
-            <button type='button' className='teacher-menu-trigger' onClick={(event) => { setTeacherMenuOpen((open) => !open); if (teacherMenuOpen) event.currentTarget.blur(); }} aria-expanded={teacherMenuOpen} aria-controls='teacher-desktop-menu' aria-label={teacherMenuOpen ? 'Contraer menú' : 'Expandir menú'} title={teacherMenuOpen ? 'Contraer menú' : 'Expandir menú'}>
-              {teacherMenuOpen ? <FaXmark /> : <FaBars />}<span className='teacher-menu-label'>Menú</span>
+            <button type='button' className='teacher-menu-trigger' onClick={(event) => { setTeacherMenuOpen((open) => !open); if (teacherMenuOpen) event.currentTarget.blur(); }} aria-expanded={teacherMenuOpen} aria-controls='teacher-desktop-menu' aria-label={teacherMenuOpen ? 'Contraer menú' : 'Expandir menú'} data-tooltip={teacherMenuOpen ? 'Contraer menú' : 'Expandir menú'}>
+              {teacherMenuOpen ? <FaXmark /> : <FaPlus />}<span className='teacher-menu-label'>Menú</span>
             </button>
           </div>
           <nav aria-label='Secciones del maestro'>
             {teacherTabs.filter((tab) => tab.id !== 'hechizos').map((tab) => (
-              <button key={tab.id} type='button' className={teacherTab === tab.id ? 'active' : ''} onClick={() => { setTeacherTab(tab.id); setTeacherMenuOpen(false); }} aria-label={tab.label} title={tab.label} aria-current={teacherTab === tab.id ? 'page' : undefined}>
+              <button key={tab.id} type='button' className={teacherTab === tab.id ? 'active' : ''} onClick={() => { setTeacherTab(tab.id); setTeacherMenuOpen(false); }} aria-label={tab.label} data-tooltip={tab.label} aria-current={teacherTab === tab.id ? 'page' : undefined}>
                 {tab.icon}<span className='teacher-menu-label'>{tab.label}</span>
               </button>
             ))}
           </nav>
           <div className='teacher-menu-actions'>
             <span className='teacher-menu-label'>Administración</span>
-            <button type='button' onClick={() => { setTeacherMenuOpen(false); abrirAccionMaestro({ tipo: 'nuevo-parcial' }); }} aria-label='Nuevo parcial' title='Nuevo parcial'><FaCalendarDays /><span className='teacher-menu-label'>Nuevo parcial</span></button>
-            <button type='button' onClick={() => { setTeacherMenuOpen(false); setMostrarRespaldos(true); }} aria-label='Respaldos' title='Respaldos'><FaBookOpen /><span className='teacher-menu-label'>Respaldos</span></button>
-            <button type='button' onClick={() => { setTeacherMenuOpen(false); abrirAccionMaestro({ tipo: 'reiniciar-bestiario' }); }} aria-label='Reiniciar bestiario' title='Reiniciar bestiario'><FaWandMagicSparkles /><span className='teacher-menu-label'>Reiniciar bestiario</span></button>
-            <button type='button' className='danger-soft' onClick={() => { setTeacherMenuOpen(false); abrirAccionMaestro({ tipo: 'eliminar-clase' }); }} aria-label='Eliminar clase' title='Eliminar clase'><FaXmark /><span className='teacher-menu-label'>Eliminar clase</span></button>
-            <button type='button' onClick={() => { setTeacherMenuOpen(false); salir(); }} aria-label='Salir' title='Salir'><FaArrowRight /><span className='teacher-menu-label'>Salir</span></button>
+            <button type='button' onClick={() => { setTeacherMenuOpen(false); abrirAccionMaestro({ tipo: 'nuevo-parcial' }); }} aria-label='Nuevo parcial' data-tooltip='Nuevo parcial'><FaCalendarDays /><span className='teacher-menu-label'>Nuevo parcial</span></button>
+            <button type='button' onClick={() => { setTeacherMenuOpen(false); setMostrarRespaldos(true); }} aria-label='Respaldos' data-tooltip='Respaldos'><FaBookOpen /><span className='teacher-menu-label'>Respaldos</span></button>
+            <button type='button' onClick={() => { setTeacherMenuOpen(false); abrirAccionMaestro({ tipo: 'reiniciar-bestiario' }); }} aria-label='Reiniciar bestiario' data-tooltip='Reiniciar bestiario'><FaWandMagicSparkles /><span className='teacher-menu-label'>Reiniciar bestiario</span></button>
+            <button type='button' className='danger-soft' onClick={() => { setTeacherMenuOpen(false); abrirAccionMaestro({ tipo: 'eliminar-clase' }); }} aria-label='Eliminar clase' data-tooltip='Eliminar clase'><FaXmark /><span className='teacher-menu-label'>Eliminar clase</span></button>
+            <button type='button' onClick={() => { setTeacherMenuOpen(false); salir(); }} aria-label='Salir' data-tooltip='Salir'><FaArrowRight /><span className='teacher-menu-label'>Salir</span></button>
           </div>
         </aside>
       }
