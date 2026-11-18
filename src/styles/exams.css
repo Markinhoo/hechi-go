@@ -47,6 +47,14 @@
   .teacher-view .teacher-desktop-tabs-area:has(> .exam-panel){display:grid;grid-template-rows:auto minmax(0,1fr);height:100%;min-height:0;overflow:hidden;}
   .student-view .student-tabs-area > .exam-panel,
   .teacher-view .teacher-desktop-tabs-area > .exam-panel{height:100%;min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain;}
+
+  /* The student desktop exam grows with its questions and scrolls with the page. */
+  html:has(.student-view .exam-panel),
+  body:has(.student-view .exam-panel),
+  #root:has(.student-view .exam-panel){height:auto;min-height:100%;overflow-y:auto;}
+  .student-view.game-shell:has(.exam-panel){height:auto !important;min-height:100dvh !important;overflow-y:visible !important;}
+  .student-view .student-tabs-area:has(> .exam-panel){display:block;height:auto;overflow:visible;}
+  .student-view .student-tabs-area > .exam-panel{height:auto;max-height:none;overflow:visible;}
 }
 .student-spell-history{margin-top:14px;padding:10px 12px;border:1px solid #c69c5d;border-radius:10px;background:#152b3e;color:#f4f8ff;}
 .student-spell-history summary{cursor:pointer;color:#ffe1a0;font:700 16px/1.4 Arial,sans-serif;}
