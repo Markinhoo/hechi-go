@@ -4083,7 +4083,7 @@ button,
   }
 
   .teacher-view .teacher-desktop-menu.is-expanded {
-    width: 238px;
+    width: 266px;
     padding-inline: 7px;
     box-shadow: 9px 16px 34px #08143577, inset 0 1px #ffffff38;
   }
@@ -4122,7 +4122,7 @@ button,
     box-shadow: none;
     color: #aebee5;
     text-align: left;
-    font: 700 14px/1.2 Arial, sans-serif;
+    font: 400 21px/1.15 'Harry P', Georgia, serif;
     cursor: pointer;
     transition: color .2s ease, transform .2s ease;
   }
@@ -4182,7 +4182,7 @@ button,
     background: #0a1533;
     box-shadow: 0 5px 14px #06112c66;
     color: #fff;
-    font: 700 12px/1.2 Arial, sans-serif;
+    font: 400 18px/1.2 'Harry P', Georgia, serif;
     opacity: 0;
     pointer-events: none;
     transform: translate(-4px, -50%);
@@ -4205,6 +4205,7 @@ button,
 
   .teacher-desktop-menu.is-expanded button {
     justify-content: flex-start;
+    gap: 30px;
     padding: 0 13px;
   }
 
@@ -4215,7 +4216,7 @@ button,
   .teacher-menu-actions > span {
     margin: 0 0 2px 10px;
     color: #cddaff;
-    font: 700 14px/1.2 Arial, sans-serif;
+    font: 400 20px/1.2 'Harry P', Georgia, serif;
   }
 
   .teacher-menu-actions button.danger-soft {
